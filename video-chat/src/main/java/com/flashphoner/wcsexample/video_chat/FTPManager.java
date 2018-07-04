@@ -10,6 +10,7 @@ import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.widget.Toast;
 
+import java.awt.font.TextAttribute;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,9 +38,13 @@ import org.apache.commons.net.ftp.FTPReply;
 
     Handler mHandler = new Handler();
 
+    public  boolean running = false;
+
     @Override
     protected Object doInBackground(Object[] objects)
     {
+        running = true;
+
         try {
             ftpClient.connect(server, port);
             showServerReply(ftpClient);
@@ -62,6 +67,8 @@ import org.apache.commons.net.ftp.FTPReply;
             ftpClient.enterLocalPassiveMode();
 
             if(uploadORdownload == 1) {
+
+                Log.d(VideoChatActivity.TAG, fileInputStream.available() + " ");
 
                 success = ftpClient.storeFile(GetFileName(filePath), fileInputStream);
 
@@ -116,6 +123,8 @@ import org.apache.commons.net.ftp.FTPReply;
             e.printStackTrace();
         }
 
+        running = false;
+
         return null;
     }
 
@@ -143,6 +152,8 @@ import org.apache.commons.net.ftp.FTPReply;
 
     public  String GetFileName(String filePath)
     {
+       filePath = filePath.replace("primary:", "");
+
        return filePath.substring(filePath.lastIndexOf("/"));
     }
 

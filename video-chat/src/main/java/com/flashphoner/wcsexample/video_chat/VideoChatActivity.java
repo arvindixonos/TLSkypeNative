@@ -9,6 +9,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
@@ -18,6 +23,7 @@ import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
@@ -104,7 +110,7 @@ public class VideoChatActivity extends AppCompatActivity {
      */
     private Room room;
 
-    private SurfaceViewRenderer localRenderer;
+    private SurfaceViewRendererCustom localRenderer;
 
     private Queue<ParticipantView> freeViews = new LinkedList<>();
     private Map<String, ParticipantView> busyViews = new ConcurrentHashMap<>();
@@ -114,8 +120,6 @@ public class VideoChatActivity extends AppCompatActivity {
     private EditText loginName;
 
     private boolean   permissionGiven = false;
-
-    private FTPManager  ftpManager = new FTPManager();
 
     public  static   Context    applicationContext;
 
@@ -141,7 +145,6 @@ public class VideoChatActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_videochat);
 
-
 //        DownloadFile("5EN.mp3");
 
 //        //mute audio
@@ -166,7 +169,7 @@ public class VideoChatActivity extends AppCompatActivity {
 
 //        ftpManager.execute();
 
-        localRenderer = (SurfaceViewRenderer) findViewById(R.id.local_video_view);
+        localRenderer = (SurfaceViewRendererCustom) findViewById(R.id.local_video_view);
         PercentFrameLayout localRenderLayout = (PercentFrameLayout) findViewById(R.id.local_video_layout);
         localRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         localRenderer.setMirror(true);
@@ -415,22 +418,28 @@ public class VideoChatActivity extends AppCompatActivity {
                 {
                     ContentResolver contentResolver = getApplicationContext().getContentResolver();
                     try {
-                     InputStream fileInputStream = contentResolver.openInputStream(data.getData());
-                     ftpManager.fileInputStream = fileInputStream;
-
+                        InputStream fileInputStream = contentResolver.openInputStream(data.getData());
+                        String FilePath = data.getData().getPath();
+                        UploadFile(FilePath, fileInputStream);
+                        Log.d(TAG, FilePath);
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
-
-                    String FilePath = data.getData().getPath();
-                    UploadFile(FilePath);
-                    Log.d(TAG, FilePath);
                 }
         }
     }
 
-    public void UploadFile(String filePath)
+    public void UploadFile(String filePath, InputStream inputStream)
     {
+        FTPManager  ftpManager = new FTPManager();
+
+        if(ftpManager.running)
+        {
+            ShowToast("FTP Manager Running Already");
+            return;
+        }
+
+        ftpManager.fileInputStream = inputStream;
         ftpManager.uploadORdownload = 1;
         ftpManager.applicationContext = getApplicationContext();
         ftpManager.filePath = filePath;
@@ -439,6 +448,14 @@ public class VideoChatActivity extends AppCompatActivity {
 
     public void DownloadFile(String fileName)
     {
+        FTPManager  ftpManager = new FTPManager();
+
+        if(ftpManager.running)
+        {
+            ShowToast("FTP Manager Running Already");
+            return;
+        }
+
         String filePath = "/sdcard/ReceivedFiles/" + fileName;
         ftpManager.uploadORdownload = 2;
         ftpManager.applicationContext = getApplicationContext();
