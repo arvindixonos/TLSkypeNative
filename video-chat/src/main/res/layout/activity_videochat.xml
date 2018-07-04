@@ -1,0 +1,96 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="0dp"
+    android:paddingBottom="0dp"
+    android:paddingEnd="0dp"
+    android:paddingLeft="0dp"
+    android:paddingRight="0dp"
+    android:paddingStart="0dp"
+    android:paddingTop="0dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg"
+        android:baselineAligned="true"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/header"
+            android:layout_width="match_parent"
+            android:layout_height="78dp"
+            android:layout_gravity="top"
+            android:src="@drawable/header_blue" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="200dp">
+
+            <com.flashphoner.fpwcsapi.layout.PercentFrameLayout
+                android:id="@+id/remote_video_layout"
+                android:layout_width="match_parent"
+                android:layout_height="200dp">
+
+                <org.webrtc.SurfaceViewRenderer
+                    android:id="@+id/remote_video_view"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </com.flashphoner.fpwcsapi.layout.PercentFrameLayout>
+        </RelativeLayout>
+
+        <com.flashphoner.fpwcsapi.layout.PercentFrameLayout
+            android:id="@+id/local_video_layout"
+            android:layout_width="120dp"
+            android:layout_height="90dp">
+
+            <org.webrtc.SurfaceViewRenderer
+                android:id="@+id/local_video_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+        </com.flashphoner.fpwcsapi.layout.PercentFrameLayout>
+
+        <EditText
+            android:id="@+id/loginName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Login Name"
+            android:inputType="textUri"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:text="" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="91dp"
+            android:layout_marginTop="50dp"
+            android:background="@drawable/footer_grey"
+            android:gravity="bottom"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/TLconnect_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:scaleType="fitCenter"
+                android:src="@drawable/callexpertbutton" />
+
+            <ImageButton
+                android:id="@+id/TLfileupload_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:scaleType="fitCenter"
+                android:src="@drawable/file_sharing" />
+        </LinearLayout>
+
+
+    </LinearLayout>
+
+</LinearLayout>
