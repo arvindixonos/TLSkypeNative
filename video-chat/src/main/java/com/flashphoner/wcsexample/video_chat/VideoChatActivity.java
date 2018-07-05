@@ -175,7 +175,7 @@ public class VideoChatActivity extends AppCompatActivity {
         localRenderer.setMirror(true);
         localRenderer.requestLayout();
 
-        SurfaceViewRenderer remote1Render = (SurfaceViewRenderer) findViewById(R.id.remote_video_view);
+        SurfaceViewRendererCustom remote1Render = (SurfaceViewRendererCustom) findViewById(R.id.remote_video_view);
         PercentFrameLayout remote1RenderLayout = (PercentFrameLayout) findViewById(R.id.remote_video_layout);
         remote1Render.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         remote1Render.setMirror(false);
