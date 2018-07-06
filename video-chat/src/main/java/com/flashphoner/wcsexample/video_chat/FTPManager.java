@@ -76,7 +76,7 @@ import org.apache.commons.net.ftp.FTPReply;
                 {
                     ToastFunction("Successfully Uploaded File " + GetFileName(filePath));
 
-                    VideoChatActivity.getInstance().SendMessage(":FU-" + GetFileName(filePath));
+                    VideoChatActivity.getInstance().SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
                 }
                 else
                 {
