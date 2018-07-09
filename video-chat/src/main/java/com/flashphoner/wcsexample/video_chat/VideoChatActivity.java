@@ -100,7 +100,7 @@ public class VideoChatActivity extends AppCompatActivity {
      * Room object is used for work with the video chat room, to which the user is joined.
      */
     private Room room;
-    private SurfaceViewRenderer localRenderer;
+    private SurfaceViewRendererCustom localRenderer;
     private Stream stream;
     private EditText loginName;
     private boolean permissionGiven = false;
@@ -116,6 +116,11 @@ public class VideoChatActivity extends AppCompatActivity {
             Instance = new VideoChatActivity();
         }
         return Instance;
+    }
+
+    public  String GetMyName()
+    {
+        return "Arvind";
     }
 
     @Override
@@ -149,7 +154,7 @@ public class VideoChatActivity extends AppCompatActivity {
 
 //        ftpManager.execute();
 
-        localRenderer = (SurfaceViewRenderer) findViewById(R.id.local_video_view);
+        localRenderer = (SurfaceViewRendererCustom) findViewById(R.id.local_video_view);
         PercentFrameLayout localRenderLayout = (PercentFrameLayout) findViewById(R.id.local_video_layout);
         localRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         localRenderer.setMirror(true);
@@ -178,8 +183,6 @@ public class VideoChatActivity extends AppCompatActivity {
             Log.d(TAG, videoDevice.getLabel() + " " + videoDevice.getType());
 
         }
-
-
 
         mConnectButton = (ImageButton) findViewById(R.id.TLconnect_button);
         mFileUploadButton = (ImageButton) findViewById(R.id.TLfileupload_button);

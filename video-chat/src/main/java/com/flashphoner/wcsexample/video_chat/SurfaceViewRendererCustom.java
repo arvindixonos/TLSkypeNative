@@ -33,6 +33,7 @@ import static android.graphics.ImageFormat.NV21;
 
 public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
     private static final float TOUCH_TOLERANCE = 4;
+    public boolean  drawEnabled = false;
     public boolean savePic = false;
     public YuvFrame yuvFrame;
     Bitmap screenShotBitmap;

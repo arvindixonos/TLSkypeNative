@@ -1,0 +1,29 @@
+[FINE:7/7/18 11:23 PM] Creating internal file-system for archive...
+[INFO:7/7/18 11:23 PM] Loaded input from: libjingle_peerconnection.jar
+[FINE:7/7/18 11:23 PM] Decompile 'get' failed: /java/lang/Enum
+[FINE:7/7/18 11:23 PM] Decompile 'get' failed: /java/lang/Object
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/lang/Object
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/util/LinkedList
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/lang/StringBuilder
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/lang/Object
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/util/LinkedList
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/lang/StringBuilder
+[FINE:7/7/18 11:24 PM] Decompile 'get' failed: /java/lang/Object
+[FINE:7/9/18 12:33 AM] Creating internal file-system for archive...
+[INFO:7/9/18 12:33 AM] Loaded input from: classes.jar
+[FINE:7/9/18 12:33 AM] Creating internal file-system for archive...
+[INFO:7/9/18 12:33 AM] Loaded input from: libjingle_peerconnection.jar
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/lang/Object
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/util/Comparator
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/lang/UnsupportedOperationException
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /android/graphics/ImageFormat
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/lang/StringBuilder
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /android/hardware/Camera$Size
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/lang/Math
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/util/List
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /android/hardware/Camera
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /android/hardware/Camera$CameraInfo
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/lang/RuntimeException
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/lang/Exception
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /android/hardware/Camera$Parameters
+[FINE:7/9/18 12:34 AM] Decompile 'get' failed: /java/util/Collections

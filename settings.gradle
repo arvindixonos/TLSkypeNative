@@ -1,1 +1,1 @@
-include ":video-chat", ':commons-net-3.6', ':customflashphoner'
+include ":video-chat", ':commons-net-3.6', ':customflashphoner', ':autobahn.0.5.2', ':libjingle_peerconnection'
