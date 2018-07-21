@@ -1,1 +1,0 @@
-Java Bytecode Editor 0.1.1

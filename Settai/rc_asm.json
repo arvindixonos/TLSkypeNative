@@ -8,5 +8,6 @@
   "asm.in.skipframes": true,
   "asm.in.expandframes": false,
   "asm.edit.linkedmethods": false,
-  "asm.edit.locklibmethods": false
+  "asm.edit.locklibmethods": false,
+  "asm.edit.verify": true
 }

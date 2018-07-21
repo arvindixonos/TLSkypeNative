@@ -1,0 +1,49 @@
+
+{
+	"buildFiles" : 
+	[
+		"C:/Users/TakeLeap05/Desktop/Aadharsh/TLSkypeNative/libraryyuv/CMakeLists.txt"
+	],
+	"cleanCommands" : 
+	[
+		"C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\debug\\armeabi-v7a --target clean"
+	],
+	"cppFileExtensions" : [ "cpp" ],
+	"libraries" : 
+	{
+		"native-lib-Debug-armeabi-v7a" : 
+		{
+			"abi" : "armeabi-v7a",
+			"artifactName" : "native-lib",
+			"buildCommand" : "C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\debug\\armeabi-v7a --target native-lib",
+			"buildType" : "debug",
+			"files" : 
+			[
+				
+				{
+					"flags" : "  --target=armv7-none-linux-androideabi --gcc-toolchain=C:/Users/TakeLeap05/AppData/Local/Android/Sdk/ndk-bundle/toolchains/arm-linux-androideabi-4.9/prebuilt/windows-x86_64 --sysroot=C:/Users/TakeLeap05/AppData/Local/Android/Sdk/ndk-bundle/sysroot  -Dnative_lib_EXPORTS -I..\\..\\..\\..\\src\\main\\cpp\\include -isystem C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include -isystem C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\libs\\armeabi-v7a\\include -isystem C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\ndk-bundle\\sources\\cxx-stl\\gnu-libstdc++\\4.9\\include\\backward  -isystem C:/Users/TakeLeap05/AppData/Local/Android/Sdk/ndk-bundle/sysroot/usr/include/arm-linux-androideabi -D__ANDROID_API__=19 -g -DANDROID -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -fno-integrated-as -mthumb -Wa,--noexecstack -Wformat -Werror=format-security   -O0 -fno-limit-debug-info  -fPIC    -c ",
+					"src" : "C:/Users/TakeLeap05/Desktop/Aadharsh/TLSkypeNative/libraryyuv/src/main/cpp/native-lib.cpp",
+					"workingDirectory" : "C:/Users/TakeLeap05/Desktop/Aadharsh/TLSkypeNative/libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a"
+				}
+			],
+			"output" : "C:/Users/TakeLeap05/Desktop/Aadharsh/TLSkypeNative/libraryyuv/build/intermediates/cmake/debug/obj/armeabi-v7a/libnative-lib.so",
+			"toolchain" : "4251909129"
+		},
+		"yuv-Debug-armeabi-v7a" : 
+		{
+			"abi" : "armeabi-v7a",
+			"artifactName" : "yuv",
+			"buildType" : "debug",
+			"output" : "../../../../src/main/jniLibs/armeabi-v7a/libyuv.so",
+			"toolchain" : "4251909129"
+		}
+	},
+	"toolchains" : 
+	{
+		"4251909129" : 
+		{
+			"cCompilerExecutable" : "C:/Users/TakeLeap05/AppData/Local/Android/Sdk/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang.exe",
+			"cppCompilerExecutable" : "C:/Users/TakeLeap05/AppData/Local/Android/Sdk/ndk-bundle/toolchains/llvm/prebuilt/windows-x86_64/bin/clang++.exe"
+		}
+	}
+}
