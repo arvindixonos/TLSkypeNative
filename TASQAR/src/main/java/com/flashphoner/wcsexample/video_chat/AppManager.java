@@ -116,30 +116,6 @@ public class AppManager extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
 
-//        Session session = null;
-//
-//        if (session == null) {
-//            Exception exception = null;
-//            String message = null;
-//            try {
-//                // Create the session.
-//                session = new Session(/* context= */ getApplicationContext());
-//            } catch (UnavailableApkTooOldException e) {
-//                message = "Please update ARCore";
-//                exception = e;
-//            } catch (UnavailableSdkTooOldException e) {
-//                message = "Please update this app";
-//                exception = e;
-//            } catch (UnavailableArcoreNotInstalledException e) {
-//                message = "Failed to create AR session";
-//                exception = e;
-//            }
-//            catch (Exception e) {
-//                message = "Please update this app";
-//                exception = e;
-//            }
-//        }
-
         final Thread arCoreCheckThread = new Thread(new Runnable() {
             @Override
             public void run()
@@ -150,7 +126,35 @@ public class AppManager extends AppCompatActivity
             }
         });
 
-        arCoreCheckThread.start();
+        Session session = null;
+
+        if (session == null) {
+            Exception exception = null;
+            String message = null;
+            try {
+                // Create the session.
+                session = new Session(/* context= */ getApplicationContext());
+            } catch (UnavailableApkTooOldException e) {
+                message = "Please update ARCore";
+                exception = e;
+            } catch (UnavailableSdkTooOldException e) {
+                message = "Please update this app";
+                exception = e;
+            } catch (UnavailableArcoreNotInstalledException e) {
+                message = "Failed to create AR session";
+                exception = e;
+
+                arCoreCheckThread.start();
+            }
+            catch (Exception e) {
+
+                VideoCapturerAndroid.arCorePresent = false;
+
+                message = "Please update this app";
+                exception = e;
+            }
+
+        }
 
         if( ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
@@ -214,8 +218,18 @@ public class AppManager extends AppCompatActivity
         }
     }
 
-    void SetupUserScreen ()
-    {
+    void SetupUserScreen () {
+        ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this.getApplicationContext());
+
+        if (availability == ArCoreApk.Availability.SUPPORTED_INSTALLED)
+        {
+            VideoCapturerAndroid.arCorePresent = true;
+        }
+        else
+        {
+            VideoCapturerAndroid.arCorePresent = false;
+        }
+
         setContentView(R.layout.activity_user);
         final Button callUserButton = findViewById(R.id.buttonCall);
         callUserButton.setOnClickListener(new View.OnClickListener()

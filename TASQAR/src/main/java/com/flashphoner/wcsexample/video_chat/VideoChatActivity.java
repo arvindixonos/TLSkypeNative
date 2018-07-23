@@ -33,6 +33,7 @@ import android.view.Display;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
@@ -65,6 +66,7 @@ import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.PointCloud;
+import com.google.ar.core.Pose;
 import com.google.ar.core.Session;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
@@ -114,11 +116,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-Cool";
+    String roomName = "TLSkypeRoom-VeraCoolRoom";
 //    UI references.
-    private EditText mWcsUrlView;
-    private EditText mLoginView;
-    private TextView mConnectStatus;
+
     private ImageButton mConnectButton;
     private ImageButton mFileUploadButton;
     private EditText mJoinRoomView;
@@ -137,6 +137,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private Handler mHandler = new Handler();
     private Handler nHandler = new Handler();
     public  Intent  currentActivityIntent;
+
+    private ScreenRecorder  screenRecorder;
 
 
     private ParticipantView participantView;
@@ -178,7 +180,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private DisplayRotationHelper displayRotationHelper;
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
     private final ObjectRenderer virtualObject = new ObjectRenderer();
-    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+//    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
     private final float[] anchorMatrix = new float[16];
@@ -188,9 +190,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         public final Anchor anchor;
         public final float[] color;
 
-        public ColoredAnchor(Anchor a, float[] color4f) {
+        public ColoredAnchor(Anchor a, float[] color4f, Pose finalPose) {
             this.anchor = a;
             this.color = color4f;
+            this.anchor.getPose().compose(finalPose);
         }
     }
 
@@ -211,13 +214,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/andy.obj", "models/andy.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-            virtualObjectShadow.createOnGlThread(
-                    /*context=*/ this, "models/andy_shadow.obj", "models/andy_shadow.png");
-            virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
-            virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
+//            virtualObjectShadow.createOnGlThread(this, "models/andy_shadow.obj", "models/andy_shadow.png");
+//            virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
+//            virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
         } catch (IOException e) {
             Log.e(TAG, "Failed to read an asset file", e);
@@ -227,14 +229,17 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
 
+        width = 1280;
+        height = 720;
+
         screenWidth = width;
         screenHeight = height;
 
         displayRotationHelper.onSurfaceChanged(width, height);
         GLES20.glViewport(0, 0, width, height);
 
-        mWidth = 640; //width;
-        mHeight = 480; //height;
+        mWidth = 1280; //width;
+        mHeight = 720; //height;
 
         totalSurfaceLength = screenWidth * screenHeight * 4;
         totalViewLength = mWidth * mHeight * 4;
@@ -333,6 +338,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             glsurfaceView.onResume();
             displayRotationHelper.onResume();
         }
+
+        if(screenRecorder != null)
+            screenRecorder.ResumeRecording();
     }
 
     void SetupCallScreen ()
@@ -344,7 +352,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         mConnectButton = findViewById(R.id.CallExpertButton);
         mFileUploadButton = findViewById(R.id.UploadFileButton);
 
+        screenRecorder = new ScreenRecorder(this);
+
         glsurfaceView = (GLSurfaceView) findViewById(R.id.glsurfaceview);
+        ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
+        layoutParams.width = 1280;
+        layoutParams.height = 720;
+        glsurfaceView.setLayoutParams(layoutParams);
+        glsurfaceView.invalidate();
         glsurfaceView.setPreserveEGLContextOnPause(true);
         glsurfaceView.setEGLContextClientVersion(2);
         glsurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
@@ -524,7 +539,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //            planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
 
             // Visualize anchors created by touch.
-            float scaleFactor = 1.0f;
+            float scaleFactor = 0.1f;
             for (ColoredAnchor coloredAnchor : anchors) {
                 if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
                     continue;
@@ -535,9 +550,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                 // Update and draw the model and its shadow.
                 virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
+//                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
                 virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+//                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
             }
 
             byte[] ardata = GetScreenPixels();
@@ -553,8 +568,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         GLES20.glReadPixels(0, 0, screenWidth, screenHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
 
-        Libyuv.ARGBScale(pixelData, screenWidth * 4, screenWidth, screenHeight, abgrBuffer, mWidth * 4, mWidth, mHeight);
-        Libyuv.ABGRToARGB(abgrBuffer, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
+//        Libyuv.ARGBScale(pixelData, screenWidth * 4, screenWidth, screenHeight, abgrBuffer, mWidth * 4, mWidth, mHeight);
+        Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
         Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
         Libyuv.ARGBToNV21(argbBufferMirror, mWidth * 4, mWidth, mHeight, ybuffer, uvbuffer);
 
@@ -581,7 +596,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
+//            localRenderer.setMirror(true);
             int frameOrientation = 0; //videoCapturerAndroid.getFrameOrientation();
+
+            Log.d(TAG, "WITH AR CORE :" + videoCapturerAndroid.getFrameOrientation());
 
             if (videoCapturerAndroid.frameObserver != null)
                 videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width,
@@ -595,13 +613,36 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
+            Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
+
             videoCapturerAndroid.cameraStatistics.addFrame();
-            videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height, videoCapturerAndroid.getFrameOrientation(), captureTimeNs);
+            videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height, 270, captureTimeNs);
             if (videoCapturerAndroid.camera != null) {
                 videoCapturerAndroid.camera.addCallbackBuffer(data);
             }
         }
     }
+
+    private int getDeviceOrientation() {
+        int orientation = 0;
+        WindowManager wm = (WindowManager)this.applicationContext.getSystemService(Context.WINDOW_SERVICE);
+        switch(wm.getDefaultDisplay().getRotation()) {
+            case 0:
+                orientation = 0;
+                break;
+            case 1:
+                orientation = 90;
+                break;
+            case 2:
+                orientation = 180;
+                break;
+            case 3:
+                orientation = 270;
+        }
+
+        return orientation;
+    }
+
 
     public void DecodeTapMessage(String tapMessage)
     {
@@ -653,7 +694,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                 float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
 
-                anchors.add(new ColoredAnchor(hit.createAnchor(), objColor));
+                anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, camera.getDisplayOrientedPose()));
                 break;
             }
 
@@ -735,17 +776,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                         Exception exception = null;
                                         String message = null;
                                         try {
-                                            // Create the session.
                                             session = new Session(/* context= */ getApplicationContext());
                                         } catch (UnavailableApkTooOldException e) {
                                             message = "Please update ARCore";
                                             exception = e;
+                                            VideoCapturerAndroid.arCorePresent = false;
+                                            ShowToast("AR CORE NOT PRESENT", applicationContext);
+                                            OpenBackCamera();
                                         } catch (UnavailableSdkTooOldException e) {
                                             message = "Please update this app";
                                             exception = e;
+                                            VideoCapturerAndroid.arCorePresent = false;
+                                            ShowToast("AR CORE NOT PRESENT", applicationContext);
+                                            OpenBackCamera();
                                         } catch (Exception e) {
                                             message = "Failed to create AR session";
                                             exception = e;
+                                            VideoCapturerAndroid.arCorePresent = false;
+                                            ShowToast("AR CORE NOT PRESENT", applicationContext);
+                                            OpenBackCamera();
                                         }
                                     }
 
@@ -781,6 +830,20 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         };
 
         thread.start();
+    }
+
+    public void OpenBackCamera()
+    {
+        WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
+        VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
+
+        if (videoCapturerAndroid == null)
+            return;
+
+        WebRTCMediaProvider.cameraID = 0;
+        videoCapturerAndroid.id = 1;
+
+        videoCapturerAndroid.switchCamera(cameraSwitchHandler);
     }
 
     public void Connect() {
@@ -849,11 +912,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         if (permissionGiven && stream == null) {
                             stream = room.publish(localRenderer, VideoChatActivity.this);
-                            stream.muteAudio();
+                            stream.unmuteAudio();
                         }
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
                          */
+
+                        screenRecorder.GetPermission();
 
                         Log.i(TAG, "Permission has been granted by user");
 
@@ -914,7 +979,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                          */
                         if (participantView != null) {
                             participantPublishing = true;
-                            participant.play(participantView.surfaceViewRenderer);
+                            Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
+                            remoteStream.unmuteAudio();
                         }
                     }
 
@@ -987,7 +1053,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         // TODO Fix no activity available
         if (data == null)
             return;
-        Log.d(TAG, "Data is" + data.getData().getPath());
+//        Log.d(TAG, "Data is" + data.getData().getPath());
         switch (requestCode)
         {
             case PICKFILE_RESULT_CODE:
@@ -1013,6 +1079,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     e.printStackTrace();
                 }
             }
+
+            break;
+
+            case ScreenRecorder.PERMISSION_CODE:
+                if (resultCode == RESULT_OK)
+                {
+                    final Intent localDataCopy = data;
+                    Handler handler = new Handler();
+                    Runnable runnable = new Runnable() {
+                        @Override
+                        public void run()
+                        {
+                            screenRecorder.ActivityResult(RESULT_OK, localDataCopy);
+                        }
+                    };
+
+                    handler.postDelayed(runnable, 200);
+                }
+            break;
         }
     }
 
@@ -1148,7 +1233,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     if (stream == null && room != null)
                     {
                         stream = room.publish(localRenderer, VideoChatActivity.this);
-                        stream.muteAudio();
+                        stream.unmuteAudio();
                     }
 
                     /**
@@ -1172,6 +1257,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             glsurfaceView.onPause();
             session.pause();
         }
+
+        if(screenRecorder != null)
+            screenRecorder.PauseRecording();;
     }
 
     @Override
@@ -1198,6 +1286,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         roomManager.disconnect();
 
         room = null;
+
+        if(screenRecorder != null)
+        {
+            screenRecorder.StopRecording();
+        }
     }
 
     private class ParticipantView
