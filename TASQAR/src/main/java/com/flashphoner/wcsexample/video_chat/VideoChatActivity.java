@@ -572,7 +572,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
         Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
         Libyuv.ARGBToNV21(argbBufferMirror, mWidth * 4, mWidth, mHeight, ybuffer, uvbuffer);
-
         System.arraycopy(ybuffer,0, frameData,0, mWidth * mHeight);
         System.arraycopy(uvbuffer,0, frameData, mWidth * mHeight, mWidth * mHeight / 2);
 
