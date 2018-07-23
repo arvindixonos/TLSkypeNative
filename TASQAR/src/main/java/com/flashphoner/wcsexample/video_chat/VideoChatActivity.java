@@ -169,9 +169,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     int totalSurfaceLength;
     int totalViewLength;
     byte[] pixelData;
+    byte[] tempData;
     byte[] abgrBuffer;
     byte[] argbBuffer;
-    byte[] argbBufferMirror;
     ByteBuffer buf;
     byte[]  ybuffer;
     byte[]  uvbuffer;
@@ -246,7 +246,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         pixelData = new byte[totalSurfaceLength];
         abgrBuffer = new byte[totalViewLength];
         argbBuffer = new byte[totalViewLength];
-        argbBufferMirror = new byte[totalViewLength];
+        tempData = new byte[totalViewLength];
         buf = ByteBuffer.wrap(pixelData);
         ybuffer = new byte[mWidth * mHeight];
         uvbuffer = new byte[mWidth * mHeight / 2];
@@ -568,12 +568,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         GLES20.glReadPixels(0, 0, screenWidth, screenHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
 
-//        Libyuv.ARGBScale(pixelData, screenWidth * 4, screenWidth, screenHeight, abgrBuffer, mWidth * 4, mWidth, mHeight);
-        Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
-        Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
-        Libyuv.ARGBToNV21(argbBufferMirror, mWidth * 4, mWidth, mHeight, ybuffer, uvbuffer);
-        System.arraycopy(ybuffer,0, frameData,0, mWidth * mHeight);
-        System.arraycopy(uvbuffer,0, frameData, mWidth * mHeight, mWidth * mHeight / 2);
+//        Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
+//        Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
+
+        Libyuv.ARCORETONV21(pixelData, mWidth * 4, tempData, argbBuffer, mWidth * 4, mWidth, -mHeight, ybuffer, uvbuffer, frameData);
+//        Libyuv.ARGBToNV21(argbBuffer, mWidth * 4, mWidth, mHeight, ybuffer, uvbuffer);
+
+//        System.arraycopy(ybuffer,0, frameData,0, mWidth * mHeight);
+//        System.arraycopy(uvbuffer,0, frameData, mWidth * mHeight, mWidth * mHeight / 2);
 
         return frameData;
     }
@@ -596,7 +598,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
 //            localRenderer.setMirror(true);
-            int frameOrientation = 0; //videoCapturerAndroid.getFrameOrientation();
+            int frameOrientation = 180; //videoCapturerAndroid.getFrameOrientation();
 
             Log.d(TAG, "WITH AR CORE :" + videoCapturerAndroid.getFrameOrientation());
 
