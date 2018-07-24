@@ -597,8 +597,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
 //            localRenderer.setMirror(true);
 <<<<<<< HEAD
+<<<<<<< HEAD
             int frameOrientation = 0; //videoCapturerAndroid.getFrameOrientation();
 =======
+=======
+>>>>>>> parent of e91efef... nonar phones back camera fix
             int frameOrientation = 180; //videoCapturerAndroid.getFrameOrientation();
 >>>>>>> parent of e91efef... nonar phones back camera fix
 
