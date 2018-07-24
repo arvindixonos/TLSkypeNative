@@ -155,7 +155,7 @@ public class ScreenRecorder
             mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.SURFACE);
             mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.H264);
-            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
+            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
             mMediaRecorder.setVideoEncodingBitRate(512 * 1000);
             mMediaRecorder.setVideoFrameRate(30);
             mMediaRecorder.setVideoSize(DISPLAY_WIDTH, DISPLAY_HEIGHT);
@@ -220,10 +220,6 @@ public class ScreenRecorder
             return;
 
         mVirtualDisplay = createVirtualDisplay();
-        if(validateMicAvailability())
-            Log.d(TAG, "Mic Available");
-        else
-            Log.d(TAG, "Mic Not Available");
         mMediaRecorder.start();
         inited = true;
         recording = true;
@@ -263,6 +259,10 @@ public class ScreenRecorder
         mMediaProjection = null;
         mMediaRecorder.release();
         mMediaRecorder = null;
+        if(validateMicAvailability())
+            Log.d(TAG, "MIC Available");
+        else
+            Log.d(TAG, "MIC not available ");
         stopScreenSharing();
         recording = false;
         inited = false;

@@ -35,7 +35,7 @@ import static android.provider.AlarmClock.EXTRA_MESSAGE;
 
 public class AppManager extends AppCompatActivity
 {
-    public static String TAG = "TLSkype";
+    public static String TAG = "TLSKYPE";
 
     private static final int ALL_PERMISSIONS = 555;
     private     boolean  allPermissionsGiven = false;
@@ -157,9 +157,8 @@ public class AppManager extends AppCompatActivity
         }
 
         if( ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
-//                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.CAPTURE_AUDIO_OUTPUT) != PackageManager.PERMISSION_GRANTED
+                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
 
             RequestAllPermissions();
         }
@@ -185,7 +184,7 @@ public class AppManager extends AppCompatActivity
     public void RequestAllPermissions()
     {
         ActivityCompat.requestPermissions(AppManager.this,
-                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE/*, Manifest.permission.CAPTURE_AUDIO_OUTPUT*/},
+                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 ALL_PERMISSIONS);
     }
 
@@ -198,10 +197,7 @@ public class AppManager extends AppCompatActivity
                 {
                     allPermissionsGiven = allPermissionsGiven & (grantResults[i] == PackageManager.PERMISSION_GRANTED);
                 }
-                if(allPermissionsGiven)
-                    Log.d(TAG, "All Given");
-                else
-                    Log.d(TAG, "All Not Given");
+
                 break;
         }
     }
