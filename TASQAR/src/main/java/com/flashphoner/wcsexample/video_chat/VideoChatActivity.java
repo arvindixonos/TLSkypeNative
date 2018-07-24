@@ -481,6 +481,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 }
             }
         });
+
+        SetLocalRendererMirror();
     }
 
     @Override
@@ -597,10 +599,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
-//            localRenderer.setMirror(true);
             int frameOrientation = 180; //videoCapturerAndroid.getFrameOrientation();
 
-            Log.d(TAG, "WITH AR CORE :" + videoCapturerAndroid.getFrameOrientation());
+//            Log.d(TAG, "WITH AR CORE :" + videoCapturerAndroid.getFrameOrientation());
 
             if (videoCapturerAndroid.frameObserver != null)
                 videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width,
@@ -614,10 +615,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
-            Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
+//            Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
 
             videoCapturerAndroid.cameraStatistics.addFrame();
-            videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height, 270, captureTimeNs);
+            videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height, videoCapturerAndroid.getFrameOrientation(), captureTimeNs);
             if (videoCapturerAndroid.camera != null) {
                 videoCapturerAndroid.camera.addCallbackBuffer(data);
             }
@@ -703,6 +704,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    public void SetLocalRendererMirror()
+    {
+        if(WebRTCMediaProvider.cameraID == 0) {
+            if (VideoCapturerAndroid.arCorePresent) {
+                localRenderer.setMirror(true);
+            } else {
+                localRenderer.setMirror(false);
+            }
+        }
+        else
+        {
+            if (VideoCapturerAndroid.arCorePresent) {
+                localRenderer.setMirror(true);
+            } else {
+                localRenderer.setMirror(true);
+            }
+        }
+    }
+
     public void ToggleCamera()
     {
         if(WebRTCMediaProvider.cameraID == 1)
@@ -717,7 +737,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             WebRTCMediaProvider.cameraID = 1;
         }
 
-        localRenderer.setMirror(true);
+        SetLocalRendererMirror();
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
