@@ -2,6 +2,7 @@ package com.flashphoner.wcsexample.video_chat;
 
 import android.app.Activity;
 import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -27,10 +28,13 @@ import com.flashphoner.fpwcsapi.session.Stream;
 
 import org.webrtc.SurfaceViewRenderer;
 
+import java.util.List;
+
 public class MainUIHandler
 {
     private boolean     drawMode;
     private boolean     switched;
+    private boolean     minimisedSwitched;
     private boolean     videoView = false;
     private boolean     backCam = true;
     private Activity    currentActivity;
@@ -38,32 +42,52 @@ public class MainUIHandler
     private boolean     isAboveEight;
     private VideoChatActivity chatActivity;
 
+    SurfaceViewRendererCustom remote1Render;
+    SurfaceViewRendererCustom localRender;
+
+    FloatingActionButton mEndCallButton;
+    FloatingActionButton mPlusButton;
+    FloatingActionButton mSwitchLayoutButton;
+    FloatingActionButton mToggleDrawingMode;
+    FloatingActionButton mSwitchCamera;
+
+    Button mButton;
+
+    LinearLayout mSpawnButtonLayout;
+
+    RelativeLayout currentRenderLayout;
+    RelativeLayout streamRenderLayout;
+    RelativeLayout mRenderHolder;
+    RelativeLayout.LayoutParams   fullScreenlayoutParams;
+    RelativeLayout.LayoutParams   smallScreenlayoutParams;
+    Rational aspectRatio;
+
     private final PictureInPictureParams.Builder mPictureInPictureParamsBuilder =
             new PictureInPictureParams.Builder();
 
     public MainUIHandler (Activity activity)
     {
-         currentActivity = activity;
-         chatActivity = VideoChatActivity.getInstance();
+        currentActivity = activity;
+        chatActivity = VideoChatActivity.getInstance();
 
-         final SurfaceViewRendererCustom remote1Render = currentActivity.findViewById(R.id.StreamRender);
-         final SurfaceViewRendererCustom localRender = currentActivity.findViewById(R.id.CurrentRender);
+        remote1Render = currentActivity.findViewById(R.id.StreamRender);
+        localRender = currentActivity.findViewById(R.id.CurrentRender);
 
-         final FloatingActionButton mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
-         final FloatingActionButton mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
-         final FloatingActionButton mSwitchLayoutButton = currentActivity.findViewById(R.id.SwitchLayoutButton);
-         final FloatingActionButton mToggleDrawingMode = currentActivity.findViewById(R.id.DrawingModeButton);
-         final FloatingActionButton mSwitchCamera = currentActivity.findViewById(R.id.SwitchCamButton);
+        mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
+        mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
+        mSwitchLayoutButton = currentActivity.findViewById(R.id.SwitchLayoutButton);
+        mToggleDrawingMode = currentActivity.findViewById(R.id.DrawingModeButton);
+        mSwitchCamera = currentActivity.findViewById(R.id.SwitchCamButton);
 
-         final Button mButton = currentActivity.findViewById(R.id.button);
+        mButton = currentActivity.findViewById(R.id.button);
 
-         final LinearLayout mSpawnButtonLayout = currentActivity.findViewById(R.id.ButtonLayout);
+        mSpawnButtonLayout = currentActivity.findViewById(R.id.ButtonLayout);
 
-         final RelativeLayout currentRenderLayout = currentActivity.findViewById(R.id.currentLayout);
-         final RelativeLayout streamRenderLayout = currentActivity.findViewById(R.id.streamLayout);
-         final RelativeLayout mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
-         final RelativeLayout.LayoutParams   fullScreenlayoutParams = (RelativeLayout.LayoutParams) streamRenderLayout.getLayoutParams();
-         final RelativeLayout.LayoutParams   smallScreenlayoutParams = (RelativeLayout.LayoutParams) currentRenderLayout.getLayoutParams();
+        currentRenderLayout = currentActivity.findViewById(R.id.currentLayout);
+        streamRenderLayout = currentActivity.findViewById(R.id.streamLayout);
+        mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
+        fullScreenlayoutParams = (RelativeLayout.LayoutParams) streamRenderLayout.getLayoutParams();
+        smallScreenlayoutParams = (RelativeLayout.LayoutParams) currentRenderLayout.getLayoutParams();
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
@@ -88,14 +112,14 @@ public class MainUIHandler
             @Override
             public void onClick(View v)
             {
-            if(mSpawnButtonLayout.getVisibility() == View.VISIBLE)
-            {
-                mSpawnButtonLayout.setVisibility(View.GONE);
-            }
-            else
-            {
-                mSpawnButtonLayout.setVisibility(View.VISIBLE);
-            }
+                if(mSpawnButtonLayout.getVisibility() == View.VISIBLE)
+                {
+                    mSpawnButtonLayout.setVisibility(View.GONE);
+                }
+                else
+                {
+                    mSpawnButtonLayout.setVisibility(View.VISIBLE);
+                }
             }
         });
 
@@ -116,7 +140,6 @@ public class MainUIHandler
             @Override
             public void onClick(View v)
             {
-                chatActivity.currentActivityIntent.putExtra("MIN", "TRUE");
                 Minimise();
             }
         });
@@ -210,13 +233,11 @@ public class MainUIHandler
                                 mRenderHolder.addView(streamRenderLayout, 0);
                                 mRenderHolder.addView(currentRenderLayout, 1);
                             }
-                                switched = false;
+                            switched = false;
                         }
                         mRenderHolder.invalidate();
                     }
                 }));
-
-
             }
         });
     }
@@ -231,13 +252,72 @@ public class MainUIHandler
 
     public void Minimise ()
     {
-        SurfaceViewRendererCustom remoteRender = currentActivity.findViewById(R.id.StreamRender);
-        Rational aspectRatio = new Rational(remoteRender.getWidth(), remoteRender.getHeight());
-        chatActivity.currentActivityIntent.putExtra("MIN", "FALSE");
-
+        if(switched)
+        {
+            Log.d(TAG, " layout has been switched");
+            aspectRatio = new Rational(localRender.getWidth(), localRender.getHeight());
+            PreMinimise();
+            minimisedSwitched = true;
+        }
+        else
+        {
+            aspectRatio = new Rational(remote1Render.getWidth(), remote1Render.getHeight());
+        }
+//        SurfaceViewRendererCustom remoteRender = currentActivity.findViewById(R.id.StreamRender);
+//
         mPictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build();
         currentActivity.enterPictureInPictureMode(mPictureInPictureParamsBuilder.build());
+    }
 
+    List<RemoteAction> remoteActions;
+
+    public void PreMinimise ()
+    {
+        mRenderHolder.removeView(streamRenderLayout);
+        mRenderHolder.removeView(currentRenderLayout);
+        if(!switched)
+        {
+            streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
+            currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
+
+            if(!isAboveEight)
+            {
+                mRenderHolder.addView(streamRenderLayout, 0);
+                mRenderHolder.addView(currentRenderLayout, 1);
+            }
+            else
+            {
+                mRenderHolder.addView(currentRenderLayout, 0);
+                mRenderHolder.addView(streamRenderLayout, 1);
+            }
+            switched = true;
+        }
+        else
+        {
+            streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
+            currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
+
+            if(!isAboveEight)
+            {
+                mRenderHolder.addView(currentRenderLayout, 0);
+                mRenderHolder.addView(streamRenderLayout, 1);
+            }
+            else
+            {
+                mRenderHolder.addView(streamRenderLayout, 0);
+                mRenderHolder.addView(currentRenderLayout, 1);
+            }
+            switched = false;
+        }
+        mRenderHolder.invalidate();
+    }
+
+    public void PostMinimise ()
+    {
+        if(minimisedSwitched)
+        {
+            PreMinimise();
+        }
     }
 
     public void setUItoPiP (boolean isSmall)
@@ -245,6 +325,12 @@ public class MainUIHandler
 //        FloatingActionButton switchButton = currentActivity.findViewById(R.id.SwitchLayoutButton);
 //
 //        switchButton.callOnClick();
+        if(minimisedSwitched && !isSmall)
+        {
+            PreMinimise();
+            minimisedSwitched = false;
+        }
+
         SurfaceViewRendererCustom currentRender = currentActivity.findViewById(R.id.CurrentRender);
         FloatingActionButton mEndCall = currentActivity.findViewById(R.id.EndCallButton);
         FloatingActionButton mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
@@ -254,6 +340,7 @@ public class MainUIHandler
             currentRender.setVisibility(View.GONE);
             mEndCall.setVisibility(View.GONE);
             mPlusButton.setVisibility(View.GONE);
+            mSpawnButtonLayout.setVisibility(View.GONE);
         }
         else
         {
