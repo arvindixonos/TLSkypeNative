@@ -625,27 +625,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
-    private int getDeviceOrientation() {
-        int orientation = 0;
-        WindowManager wm = (WindowManager)this.applicationContext.getSystemService(Context.WINDOW_SERVICE);
-        switch(wm.getDefaultDisplay().getRotation()) {
-            case 0:
-                orientation = 0;
-                break;
-            case 1:
-                orientation = 90;
-                break;
-            case 2:
-                orientation = 180;
-                break;
-            case 3:
-                orientation = 270;
-        }
-
-        return orientation;
-    }
-
-
     public void DecodeTapMessage(String tapMessage)
     {
         tapMessage = tapMessage.replace("TAP: ", "");

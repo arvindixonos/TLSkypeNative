@@ -53,11 +53,11 @@ dependencies {
     implementation project(':autobahn.0.5.2')
     implementation 'com.android.support.constraint:constraint-layout:1.1.2'
     implementation 'com.android.support:gridlayout-v7:27.1.1'
-    implementation project(':flashphoner')
-    implementation project(':libjingle_peerconnection')
     implementation 'de.javagl:obj:0.2.1'
     implementation project(':libraryyuv')
     implementation 'com.github.hedzr:android-file-chooser:83d0e18f63'
+    implementation project(':flashphoner')
+    implementation project(':libjingle_peerconnection')
 }
 
 play {
