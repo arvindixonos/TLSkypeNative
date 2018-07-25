@@ -116,7 +116,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-VeraCoolRoom";
+    String roomName = "TLSkypeRoom-SuperCoolRoom";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -138,7 +138,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private Handler nHandler = new Handler();
     public  Intent  currentActivityIntent;
 
-    private ScreenRecorder  screenRecorder;
+    public ScreenRecorder  screenRecorder;
 
 
     private ParticipantView participantView;
@@ -227,8 +227,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
-
+    public void onSurfaceChanged(GL10 gl, int width, int height)
+    {
         width = 1280;
         height = 720;
 
@@ -917,8 +917,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
                          */
-
-                        screenRecorder.GetPermission();
 
                         Log.i(TAG, "Permission has been granted by user");
 
