@@ -3,24 +3,30 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/PostLogin"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
     android:theme="@style/Theme.AppCompat.NoActionBar">
+
+    <Button
+        android:id="@+id/pointorplanebutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/UserName"
+        android:layout_alignBottom="@+id/UserName"
+        android:layout_toEndOf="@+id/button"
+        android:text="PP"
+        tools:layout_editor_absoluteX="194dp"
+        tools:layout_editor_absoluteY="0dp" />
 
     <android.opengl.GLSurfaceView
         android:id="@+id/glsurfaceview"
-        android:layout_width="1280dp"
-        android:layout_height="720dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignWithParentIfMissing="false"
-        android:layout_below="@+id/button"
-        android:layout_centerInParent="false"
-        android:layout_marginTop="54dp"
-        android:clickable="false"
-        android:minHeight="720dp"
-        android:minWidth="1280dp"
-        tools:layout_editor_absoluteX="222dp"
-        tools:layout_editor_absoluteY="0dp" />
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="top"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 
     <Button
