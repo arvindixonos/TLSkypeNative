@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.net.Uri;
@@ -65,6 +66,7 @@ import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
+import com.google.ar.core.Plane;
 import com.google.ar.core.PointCloud;
 import com.google.ar.core.Pose;
 import com.google.ar.core.Session;
@@ -87,9 +89,11 @@ import org.webrtc.VideoCapturerAndroid;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -116,11 +120,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-VeraCoolRoom";
+    String roomName = "TLSkypeRoom-SuperCoolRoom";
 //    UI references.
 
     private ImageButton mConnectButton;
     private ImageButton mFileUploadButton;
+    private Button mPlaneOrPointButton;
     private EditText mJoinRoomView;
     private TextView mJoinStatus;
     private Button mJoinButton;
@@ -169,9 +174,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     int totalSurfaceLength;
     int totalViewLength;
     byte[] pixelData;
-    byte[] tempData;
-    byte[] abgrBuffer;
     byte[] argbBuffer;
+    byte[] tempData;
     ByteBuffer buf;
     byte[]  ybuffer;
     byte[]  uvbuffer;
@@ -214,7 +218,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/andy.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/sphere.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
 //            virtualObjectShadow.createOnGlThread(this, "models/andy_shadow.obj", "models/andy_shadow.png");
@@ -244,7 +248,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         totalSurfaceLength = screenWidth * screenHeight * 4;
         totalViewLength = mWidth * mHeight * 4;
         pixelData = new byte[totalSurfaceLength];
-        abgrBuffer = new byte[totalViewLength];
         argbBuffer = new byte[totalViewLength];
         tempData = new byte[totalViewLength];
         buf = ByteBuffer.wrap(pixelData);
@@ -351,14 +354,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         participantView = new ParticipantView(remoteRenderer, mParticipantName);
         mConnectButton = findViewById(R.id.CallExpertButton);
         mFileUploadButton = findViewById(R.id.UploadFileButton);
+        mPlaneOrPointButton = findViewById(R.id.pointorplanebutton);
 
         screenRecorder = new ScreenRecorder(this);
 
         glsurfaceView = (GLSurfaceView) findViewById(R.id.glsurfaceview);
         ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
-        layoutParams.width = 1280;
-        layoutParams.height = 720;
-        glsurfaceView.setLayoutParams(layoutParams);
+//        layoutParams.width = 1280;
+//        layoutParams.height = 720;
+//        glsurfaceView.setLayoutParams(layoutParams);
         glsurfaceView.invalidate();
         glsurfaceView.setPreserveEGLContextOnPause(true);
         glsurfaceView.setEGLContextClientVersion(2);
@@ -405,6 +409,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
             }
         };
+
+        mPlaneOrPointButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TogglePointPlaneSpawn();
+            }
+        });
 
         /**
          * Connection to server will be established when Connect button is clicked.
@@ -528,20 +539,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             final float[] colorCorrectionRgba = new float[4];
             frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
 
-            // Visualize tracked points.
-            PointCloud pointCloud = frame.acquirePointCloud();
-            pointCloudRenderer.update(pointCloud);
-            pointCloudRenderer.draw(viewmtx, projmtx);
+            if(pointsOrPlaneSpawn)
+            {
+                // Visualize tracked points.
+                PointCloud pointCloud = frame.acquirePointCloud();
+                pointCloudRenderer.update(pointCloud);
+                pointCloudRenderer.draw(viewmtx, projmtx);
 
-            // Application is responsible for releasing the point cloud resources after
-            // using it.
-            pointCloud.release();
-
-            // Visualize planes.
-//            planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
+                // Application is responsible for releasing the point cloud resources after
+                // using it.
+                pointCloud.release();
+            }
+            else
+            {
+                // Visualize planes.
+                planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
+            }
 
             // Visualize anchors created by touch.
-            float scaleFactor = 0.1f;
+            float scaleFactor = 0.05f;
             for (ColoredAnchor coloredAnchor : anchors) {
                 if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
                     continue;
@@ -565,6 +581,51 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    public void SavePicture() throws IOException {
+        int pixelData[] = new int[screenWidth * screenHeight];
+
+        // Read the pixels from the current GL frame.
+        IntBuffer buf = IntBuffer.wrap(pixelData);
+        buf.position(0);
+        GLES20.glReadPixels(0, 0, screenWidth, screenHeight,
+                GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
+
+        // Create a file in the Pictures/HelloAR album.
+        final File out = new File("/sdcard/arout.png");
+
+        // Make sure the directory exists
+        if (!out.getParentFile().exists()) {
+            out.getParentFile().mkdirs();
+        }
+
+        // Convert the pixel data from RGBA to what Android wants, ARGB.
+        int bitmapData[] = new int[pixelData.length];
+        for (int i = 0; i < screenHeight; i++) {
+            for (int j = 0; j < screenWidth; j++) {
+                int p = pixelData[i * screenWidth + j];
+                int b = (p & 0x00ff0000) >> 16;
+                int r = (p & 0x000000ff) << 16;
+                int ga = p & 0xff00ff00;
+                bitmapData[(screenHeight - i - 1) * screenWidth + j] = ga | r | b;
+            }
+        }
+        // Create a bitmap.
+        Bitmap bmp = Bitmap.createBitmap(bitmapData,
+                screenWidth, screenHeight, Bitmap.Config.ARGB_8888);
+
+        // Write it to disk.
+        FileOutputStream fos = new FileOutputStream(out);
+        bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        fos.flush();
+        fos.close();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+//        showSnackbarMessage("Wrote " + out.getName(), false);
+            }
+        });
+    }
+
     public byte[] GetScreenPixels() throws IOException {
         buf.position(0);
 
@@ -580,6 +641,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //        System.arraycopy(uvbuffer,0, frameData, mWidth * mHeight, mWidth * mHeight / 2);
 
         return frameData;
+    }
+
+
+    void  SaveBitmap(byte[] rgbbuffer) throws IOException {
+        FileOutputStream out = new FileOutputStream("/sdcard/scr.png");
+        Bitmap stitchBmp = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.ARGB_8888);
+        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(rgbbuffer));
+        stitchBmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+        // bmp is your Bitmap instance
+        out.close();
     }
 
     @Override
@@ -609,6 +680,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
         else
         {
+//            try {
+//                SaveBitmap(data);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+
             long captureTimeNs = TimeUnit.MILLISECONDS.toNanos(SystemClock.elapsedRealtime());
             if (videoCapturerAndroid.eventsHandler != null && !videoCapturerAndroid.firstFrameReported) {
                 videoCapturerAndroid.eventsHandler.onFirstFrameAvailable();
@@ -662,6 +739,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         motionEventCurrent = event;
     }
 
+    public  boolean pointsOrPlaneSpawn = false;
+
     private void handleTap(Frame frame, Camera camera) {
 
         MotionEvent tap = motionEventCurrent;// tapHelper.poll();
@@ -673,14 +752,39 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     anchors.remove(0);
                 }
 
-                float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
+                Trackable currentTrackable = hit.getTrackable();
 
-                anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, camera.getDisplayOrientedPose()));
-                break;
+                if(pointsOrPlaneSpawn)
+                {
+                    if(currentTrackable instanceof com.google.ar.core.Point)
+                    {
+                        SpawnArrow(hit, camera);
+                    }
+                }
+                else
+                {
+                    if(currentTrackable instanceof com.google.ar.core.Plane)
+                    {
+                        SpawnArrow(hit, camera);
+                    }
+                }
+
             }
 
             motionEventCurrent = null;
         }
+    }
+
+    public  void TogglePointPlaneSpawn()
+    {
+        pointsOrPlaneSpawn = !pointsOrPlaneSpawn;
+    }
+
+    private void SpawnArrow(HitResult hit, Camera camera)
+    {
+        float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
+
+        anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, camera.getDisplayOrientedPose()));
     }
 
     public void SetLocalRendererMirror()
