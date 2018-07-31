@@ -147,7 +147,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private Handler nHandler = new Handler();
     public  Intent  currentActivityIntent;
 
-    private ScreenRecorder  screenRecorder;
+    public ScreenRecorder  screenRecorder;
 
 
     private ParticipantView participantView;
