@@ -247,8 +247,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         displayRotationHelper.onSurfaceChanged(width, height);
         GLES20.glViewport(0, 0, width, height);
 
-        mWidth = 1280; //width;
-        mHeight = 720; //height;
+        mWidth = 720; //width;
+        mHeight = 1280; //height;
 
         totalSurfaceLength = screenWidth * screenHeight * 4;
         totalViewLength = mWidth * mHeight * 4;
@@ -369,8 +369,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         glsurfaceView = (GLSurfaceView) findViewById(R.id.glsurfaceview);
         ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
-        layoutParams.width = 1280;
-        layoutParams.height = 720;
+        layoutParams.width = 720;
+        layoutParams.height = 1280;
         glsurfaceView.setLayoutParams(layoutParams);
         glsurfaceView.invalidate();
         glsurfaceView.setPreserveEGLContextOnPause(true);
@@ -705,7 +705,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
-//            Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
+//           Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
+
+            int frameOri = videoCapturerAndroid.getFrameOrientation();
 
             videoCapturerAndroid.cameraStatistics.addFrame();
             videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height, videoCapturerAndroid.getFrameOrientation(), captureTimeNs);
