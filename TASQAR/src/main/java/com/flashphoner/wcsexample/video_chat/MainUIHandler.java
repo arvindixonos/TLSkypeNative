@@ -143,12 +143,14 @@ public class MainUIHandler
             {
                 if(pointMode)
                 {
+                    chatActivity.TogglePointPlaneSpawn();
                     mPointToPlaneButton.setImageResource(R.drawable.botton_plane);
                     pointModeText.setText("Switch to Point");
                     pointMode = false;
                 }
                 else
                 {
+                    chatActivity.TogglePointPlaneSpawn();
                     mPointToPlaneButton.setImageResource(R.drawable.button_blur);
                     pointModeText.setText("Switch to Plane");
                     pointMode = true;
