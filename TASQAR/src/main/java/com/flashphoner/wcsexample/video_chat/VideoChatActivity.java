@@ -11,8 +11,11 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
+import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -23,6 +26,7 @@ import android.os.HandlerThread;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.SystemClock;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
@@ -174,6 +178,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     int totalSurfaceLength;
     int totalViewLength;
     byte[] pixelData;
+    byte[] pixelData2;
     byte[] argbBuffer;
     byte[] tempData;
     ByteBuffer buf;
@@ -233,8 +238,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
 
-        width = 1280;
-        height = 720;
+//        width = 1280;
+//        height = 720;
 
         screenWidth = width;
         screenHeight = height;
@@ -248,6 +253,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         totalSurfaceLength = screenWidth * screenHeight * 4;
         totalViewLength = mWidth * mHeight * 4;
         pixelData = new byte[totalSurfaceLength];
+        pixelData2 = new byte[totalViewLength];
         argbBuffer = new byte[totalViewLength];
         tempData = new byte[totalViewLength];
         buf = ByteBuffer.wrap(pixelData);
@@ -280,6 +286,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+//        VideoCapturerAndroid.arCorePresent = false;
+
         super.onCreate(savedInstanceState);
         Instance = this;
 
@@ -360,9 +369,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         glsurfaceView = (GLSurfaceView) findViewById(R.id.glsurfaceview);
         ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
-//        layoutParams.width = 1280;
-//        layoutParams.height = 720;
-//        glsurfaceView.setLayoutParams(layoutParams);
+        layoutParams.width = 1280;
+        layoutParams.height = 720;
+        glsurfaceView.setLayoutParams(layoutParams);
         glsurfaceView.invalidate();
         glsurfaceView.setPreserveEGLContextOnPause(true);
         glsurfaceView.setEGLContextClientVersion(2);
@@ -618,18 +627,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
         fos.flush();
         fos.close();
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-//        showSnackbarMessage("Wrote " + out.getName(), false);
-            }
-        });
     }
 
     public byte[] GetScreenPixels() throws IOException {
         buf.position(0);
 
         GLES20.glReadPixels(0, 0, screenWidth, screenHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
+
+//        Libyuv.ARGBScale(pixelData, screenWidth * 4, screenWidth, screenHeight, pixelData2, mWidth * 4, mWidth, mHeight);
 
 //        Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
 //        Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
@@ -644,12 +649,20 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
 
-    void  SaveBitmap(byte[] rgbbuffer) throws IOException {
+    void  SaveBitmap(byte[] rgbbuffer, int width, int height) throws IOException
+    {
+        if(rgbbuffer.length == 0)
+            return;
+
+        YuvImage yuvImage = new YuvImage(rgbbuffer, ImageFormat.NV21, width, height, null);
+
         FileOutputStream out = new FileOutputStream("/sdcard/scr.png");
-        Bitmap stitchBmp = Bitmap.createBitmap(screenWidth, screenHeight, Bitmap.Config.ARGB_8888);
-        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(rgbbuffer));
-        stitchBmp.compress(Bitmap.CompressFormat.PNG, 100, out);
-        // bmp is your Bitmap instance
+//        Bitmap stitchBmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+//        stitchBmp.copyPixelsFromBuffer(ByteBuffer.wrap(rgbbuffer));
+//        stitchBmp.compress(Bitmap.CompressFormat.PNG, 100, out);
+
+        yuvImage.compressToJpeg(new Rect(0, 0, width, height), 100, out);
+
         out.close();
     }
 
@@ -681,7 +694,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         else
         {
 //            try {
-//                SaveBitmap(data);
+//                SaveBitmap(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height);
 //            } catch (IOException e) {
 //                e.printStackTrace();
 //            }
