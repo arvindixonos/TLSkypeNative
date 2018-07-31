@@ -1037,8 +1037,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
                          */
 
-                        screenRecorder.GetPermission();
-
                         Log.i(TAG, "Permission has been granted by user");
 
                         /**

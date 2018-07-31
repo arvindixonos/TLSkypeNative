@@ -60,6 +60,7 @@ public class MainUIHandler
     TextView pointModeText;
 
     Button mButton;
+    Button mExpandButton;
 
     LinearLayout mSpawnButtonLayout;
 
@@ -88,6 +89,7 @@ public class MainUIHandler
         mSwitchCamera = currentActivity.findViewById(R.id.SwitchCamButton);
         mStartRecordingButton = currentActivity.findViewById(R.id.StartRecordingButton);
         mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
+        mExpandButton = currentActivity.findViewById(R.id.expandButton);
 
         recordingText = currentActivity.findViewById(R.id.startRecord);
         pointModeText = currentActivity.findViewById(R.id.Point2Plane);
@@ -119,6 +121,26 @@ public class MainUIHandler
         {
             Log.d(TAG, "Current Version is 7 or below");
         }
+
+        mExpandButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                ViewGroup.LayoutParams layoutParams = currentRenderLayout.getLayoutParams();
+                Log.d(TAG, Integer.toString(layoutParams.height));
+                if(layoutParams.height == ViewGroup.LayoutParams.MATCH_PARENT)
+                {
+                    layoutParams.height = 600;
+                }
+                else
+                {
+                    layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
+                }
+                currentRenderLayout.setLayoutParams(layoutParams);
+                currentRenderLayout.invalidate();
+            }
+        });
 
         mPlusButton.setOnClickListener(new View.OnClickListener()
         {
@@ -341,6 +363,9 @@ public class MainUIHandler
                 {
                     streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
                     currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
+                    ViewGroup.LayoutParams layoutParams = currentRenderLayout.getLayoutParams();
+                    layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+
 
                     if(!isAboveEight)
                     {
@@ -352,6 +377,7 @@ public class MainUIHandler
                         mRenderHolder.addView(currentRenderLayout, 0);
                         mRenderHolder.addView(streamRenderLayout, 1);
                     }
+                    currentRenderLayout.setLayoutParams(layoutParams);
                     switched = true;
                 }
                 else
