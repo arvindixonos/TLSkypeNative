@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/PostLogin"
@@ -11,13 +11,13 @@
         android:id="@+id/pointorplanebutton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/UserName"
-        android:layout_alignBottom="@+id/UserName"
-        android:layout_toEndOf="@+id/button"
         android:text="PP"
         android:visibility="gone"
         tools:layout_editor_absoluteX="194dp"
-        tools:layout_editor_absoluteY="0dp" />
+        tools:layout_editor_absoluteY="0dp"
+        app:layout_constraintBaseline_toBaselineOf="@+id/UserName"
+        app:layout_constraintBottom_toBottomOf="@+id/UserName"
+        app:layout_constraintStart_toEndOf="@+id/button" />
 
     <android.opengl.GLSurfaceView
         android:id="@+id/glsurfaceview"
@@ -34,7 +34,9 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Minimise" />
+        android:text="Minimise"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
         android:id="@+id/imageView"
@@ -43,12 +45,16 @@
         android:adjustViewBounds="false"
         android:contentDescription="TODO"
         android:scaleType="fitXY"
-        app:srcCompat="@drawable/bg" />
+        app:srcCompat="@drawable/bg"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <RelativeLayout
         android:id="@+id/RenderHolder"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <RelativeLayout
             android:id="@+id/currentLayout"
@@ -82,7 +88,9 @@
     <android.support.constraint.ConstraintLayout
         android:id="@+id/FloatingButtonsLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/floatingActionButton4"
@@ -365,19 +373,22 @@
         android:ems="10"
         android:inputType="textPersonName"
         android:text="Name"
-        android:visibility="invisible" />
+        android:visibility="invisible"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/EndCallButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
         android:layout_marginBottom="10dp"
         android:clickable="true"
         android:scaleX="1.2"
         android:scaleY="1.2"
         app:backgroundTint="@android:color/holo_red_dark"
-        app:srcCompat="@drawable/call_end" />
+        app:srcCompat="@drawable/call_end"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent" />
 
-</RelativeLayout>
+</android.support.constraint.ConstraintLayout>
