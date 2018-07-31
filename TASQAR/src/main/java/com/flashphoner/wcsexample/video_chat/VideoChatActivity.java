@@ -124,7 +124,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-SuperCoolRoom";
+    String roomName = "TLSkypeRoom-CoolRoom";
 //    UI references.
 
     private ImageButton mConnectButton;
