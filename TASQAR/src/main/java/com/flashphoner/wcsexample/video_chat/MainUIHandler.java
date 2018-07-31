@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.flashphoner.fpwcsapi.room.Room;
 import com.flashphoner.fpwcsapi.room.RoomManager;
@@ -37,6 +38,8 @@ public class MainUIHandler
     private boolean     minimisedSwitched;
     private boolean     videoView = false;
     private boolean     backCam = true;
+    private boolean     recording;
+    private boolean     pointMode = true;
     private Activity    currentActivity;
     private static  String TAG = "UI_TEST";
     private boolean     isAboveEight;
@@ -50,6 +53,11 @@ public class MainUIHandler
     FloatingActionButton mSwitchLayoutButton;
     FloatingActionButton mToggleDrawingMode;
     FloatingActionButton mSwitchCamera;
+    FloatingActionButton mStartRecordingButton;
+    FloatingActionButton mPointToPlaneButton;
+
+    TextView recordingText;
+    TextView pointModeText;
 
     Button mButton;
 
@@ -78,6 +86,11 @@ public class MainUIHandler
         mSwitchLayoutButton = currentActivity.findViewById(R.id.SwitchLayoutButton);
         mToggleDrawingMode = currentActivity.findViewById(R.id.DrawingModeButton);
         mSwitchCamera = currentActivity.findViewById(R.id.SwitchCamButton);
+        mStartRecordingButton = currentActivity.findViewById(R.id.StartRecordingButton);
+        mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
+
+        recordingText = currentActivity.findViewById(R.id.startRecord);
+        pointModeText = currentActivity.findViewById(R.id.Point2Plane);
 
         mButton = currentActivity.findViewById(R.id.button);
 
@@ -119,6 +132,50 @@ public class MainUIHandler
                 else
                 {
                     mSpawnButtonLayout.setVisibility(View.VISIBLE);
+                }
+            }
+        });
+
+        mPointToPlaneButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if(pointMode)
+                {
+                    mPointToPlaneButton.setImageResource(R.drawable.botton_plane);
+                    pointModeText.setText("Switch to Point");
+                    pointMode = false;
+                }
+                else
+                {
+                    mPointToPlaneButton.setImageResource(R.drawable.button_blur);
+                    pointModeText.setText("Switch to Plane");
+                    pointMode = true;
+                }
+            }
+        });
+
+        mStartRecordingButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if (!recording)
+                {
+                    chatActivity.screenRecorder.GetPermission();
+                    mStartRecordingButton.setImageResource(R.drawable.button_stop);
+                    recordingText.setText("Stop Recording");
+                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
+                    recording = true;
+                }
+                else
+                {
+                    chatActivity.screenRecorder.StopRecording();
+                    mStartRecordingButton.setImageResource(R.drawable.button_record);
+                    recordingText.setText("Start Recording");
+                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+                    recording = false;
                 }
             }
         });
@@ -273,51 +330,49 @@ public class MainUIHandler
 
     public void PreMinimise ()
     {
-        mRenderHolder.removeView(streamRenderLayout);
-        mRenderHolder.removeView(currentRenderLayout);
-        if(!switched)
-        {
-            streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
-            currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
+        currentActivity.runOnUiThread(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mRenderHolder.removeView(streamRenderLayout);
+                mRenderHolder.removeView(currentRenderLayout);
+                if(!switched)
+                {
+                    streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
+                    currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
 
-            if(!isAboveEight)
-            {
-                mRenderHolder.addView(streamRenderLayout, 0);
-                mRenderHolder.addView(currentRenderLayout, 1);
-            }
-            else
-            {
-                mRenderHolder.addView(currentRenderLayout, 0);
-                mRenderHolder.addView(streamRenderLayout, 1);
-            }
-            switched = true;
-        }
-        else
-        {
-            streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
-            currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
+                    if(!isAboveEight)
+                    {
+                        mRenderHolder.addView(streamRenderLayout, 0);
+                        mRenderHolder.addView(currentRenderLayout, 1);
+                    }
+                    else
+                    {
+                        mRenderHolder.addView(currentRenderLayout, 0);
+                        mRenderHolder.addView(streamRenderLayout, 1);
+                    }
+                    switched = true;
+                }
+                else
+                {
+                    streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
+                    currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
 
-            if(!isAboveEight)
-            {
-                mRenderHolder.addView(currentRenderLayout, 0);
-                mRenderHolder.addView(streamRenderLayout, 1);
+                    if(!isAboveEight)
+                    {
+                        mRenderHolder.addView(currentRenderLayout, 0);
+                        mRenderHolder.addView(streamRenderLayout, 1);
+                    }
+                    else
+                    {
+                        mRenderHolder.addView(streamRenderLayout, 0);
+                        mRenderHolder.addView(currentRenderLayout, 1);
+                    }
+                    switched = false;
+                }
+                mRenderHolder.invalidate();
             }
-            else
-            {
-                mRenderHolder.addView(streamRenderLayout, 0);
-                mRenderHolder.addView(currentRenderLayout, 1);
-            }
-            switched = false;
-        }
-        mRenderHolder.invalidate();
-    }
+        }));
 
-    public void PostMinimise ()
-    {
-        if(minimisedSwitched)
-        {
-            PreMinimise();
-        }
     }
 
     public void setUItoPiP (boolean isSmall)

@@ -235,12 +235,13 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
                 int height = getHeight();
 
                 VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
-
-                drawTouch_start(event.getX(), event.getY());
+                if(drawEnabled)
+                    drawTouch_start(event.getX(), event.getY());
                 invalidate();
                 break;
             case MotionEvent.ACTION_MOVE:
-                drawTouch_move(event.getX(), event.getY());
+                if(drawEnabled)
+                    drawTouch_move(event.getX(), event.getY());
                 invalidate();
                 break;
             case MotionEvent.ACTION_UP:
@@ -250,9 +251,9 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
                 {
                     ClearDrawingCache();
                 }
-                else
+                else if(drawEnabled)
                 {
-//                    savePic = true;
+                    savePic = true;
                 }
                 break;
         }
