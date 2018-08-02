@@ -18,6 +18,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoCapturerAndroid;
 import org.webrtc.VideoRenderer;
 
 import java.io.FileNotFoundException;
@@ -256,6 +257,9 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
                 invalidate();
                 break;
             case MotionEvent.ACTION_UP:
+
+                VideoChatActivity.getInstance().AddBreak();
+
                 drawTouch_up(event.getX(), event.getY());
                 invalidate();
                 if(!VideoChatActivity.getInstance().participantPublishing)

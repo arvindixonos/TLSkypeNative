@@ -362,6 +362,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             screenRecorder.ResumeRecording();
     }
 
+    public void AddBreak()
+    {
+        pointRenderer.AddBreak();
+    }
+
     void SetupCallScreen ()
     {
         setContentView(R.layout.activity_ui);

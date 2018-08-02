@@ -14,6 +14,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
@@ -23,7 +24,6 @@ import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
 public class PointRenderer {
 
-    private ArrayList<Anchor> anchors = new ArrayList<Anchor>();
 
     private static final String VERTEX_SHADER_NAME = "shaders/point_cloud.vert";
     private static final String FRAGMENT_SHADER_NAME = "shaders/point_cloud.frag";
@@ -44,6 +44,8 @@ public class PointRenderer {
 
     private int numPoints = 0;
 
+    private ArrayList<ArrayList<Anchor>> anchors = new ArrayList<ArrayList<Anchor>>();
+    private ArrayList<Anchor> currentAnchorList = new ArrayList<Anchor>();
 
     public void createOnGlThread(Context context) throws IOException
     {
@@ -79,47 +81,19 @@ public class PointRenderer {
         pointSizeUniform = GLES20.glGetUniformLocation(programName, "u_PointSize");
 
         ShaderUtil.checkGLError(TAG, "program  params");
+
+        anchors.add(currentAnchorList);
+    }
+
+    public void AddBreak()
+    {
+        currentAnchorList = new ArrayList<Anchor>();
+        anchors.add(currentAnchorList);
     }
 
     public void AddPoint(Anchor anchor)
     {
-        anchors.add(anchor);
-
-        ShaderUtil.checkGLError(TAG, "before update");
-
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-
-        // If the VBO is not large enough to fit the new point cloud, resize it.
-        numPoints = anchors.size();
-        if (numPoints * BYTES_PER_POINT > vboSize) {
-            while (numPoints * BYTES_PER_POINT > vboSize) {
-                vboSize *= 2;
-            }
-            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);
-        }
-
-        float[] verticesFloatArray = new float[numPoints * 3];
-
-        int k = 0;
-        for (int i = 0; i < numPoints * 3; i += 3)
-        {
-            Pose pose = anchors.get(k).getPose();
-
-            verticesFloatArray[i] = pose.tx();
-            verticesFloatArray[i + 1] = pose.ty();
-            verticesFloatArray[i + 2] = pose.tz();
-
-            k++;
-        }
-
-        FloatBuffer verticesBuffer = FloatBuffer.wrap(verticesFloatArray);
-        verticesBuffer.put(verticesFloatArray).position(0);
-
-        GLES20.glBufferSubData(
-                GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, verticesBuffer);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-
-        ShaderUtil.checkGLError(TAG, "after update");
+        currentAnchorList.add(anchor);
     }
 
     public void draw(float[] cameraView, float[] cameraPerspective) {
@@ -138,7 +112,45 @@ public class PointRenderer {
         GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
         GLES20.glLineWidth(6.0f);
-        GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, numPoints);
+
+
+        int numAnchorsList = anchors.size();
+
+        for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
+        {
+            ArrayList<Anchor> anchorsList = anchors.get(anchorsListCount);
+
+            if(anchorsList.size() == 0)
+                continue;
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+
+            int numAnchors = anchorsList.size();
+
+            float[] verticesFloatArray = new float[numAnchors * 3];
+
+            int k = 0;
+            for (int i = 0; i < numAnchors * 3; i += 3)
+            {
+                Pose pose = anchorsList.get(k).getPose();
+
+                verticesFloatArray[i] = pose.tx();
+                verticesFloatArray[i + 1] = pose.ty();
+                verticesFloatArray[i + 2] = pose.tz();
+
+                k++;
+            }
+
+            FloatBuffer verticesBuffer = FloatBuffer.wrap(verticesFloatArray);
+            verticesBuffer.put(verticesFloatArray).position(0);
+
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, numAnchors * BYTES_PER_POINT, verticesBuffer);
+
+            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, numAnchors);
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        }
+
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
