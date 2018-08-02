@@ -137,7 +137,8 @@ public class PointRenderer {
         GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);
         GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
-        GLES20.glDrawArrays(GLES20.GL_POINTS, 0, numPoints);
+        GLES20.glLineWidth(6.0f);
+        GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, numPoints);
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
