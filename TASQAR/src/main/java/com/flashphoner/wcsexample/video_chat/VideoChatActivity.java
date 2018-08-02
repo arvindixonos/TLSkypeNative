@@ -28,6 +28,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
@@ -98,9 +99,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -188,6 +192,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public GLSurfaceView glsurfaceView;
     private DisplayRotationHelper displayRotationHelper;
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
+    private final PointRenderer      pointRenderer = new PointRenderer();
+
     private final ObjectRenderer virtualObject = new ObjectRenderer();
 //    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
@@ -220,6 +226,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
+            pointRenderer.createOnGlThread(this);
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
@@ -508,6 +515,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     public void onDrawFrame(GL10 gl) {
 
+//        Log.d(TAG, "ON DRAW");
+
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         if (session == null) {
@@ -522,6 +531,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
             Frame frame = session.update();
             Camera camera = frame.getCamera();
+
 
             handleTap(frame, camera);
 
@@ -566,21 +576,23 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
             // Visualize anchors created by touch.
-            float scaleFactor = 0.05f;
-            for (ColoredAnchor coloredAnchor : anchors) {
-                if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
-                    continue;
-                }
-                // Get the current pose of an Anchor in world space. The Anchor pose is updated
-                // during calls to session.update() as ARCore refines its estimate of the world.
-                coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
+//            float scaleFactor = 0.05f;
+//            for (ColoredAnchor coloredAnchor : anchors) {
+//                if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
+//                    continue;
+//                }
+//                // Get the current pose of an Anchor in world space. The Anchor pose is updated
+//                // during calls to session.update() as ARCore refines its estimate of the world.
+//                coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
+//
+//                // Update and draw the model and its shadow.
+//                virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
+////                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
+//                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+////                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+//            }
 
-                // Update and draw the model and its shadow.
-                virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-//                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
-                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-//                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-            }
+            pointRenderer.draw(viewmtx, projmtx);
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -666,8 +678,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         out.close();
     }
 
+//    float    prevTime = 0f;
     @Override
     public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
+
+//        Log.d(TAG, "On Preview Frame " + (SystemClock.elapsedRealtime() - prevTime));
+//        prevTime = SystemClock.elapsedRealtime();
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
@@ -738,11 +754,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         DecodeTapMessage("TAP: " + x + " " + y + " " + width + " " + height);
     }
 
-    MotionEvent motionEventCurrent = null;
+    ArrayList<MotionEvent> motionEvents = new ArrayList<MotionEvent>();
+
     public void TapHandle(MotionEvent event, float width, float height)
     {
-        Log.d(TAG, "TAPPOS " + width + " " + height);
-
         float xMul = event.getX() / width;
         float yMul = event.getY() / height;
 
@@ -751,44 +766,54 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         event.setLocation(xVal, yVal);
 
-        motionEventCurrent = event;
+        motionEvents.add(event);
     }
 
     public  boolean pointsOrPlaneSpawn = false;
 
-    private void handleTap(Frame frame, Camera camera) {
-
-        MotionEvent tap = motionEventCurrent;// tapHelper.poll();
-        if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+    private void handleTap(Frame frame, Camera camera)
+    {
+        while (motionEvents.size() > 0)
         {
-            for (HitResult hit : frame.hitTest(tap)) {
-                if (anchors.size() >= 20) {
-                    anchors.get(0).anchor.detach();
-                    anchors.remove(0);
-                }
+            MotionEvent tap = motionEvents.get(0);
+            motionEvents.remove(0);
 
-                Trackable currentTrackable = hit.getTrackable();
+            if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+            {
+                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
-                if(pointsOrPlaneSpawn)
-                {
-                    if(currentTrackable instanceof com.google.ar.core.Point)
-                    {
-                        SpawnArrow(hit, camera);
-                    }
-                }
-                else
-                {
-                    if(currentTrackable instanceof com.google.ar.core.Plane)
-                    {
-                        SpawnArrow(hit, camera);
-                    }
-                }
+                for (HitResult hit : frame.hitTest(tap)) {
+//                if (anchors.size() >= 20) {
+//                    anchors.get(0).anchor.detach();
+//                    anchors.remove(0);
+//                }
 
+                    Trackable currentTrackable = hit.getTrackable();
+
+                    Log.d(TAG, "HIT FOUND");
+
+                    SpawnPoint(hit);
+
+//                if(pointsOrPlaneSpawn)
+//                {
+//                    if(currentTrackable instanceof com.google.ar.core.Point)
+//                    {
+//                        SpawnArrow(hit, camera);
+//                    }
+//                }
+//                else
+//                {
+//                    if(currentTrackable instanceof com.google.ar.core.Plane)
+//                    {
+//                        SpawnArrow(hit, camera);
+//                    }
+//                }
+
+                }
             }
-
-            motionEventCurrent = null;
         }
     }
+
 
     public  void TogglePointPlaneSpawn()
     {
@@ -800,6 +825,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
 
         anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, camera.getDisplayOrientedPose()));
+    }
+
+    private void SpawnPoint(HitResult hit)
+    {
+        pointRenderer.AddPoint(hit.createAnchor());
     }
 
     public void SetLocalRendererMirror()

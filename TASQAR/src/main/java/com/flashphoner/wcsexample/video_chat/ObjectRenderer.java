@@ -275,18 +275,17 @@ public class ObjectRenderer {
     this.specularPower = specularPower;
   }
 
-  /**
-   * Draws the model.
-   *
-   * @param cameraView A 4x4 view matrix, in column-major order.
-   * @param cameraPerspective A 4x4 projection matrix, in column-major order.
-   * @param lightIntensity Illumination intensity. Combined with diffuse and specular material
-   *     properties.
-   * @see #setBlendMode(BlendMode)
-   * @see #updateModelMatrix(float[], float)
-   * @see #setMaterialProperties(float, float, float, float)
-   * @see Matrix
-   */
+//  /**
+//   * Draws the model.
+//   *
+//   * @param cameraView A 4x4 view matrix, in column-major order.
+//   * @param cameraPerspective A 4x4 projection matrix, in column-major order.
+//   * @param lightIntensity Illumination intensity. Combined with diffuse and specular material properties.
+//   * @see #setBlendMode(BlendMode)
+//   * @see #updateModelMatrix(float[], float)
+//   * @see #setMaterialProperties(float, float, float, float)
+//   * @see Matrix
+//   */
   public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
     draw(cameraView, cameraPerspective, colorCorrectionRgba, DEFAULT_COLOR);
   }
@@ -364,7 +363,8 @@ public class ObjectRenderer {
     }
 
     GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, indexBufferId);
-    GLES20.glDrawElements(GLES20.GL_TRIANGLES, indexCount, GLES20.GL_UNSIGNED_SHORT, 0);
+    GLES20.glDrawElements(GLES20.GL_POINTS, indexCount, GLES20.GL_UNSIGNED_SHORT, 0);
+//    GLES20.glDrawArrays(GLES20.GL_POINTS);
     GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
 
     if (blendMode != null) {
