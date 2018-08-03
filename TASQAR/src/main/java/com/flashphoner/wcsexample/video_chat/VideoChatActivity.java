@@ -36,6 +36,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Rational;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -146,11 +147,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private TextView mMessageHistory;
     private EditText mMessage;
     private Button mSendButton;
-    private MainUIHandler uiHandler;
     private Handler mHandler = new Handler();
     private Handler nHandler = new Handler();
     public  Intent  currentActivityIntent;
 
+    public MainUIHandler uiHandler;
     public ScreenRecorder  screenRecorder;
 
 
@@ -337,6 +338,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         display.getSize(size);
 
         return size;
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        uiHandler.backKey();
     }
 
     @Override
@@ -684,12 +691,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         out.close();
     }
 
-//    float    prevTime = 0f;
     @Override
     public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
-
-//        Log.d(TAG, "On Preview Frame " + (SystemClock.elapsedRealtime() - prevTime));
-//        prevTime = SystemClock.elapsedRealtime();
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;

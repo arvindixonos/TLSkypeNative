@@ -34,6 +34,8 @@ import org.apache.commons.net.ftp.FTPReply;
     String filePath = "";
     Context applicationContext;
 
+    boolean transferSuccess = false;
+
     InputStream fileInputStream = null;
 
 //    Handler mHandler = new Handler();
@@ -66,7 +68,8 @@ import org.apache.commons.net.ftp.FTPReply;
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
             ftpClient.enterLocalPassiveMode();
 
-            if(uploadORdownload == 1) {
+            if(uploadORdownload == 1)
+            {
 
                 Log.d(VideoChatActivity.TAG, fileInputStream.available() + " ");
 
@@ -75,7 +78,7 @@ import org.apache.commons.net.ftp.FTPReply;
                 if(success)
                 {
                     ToastFunction("Successfully Uploaded File " + GetFileName(filePath));
-
+                    transferSuccess = true;
                     VideoChatActivity.getInstance().SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
                 }
                 else
@@ -86,7 +89,8 @@ import org.apache.commons.net.ftp.FTPReply;
                 fileInputStream.close();
                 showServerReply(ftpClient);
             }
-            else {
+            else
+            {
                 File downloadDir = new File("/sdcard/ReceivedFiles");
                 if (!downloadDir.exists())
                 {
@@ -104,7 +108,7 @@ import org.apache.commons.net.ftp.FTPReply;
                 if(success)
                 {
                     ToastFunction("Successfully Downloaded File " + GetFileName(filePath));
-
+                    transferSuccess = true;
                     VideoChatActivity.getInstance().OpenFile(filePath);
                 }
                 else
