@@ -10,6 +10,7 @@ import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Rect;
 import android.os.Build;
+import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.text.Layout;
 import android.util.Log;
@@ -39,14 +40,19 @@ public class MainUIHandler
     private boolean     videoView = false;
     private boolean     backCam = true;
     private boolean     recording;
-    private boolean     pointMode = true;
+    private boolean     pointMode = false;
+    private boolean     isAboveEight;
     private Activity    currentActivity;
     private static  String TAG = "UI_TEST";
-    private boolean     isAboveEight;
     private VideoChatActivity chatActivity;
+
+    public FileButtonHelper    fileButtonHelper;
 
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
+
+    ConstraintLayout mFloatingButtonsLayout;
+    ConstraintLayout mHistoryScreen;
 
     FloatingActionButton mEndCallButton;
     FloatingActionButton mPlusButton;
@@ -55,13 +61,15 @@ public class MainUIHandler
     FloatingActionButton mSwitchCamera;
     FloatingActionButton mStartRecordingButton;
     FloatingActionButton mPointToPlaneButton;
+    FloatingActionButton mHistoryButton;
+    FloatingActionButton mHistoryBackButton;
 
     TextView recordingText;
     TextView pointModeText;
 
-    Button mButton;
-    Button mExpandButton;
+    LinearLayout historyScreen;
 
+    Button mButton;
     LinearLayout mSpawnButtonLayout;
 
     RelativeLayout currentRenderLayout;
@@ -82,6 +90,9 @@ public class MainUIHandler
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
         localRender = currentActivity.findViewById(R.id.CurrentRender);
 
+        mFloatingButtonsLayout = currentActivity.findViewById(R.id.FloatingButtonsLayout);
+        mHistoryScreen = currentActivity.findViewById(R.id.FileHistory);
+
         mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
         mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
         mSwitchLayoutButton = currentActivity.findViewById(R.id.SwitchLayoutButton);
@@ -89,12 +100,15 @@ public class MainUIHandler
         mSwitchCamera = currentActivity.findViewById(R.id.SwitchCamButton);
         mStartRecordingButton = currentActivity.findViewById(R.id.StartRecordingButton);
         mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
-        mExpandButton = currentActivity.findViewById(R.id.expandButton);
+        mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
+        mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
 
         recordingText = currentActivity.findViewById(R.id.startRecord);
         pointModeText = currentActivity.findViewById(R.id.Point2Plane);
 
         mButton = currentActivity.findViewById(R.id.button);
+
+        historyScreen = currentActivity.findViewById(R.id.FileHistoryLayout);
 
         mSpawnButtonLayout = currentActivity.findViewById(R.id.ButtonLayout);
 
@@ -103,6 +117,8 @@ public class MainUIHandler
         mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
         fullScreenlayoutParams = (RelativeLayout.LayoutParams) streamRenderLayout.getLayoutParams();
         smallScreenlayoutParams = (RelativeLayout.LayoutParams) currentRenderLayout.getLayoutParams();
+
+        fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
@@ -121,24 +137,50 @@ public class MainUIHandler
         {
             Log.d(TAG, "Current Version is 7 or below");
         }
+//test
+//        final FileButtonHelper fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
+//
+//        testButton.setOnClickListener(new View.OnClickListener()
+//        {
+//            @Override
+//            public void onClick(View v)
+//            {
+//                fileButtonHelper.AddButton();
+//            }
+//        });
+//
+//        Button testButton2 = currentActivity.findViewById(R.id.button4);
+//        testButton2.setOnClickListener(new View.OnClickListener()
+//        {
+//            @Override
+//            public void onClick(View v)
+//            {
+//                fileButtonHelper.GetData();
+//            }
+//        });
+//test
 
-        mExpandButton.setOnClickListener(new View.OnClickListener()
+        mHistoryBackButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v)
             {
-                ViewGroup.LayoutParams layoutParams = currentRenderLayout.getLayoutParams();
-                Log.d(TAG, Integer.toString(layoutParams.height));
-                if(layoutParams.height == ViewGroup.LayoutParams.MATCH_PARENT)
-                {
-                    layoutParams.height = 600;
-                }
-                else
-                {
-                    layoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
-                }
-                currentRenderLayout.setLayoutParams(layoutParams);
-                currentRenderLayout.invalidate();
+                backKey();
+            }
+        });
+
+        mHistoryButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+
+                mHistoryScreen.setVisibility(View.VISIBLE);
+                mFloatingButtonsLayout.setVisibility(View.GONE);
+                mEndCallButton.setVisibility(View.GONE);
+                mRenderHolder.setVisibility(View.GONE);
+
+                fileButtonHelper.GetData();
             }
         });
 
@@ -323,6 +365,17 @@ public class MainUIHandler
         });
     }
 
+    void backKey ()
+    {
+        if(historyScreen.getVisibility() == View.VISIBLE)
+        {
+            mHistoryScreen.setVisibility(View.GONE);
+            mFloatingButtonsLayout.setVisibility(View.VISIBLE);
+            mEndCallButton.setVisibility(View.VISIBLE);
+            mRenderHolder.setVisibility(View.VISIBLE);
+        }
+    }
+
     void ChangeActivity ()
     {
         Intent intent = new Intent(currentActivity, AppManager.class);
@@ -429,7 +482,8 @@ public class MainUIHandler
         {
             Log.d(TAG, "Screen is big");
             currentRender.setVisibility(View.VISIBLE);
-            mEndCall.setVisibility(View.VISIBLE);
+            if(!(historyScreen.getVisibility() == View.VISIBLE))
+                mEndCall.setVisibility(View.VISIBLE);
             mPlusButton.setVisibility(View.VISIBLE);
         }
     }

@@ -35,6 +35,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Rational;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -142,11 +143,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private TextView mMessageHistory;
     private EditText mMessage;
     private Button mSendButton;
-    private MainUIHandler uiHandler;
     private Handler mHandler = new Handler();
     private Handler nHandler = new Handler();
     public  Intent  currentActivityIntent;
 
+    public MainUIHandler uiHandler;
     public ScreenRecorder  screenRecorder;
 
 
@@ -223,7 +224,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/sphere.obj", "models/andy.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow_v2.obj", "models/arrow_tex.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
 //            virtualObjectShadow.createOnGlThread(this, "models/andy_shadow.obj", "models/andy_shadow.png");
@@ -330,6 +331,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         display.getSize(size);
 
         return size;
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        uiHandler.backKey();
     }
 
     @Override
@@ -756,7 +763,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public  boolean pointsOrPlaneSpawn = false;
 
-    private void handleTap(Frame frame, Camera camera) {
+    private void handleTap(Frame frame, Camera camera)
+    {
 
         MotionEvent tap = motionEventCurrent;// tapHelper.poll();
         if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
@@ -1262,7 +1270,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             ShowToast("FTP Manager Running Already", this.getApplicationContext());
             return;
         }
-
+        String sample;
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -1277,13 +1285,19 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         ftpManager.execute();
                     }
                 });
+                while(!ftpManager.transferSuccess)
+                {
+
+                }
+                String[] filePaths = filePath.split("/");
+                uiHandler.fileButtonHelper.AddData(filePaths[filePaths.length - 1], filePath, "SENT");
             }
         }).start();
     }
 
-    public void DownloadFile(String fileName) {
+    public void DownloadFile(final String fileName) {
 
-        String filePath = "/sdcard/ReceivedFiles/" + fileName;
+        final String filePath = "/sdcard/ReceivedFiles/" + fileName;
         final FTPManager ftpManager = new FTPManager();
 
         if (ftpManager.running) {
@@ -1307,6 +1321,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         ftpManager.execute();
                     }
                 });
+
+                while(!ftpManager.transferSuccess)
+                {
+
+                }
+                uiHandler.fileButtonHelper.AddData(fileName, filePath, "RECEIVED");
             }
         }).start();
 
