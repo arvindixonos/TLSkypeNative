@@ -8,8 +8,6 @@ import android.util.Log;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -246,15 +244,32 @@ public class PointRenderer {
             int k = 0;
             int j = 0;
 
-            float maxAngleDeviation = 0.17f;
+            float maxAngleDeviation = 0.3f;
+
+            boolean nextPointSet = true;
+            Pose pose = anchorsList.get(0).getPose();
+            float[] nextPoint = new float[3];
+            nextPoint[0] = pose.tx();
+            nextPoint[1] = pose.ty();
+            nextPoint[2] = pose.tz();
 
             for (int i = 0; i < totalPoints; i += 63)
             {
-                Pose pose = anchorsList.get(k).getPose();
+                pose = anchorsList.get(k).getPose();
 
-                verticesFloatArray[i] = pose.tx();
-                verticesFloatArray[i + 1] = pose.ty();
-                verticesFloatArray[i + 2] = pose.tz();
+                if(!nextPointSet) {
+                    verticesFloatArray[i] = pose.tx();
+                    verticesFloatArray[i + 1] = pose.ty();
+                    verticesFloatArray[i + 2] = pose.tz();
+                }
+                else
+                {
+                    verticesFloatArray[i] = nextPoint[0];
+                    verticesFloatArray[i + 1] = nextPoint[1];
+                    verticesFloatArray[i + 2] = nextPoint[2];
+
+                    nextPointSet = false;
+                }
 
                 if(k < numAnchors - 1)
                 {
@@ -285,6 +300,12 @@ public class PointRenderer {
                         p1[0] = p0[0] + rotatedVector[0] * magnitude;
                         p1[1] = p0[1] + rotatedVector[1] * magnitude;
                         p1[2] = p0[2] + rotatedVector[2] * magnitude;
+
+                        nextPointSet = true;
+
+                        nextPoint[0] = p1[0];
+                        nextPoint[1] = p1[1];
+                        nextPoint[2] = p1[2];
                     }
 
                     int start = i + 3;
