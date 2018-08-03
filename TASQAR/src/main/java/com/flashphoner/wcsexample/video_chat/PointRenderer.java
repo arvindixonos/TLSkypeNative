@@ -8,8 +8,6 @@ import android.util.Log;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
 
-import org.apache.commons.lang3.ArrayUtils;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
