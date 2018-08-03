@@ -364,6 +364,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void AddBreak()
     {
+        motionEvents.clear();
         pointRenderer.AddBreak();
     }
 
@@ -785,7 +786,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
             if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
             {
-                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
+//                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
                 for (HitResult hit : frame.hitTest(tap)) {
 //                if (anchors.size() >= 20) {
@@ -795,7 +796,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                     Trackable currentTrackable = hit.getTrackable();
 
-                    Log.d(TAG, "HIT FOUND");
+//                    Log.d(TAG, "HIT FOUND");
 
                     SpawnPoint(hit);
 
