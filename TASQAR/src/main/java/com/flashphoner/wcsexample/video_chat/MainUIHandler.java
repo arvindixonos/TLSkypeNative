@@ -30,7 +30,12 @@ import com.flashphoner.fpwcsapi.session.Stream;
 
 import org.webrtc.SurfaceViewRenderer;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class MainUIHandler
 {
@@ -159,7 +164,7 @@ public class MainUIHandler
 //            }
 //        });
 //test
-
+        AddTimeStampToName("images.jpg", "jasldjha");
         mHistoryBackButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -486,6 +491,22 @@ public class MainUIHandler
                 mEndCall.setVisibility(View.VISIBLE);
             mPlusButton.setVisibility(View.VISIBLE);
         }
+    }
+
+    public String AddTimeStampToName(String fileName, String timeStamp)
+    {
+        String[] fileNames = fileName.split(Pattern.quote("."));
+
+        return fileNames[0] + timeStamp + "." + fileNames[1];
+    }
+
+    public String GetDate()
+    {
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        DateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy_HH-mm-ss");
+
+        return dateFormat.format(date);
     }
 
     public void ToggleVideoView ()

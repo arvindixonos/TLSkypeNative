@@ -28,7 +28,6 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
@@ -36,7 +35,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Rational;
 import android.view.Display;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -100,12 +98,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.sql.Time;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -129,7 +128,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom";
+    String roomName = "TLSkypeRoom-SuperCoolRoom";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -193,8 +192,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public GLSurfaceView glsurfaceView;
     private DisplayRotationHelper displayRotationHelper;
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
-    private final PointRenderer      pointRenderer = new PointRenderer();
-
     private final ObjectRenderer virtualObject = new ObjectRenderer();
 //    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
@@ -227,7 +224,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
-            pointRenderer.createOnGlThread(this);
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
@@ -255,8 +251,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         displayRotationHelper.onSurfaceChanged(width, height);
         GLES20.glViewport(0, 0, width, height);
 
-        mWidth = 720; //width;
-        mHeight = 1280; //height;
+        mWidth = 1280; //width;
+        mHeight = 720; //height;
 
         totalSurfaceLength = screenWidth * screenHeight * 4;
         totalViewLength = mWidth * mHeight * 4;
@@ -341,12 +337,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    public void onBackPressed()
-    {
-        uiHandler.backKey();
-    }
-
-    @Override
     protected void onResume() {
         super.onResume();
 
@@ -369,11 +359,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             screenRecorder.ResumeRecording();
     }
 
-    public void AddBreak()
-    {
-        pointRenderer.AddBreak();
-    }
-
     void SetupCallScreen ()
     {
         setContentView(R.layout.activity_ui);
@@ -383,13 +368,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         mConnectButton = findViewById(R.id.CallExpertButton);
         mFileUploadButton = findViewById(R.id.UploadFileButton);
         mPlaneOrPointButton = findViewById(R.id.pointorplanebutton);
-
         screenRecorder = new ScreenRecorder(this);
 
         glsurfaceView = (GLSurfaceView) findViewById(R.id.glsurfaceview);
         ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
-        layoutParams.width = 720;
-        layoutParams.height = 1280;
+        layoutParams.width = 1280;
+        layoutParams.height = 720;
         glsurfaceView.setLayoutParams(layoutParams);
         glsurfaceView.invalidate();
         glsurfaceView.setPreserveEGLContextOnPause(true);
@@ -527,8 +511,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     public void onDrawFrame(GL10 gl) {
 
-//        Log.d(TAG, "ON DRAW");
-
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
         if (session == null) {
@@ -543,7 +525,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
             Frame frame = session.update();
             Camera camera = frame.getCamera();
-
 
             handleTap(frame, camera);
 
@@ -588,23 +569,21 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
             // Visualize anchors created by touch.
-//            float scaleFactor = 0.05f;
-//            for (ColoredAnchor coloredAnchor : anchors) {
-//                if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
-//                    continue;
-//                }
-//                // Get the current pose of an Anchor in world space. The Anchor pose is updated
-//                // during calls to session.update() as ARCore refines its estimate of the world.
-//                coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
-//
-//                // Update and draw the model and its shadow.
-//                virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-////                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
-//                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-////                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-//            }
+            float scaleFactor = 0.05f;
+            for (ColoredAnchor coloredAnchor : anchors) {
+                if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
+                    continue;
+                }
+                // Get the current pose of an Anchor in world space. The Anchor pose is updated
+                // during calls to session.update() as ARCore refines its estimate of the world.
+                coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
 
-            pointRenderer.draw(viewmtx, projmtx);
+                // Update and draw the model and its shadow.
+                virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
+//                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
+                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+//                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+            }
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -663,7 +642,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //        Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
 //        Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
 
-        Libyuv.ARCORETONV21(pixelData, screenWidth * 4, tempData, argbBuffer, mWidth * 4, mWidth, -mHeight, ybuffer, uvbuffer, frameData);
+        Libyuv.ARCORETONV21(pixelData, mWidth * 4, tempData, argbBuffer, mWidth * 4, mWidth, -mHeight, ybuffer, uvbuffer, frameData);
 //        Libyuv.ARGBToNV21(argbBuffer, mWidth * 4, mWidth, mHeight, ybuffer, uvbuffer);
 
 //        System.arraycopy(ybuffer,0, frameData,0, mWidth * mHeight);
@@ -729,9 +708,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
-//           Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
-
-            int frameOri = videoCapturerAndroid.getFrameOrientation();
+//            Log.d(TAG, "NO AR CORE :" + videoCapturerAndroid.getFrameOrientation() + " " + videoCapturerAndroid.captureFormat.width);
 
             videoCapturerAndroid.cameraStatistics.addFrame();
             videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height, videoCapturerAndroid.getFrameOrientation(), captureTimeNs);
@@ -762,10 +739,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         DecodeTapMessage("TAP: " + x + " " + y + " " + width + " " + height);
     }
 
-    ArrayList<MotionEvent> motionEvents = new ArrayList<MotionEvent>();
-
+    MotionEvent motionEventCurrent = null;
     public void TapHandle(MotionEvent event, float width, float height)
     {
+        Log.d(TAG, "TAPPOS " + width + " " + height);
+
         float xMul = event.getX() / width;
         float yMul = event.getY() / height;
 
@@ -774,54 +752,44 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         event.setLocation(xVal, yVal);
 
-        motionEvents.add(event);
+        motionEventCurrent = event;
     }
 
     public  boolean pointsOrPlaneSpawn = false;
 
-    private void handleTap(Frame frame, Camera camera)
-    {
-        while (motionEvents.size() > 0)
+    private void handleTap(Frame frame, Camera camera) {
+
+        MotionEvent tap = motionEventCurrent;// tapHelper.poll();
+        if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
         {
-            MotionEvent tap = motionEvents.get(0);
-            motionEvents.remove(0);
-
-            if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
-            {
-                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
-
-                for (HitResult hit : frame.hitTest(tap)) {
-//                if (anchors.size() >= 20) {
-//                    anchors.get(0).anchor.detach();
-//                    anchors.remove(0);
-//                }
-
-                    Trackable currentTrackable = hit.getTrackable();
-
-                    Log.d(TAG, "HIT FOUND");
-
-                    SpawnPoint(hit);
-
-//                if(pointsOrPlaneSpawn)
-//                {
-//                    if(currentTrackable instanceof com.google.ar.core.Point)
-//                    {
-//                        SpawnArrow(hit, camera);
-//                    }
-//                }
-//                else
-//                {
-//                    if(currentTrackable instanceof com.google.ar.core.Plane)
-//                    {
-//                        SpawnArrow(hit, camera);
-//                    }
-//                }
-
+            for (HitResult hit : frame.hitTest(tap)) {
+                if (anchors.size() >= 20) {
+                    anchors.get(0).anchor.detach();
+                    anchors.remove(0);
                 }
+
+                Trackable currentTrackable = hit.getTrackable();
+
+                if(pointsOrPlaneSpawn)
+                {
+                    if(currentTrackable instanceof com.google.ar.core.Point)
+                    {
+                        SpawnArrow(hit, camera);
+                    }
+                }
+                else
+                {
+                    if(currentTrackable instanceof com.google.ar.core.Plane)
+                    {
+                        SpawnArrow(hit, camera);
+                    }
+                }
+
             }
+
+            motionEventCurrent = null;
         }
     }
-
 
     public  void TogglePointPlaneSpawn()
     {
@@ -833,11 +801,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
 
         anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, camera.getDisplayOrientedPose()));
-    }
-
-    private void SpawnPoint(HitResult hit)
-    {
-        pointRenderer.AddPoint(hit.createAnchor());
     }
 
     public void SetLocalRendererMirror()
@@ -1197,7 +1160,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public void SendMessage(String message) {
         if (room == null)
             return;
-
         for (Participant participant : room.getParticipants()) {
             participant.sendMessage(message);
         }
@@ -1313,15 +1275,24 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void run()
                     {
                         ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+
+                        }
+
+                        String[] fileNames = filePath.split("/");
+                        uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
                     }
                 });
             }
         }).start();
     }
 
-    public void DownloadFile(String fileName) {
+    public void DownloadFile(final String fileName)
+    {
+        final String fileDate = uiHandler.GetDate();
 
-        String filePath = "/sdcard/ReceivedFiles/" + fileName;
+        final String filePath = "/sdcard/ReceivedFiles/" + fileName;//uiHandler.AddTimeStampToName(fileName, fileDate);
         final FTPManager ftpManager = new FTPManager();
 
         if (ftpManager.running) {
@@ -1331,6 +1302,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         ftpManager.uploadORdownload = 2;
         ftpManager.applicationContext = getApplicationContext();
+        ftpManager.fileDate = fileDate;
         ftpManager.filePath = filePath;
         new Thread(new Runnable() {
             @Override
@@ -1343,11 +1315,17 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void run()
                     {
                         ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+
+                        }
+                        uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" +
+                                uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
                     }
+
                 });
             }
         }).start();
-
     }
 
     public void OpenFile(String filePath) {

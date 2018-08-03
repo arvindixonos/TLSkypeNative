@@ -24,6 +24,9 @@ import android.widget.TextView;
 import org.w3c.dom.Text;
 
 import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class FileButtonHelper
 {
@@ -44,9 +47,9 @@ public class FileButtonHelper
         parent.removeAllViews();
     }
 
-    public void AddData (String fileName, String filePath, String state)
+    public void AddData (String fileName, String filePath, String state, String timeStamp)
     {
-        dbHelper.addData(fileName, filePath, state);
+        dbHelper.addData(fileName, filePath, state, timeStamp);
     }
 
     public void GetData ()
@@ -62,20 +65,21 @@ public class FileButtonHelper
             String buttonID = data.getString(0);
             String buttonPath = data.getString(2);
             String buttonState = data.getString(3);
+            String buttonDate = data.getString(4);
             Log.d(TAG, "Button Name: " + buttonName + " Button path : " + buttonPath + " Button State " + buttonState);
-            SpawnButton(buttonName, buttonID, buttonPath, buttonState);
+            SpawnButton(buttonName, buttonID, buttonPath, buttonState, buttonDate);
             data.moveToNext();
         }
     }
 
-    private void SpawnButton (String buttonName, String buttonID, String buttonPath, String buttonState)
+    private void SpawnButton (String buttonName, String buttonID, String buttonPath, String buttonState, String buttonDate)
     {
         ViewGroup view = (ViewGroup) LayoutInflater.from(currentActivity).inflate(R.layout.button_spawn, null);
         parent.addView(view);
 
         FileButton button = (FileButton) view.getChildAt(0);
         button.setId(Integer.parseInt(buttonID));
-        button.SetValues(buttonName, buttonPath, buttonState, currentActivity);
+        button.SetValues(buttonName, buttonPath, buttonState, buttonDate, currentActivity);
     }
 }
 
@@ -85,8 +89,9 @@ class FileButton  extends AppCompatImageButton implements View.OnClickListener
     private         String  fileName;
     private         String  fileState;
     private static  String  TAG = "UI_TEST";
-    private static  Activity    currentActivity;
-    private static  VideoChatActivity   chatActivity;
+    private Activity    currentActivity;
+    private VideoChatActivity   chatActivity;
+    private String fileDate;
 
     public FileButton (Activity appActivity)
     {
@@ -108,7 +113,7 @@ class FileButton  extends AppCompatImageButton implements View.OnClickListener
 
     }
 
-    void SetValues (String buttonName, String buttonFilePath, String buttonState, Activity appActivity)
+    void SetValues (String buttonName, String buttonFilePath, String buttonState,String buttonDate, Activity appActivity)
     {
 
         currentActivity = appActivity;
@@ -117,10 +122,13 @@ class FileButton  extends AppCompatImageButton implements View.OnClickListener
         fileName = buttonName;
         filePath = buttonFilePath;
         fileState = buttonState;
+        fileDate = buttonDate;
 
         ViewGroup viewGroup = (ViewGroup) this.getParent();
         TextView text = (TextView) viewGroup.getChildAt(2);
         text.setText(fileName);
+        TextView dateText = (TextView) viewGroup.getChildAt(3);
+        dateText.setText(buttonDate);
 
         ImageView fileState = (ImageView) viewGroup.getChildAt(1);
 
