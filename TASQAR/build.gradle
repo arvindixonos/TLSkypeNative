@@ -58,6 +58,7 @@ dependencies {
     implementation 'com.github.hedzr:android-file-chooser:83d0e18f63'
     implementation project(':flashphoner')
     implementation project(':libjingle_peerconnection')
+    compile 'org.apache.commons:commons-lang3:3.7'
 }
 
 play {

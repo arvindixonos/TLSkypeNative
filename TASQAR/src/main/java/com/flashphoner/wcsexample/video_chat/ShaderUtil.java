@@ -57,6 +57,31 @@ public class ShaderUtil {
     return shader;
   }
 
+  public static int loadGLShaderSource(String tag, Context context, int type, String shaderSource)
+          throws IOException {
+    int shader = GLES20.glCreateShader(type);
+    GLES20.glShaderSource(shader, shaderSource);
+    GLES20.glCompileShader(shader);
+
+    // Get the compilation status.
+    final int[] compileStatus = new int[1];
+    GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, compileStatus, 0);
+
+    // If the compilation failed, delete the shader.
+    if (compileStatus[0] == 0) {
+      Log.e(tag, "Error compiling shader: " + GLES20.glGetShaderInfoLog(shader));
+      GLES20.glDeleteShader(shader);
+      shader = 0;
+    }
+
+    if (shader == 0) {
+      throw new RuntimeException("Error creating shader.");
+    }
+
+    return shader;
+  }
+
+
   /**
    * Checks if we've had an error inside of OpenGL ES, and if so what that error is.
    *
