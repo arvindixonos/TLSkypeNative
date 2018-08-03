@@ -236,7 +236,7 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
                 int width = getWidth();
                 int height = getHeight();
 
-                VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
+//                VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
                 if(drawEnabled)
                     drawTouch_start(event.getX(), event.getY());
                 invalidate();
@@ -248,7 +248,9 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
                 width = getWidth();
                 height = getHeight();
 
-                Log.d(VideoChatActivity.TAG, "SURF " + xPos + " " + yPos);
+//                Log.d(VideoChatActivity.TAG, "MOVE RECORDERD");
+
+//                Log.d(VideoChatActivity.TAG, "SURF " + xPos + " " + yPos);
 
                 VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
 

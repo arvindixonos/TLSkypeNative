@@ -3,6 +3,7 @@ package com.flashphoner.wcsexample.video_chat;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.util.Log;
 
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
@@ -31,7 +32,7 @@ public class PointRenderer {
     private static final int BYTES_PER_FLOAT = Float.SIZE / 8;
     private static final int FLOATS_PER_POINT = 3; // X,Y,Z.
     private static final int BYTES_PER_POINT = BYTES_PER_FLOAT * FLOATS_PER_POINT;
-    private static final int INITIAL_BUFFER_POINTS = 1000;
+    private static final int INITIAL_BUFFER_POINTS = 4000;
 
     private int vbo;
     private int vboSize;
@@ -85,15 +86,127 @@ public class PointRenderer {
         anchors.add(currentAnchorList);
     }
 
+    public void RemoveAllZeroAnchors()
+    {
+        int numAnchorsList = anchors.size();
+
+        for(int i = 0; i < numAnchorsList; i++)
+        {
+            if(anchors.get(i).size() < 5)
+            {
+                ArrayList<Anchor> removedAnchors = anchors.remove(i);
+                int numRemovedAnchors = removedAnchors.size();
+
+                for(int j = 0; j < numRemovedAnchors; j++)
+                {
+                    removedAnchors.get(j).detach();
+                }
+
+                numAnchorsList = anchors.size();
+
+                i = 0;
+            }
+        }
+    }
+
     public void AddBreak()
     {
+        Log.d(VideoChatActivity.TAG, "Adding Break");
+
+        RemoveAllZeroAnchors();
         currentAnchorList = new ArrayList<Anchor>();
         anchors.add(currentAnchorList);
     }
 
     public void AddPoint(Anchor anchor)
     {
+        Log.d(VideoChatActivity.TAG, "Adding Point");
         currentAnchorList.add(anchor);
+    }
+
+    public float VecMagnitude(float[] p1, float[] p2)
+    {
+        return (float) Math.sqrt(   (p2[0] - p1[0]) *  (p2[0] - p1[0]) +
+                            (p2[1] - p1[1]) *  (p2[1] - p1[1]) +
+                            (p2[2] - p1[2]) *  (p2[2] - p1[2]));
+    }
+
+    public float[] VecNormalized(float[] p1, float[] p2)
+    {
+        float magnitude = VecMagnitude(p1, p2);
+
+        float[] normalized = new float[3];
+
+        normalized[0] = (p2[0] - p1[0]) / magnitude;
+        normalized[1] = (p2[1] - p1[1]) / magnitude;
+        normalized[2] = (p2[2] - p1[2]) / magnitude;
+
+        return  normalized;
+    }
+
+    public float VecDot(float[] p1, float[] p2)
+    {
+        return  p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
+    }
+
+    public float VecMagnitude(float[] p)
+    {
+        return (float) Math.sqrt(   (p[0]) *  (p[0]) +
+                                    (p[1]) *  (p[1]) +
+                                    (p[2]) *  (p[2]));
+    }
+
+    public float[] VecRotate(float[] vec, float[] axis, float angle)
+    {
+        float[] rotatedVec = new float[3];
+
+        float[] part1 = new float[3];
+        part1[0] = (float) (vec[0] * Math.cos(Math.PI / 2.0f));
+        part1[1] = (float) (vec[1] * Math.cos(Math.PI / 2.0f));
+        part1[2] = (float) (vec[2] * Math.cos(Math.PI / 2.0f));
+
+        float[] part2 = new float[3];
+        part2[0] = (float) (axis[0] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
+        part2[1] = (float) (axis[1] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
+        part2[2] = (float) (axis[2] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
+
+        float[] part3 = new float[3];
+        part3[0] = (float) (VecCross(vec, axis)[0] * Math.sin(Math.PI / 2.0f));
+        part3[1] = (float) (VecCross(vec, axis)[1] * Math.sin(Math.PI / 2.0f));
+        part3[2] = (float) (VecCross(vec, axis)[2] * Math.sin(Math.PI / 2.0f));
+
+        rotatedVec[0] = part1[0] + part2[0] + part3[0];
+        rotatedVec[1] = part1[1] + part2[1] + part3[1];
+        rotatedVec[2] = part1[2] + part2[2] + part3[2];
+
+        return rotatedVec;
+    }
+
+    public float VecAngle(float[] p1, float[] p2)
+    {
+        float angle = 0.0f;
+
+        angle = (float) Math.acos(VecDot(p1, p2)/ VecMagnitude(p1) * VecMagnitude(p2));
+
+        float[] crossProduct = VecCross(p1, p2);
+
+        float dotOfCross = VecDot(crossProduct, p1);
+
+        if(dotOfCross < 0.0f)
+            angle = -angle;
+
+        return  angle;
+    }
+
+    public float[] VecCross(float[] p1, float[] p2)
+    {
+        float[] cross = new float[3];               //a × b = {aybz - azby; azbx - axbz; axby - aybx}
+
+        cross[0] = p1[1] * p2[2] - p1[2] * p2[1];
+        cross[1] = p1[2] * p2[0] - p1[0] * p2[2];
+        cross[2] = p1[0] * p2[1] - p1[1] * p2[0];
+
+        return cross;
     }
 
     public void draw(float[] cameraView, float[] cameraPerspective) {
@@ -113,7 +226,6 @@ public class PointRenderer {
 
         GLES20.glLineWidth(6.0f);
 
-
         int numAnchorsList = anchors.size();
 
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
@@ -127,10 +239,16 @@ public class PointRenderer {
 
             int numAnchors = anchorsList.size();
 
-            float[] verticesFloatArray = new float[numAnchors * 3];
+            int totalPoints = ((numAnchors - 1) * 20 + numAnchors) * 3;
+
+            float[] verticesFloatArray = new float[totalPoints];
 
             int k = 0;
-            for (int i = 0; i < numAnchors * 3; i += 3)
+            int j = 0;
+
+            float maxAngleDeviation = 0.17f;
+
+            for (int i = 0; i < totalPoints; i += 63)
             {
                 Pose pose = anchorsList.get(k).getPose();
 
@@ -138,15 +256,63 @@ public class PointRenderer {
                 verticesFloatArray[i + 1] = pose.ty();
                 verticesFloatArray[i + 2] = pose.tz();
 
+                if(k < numAnchors - 1)
+                {
+                    pose = anchorsList.get(k + 1).getPose();
+
+                    float[] p0 = new float[3];
+                    p0[0] = verticesFloatArray[i];
+                    p0[1] = verticesFloatArray[i + 1];
+                    p0[2] = verticesFloatArray[i + 2];
+
+                    float[] p1 = new float[3];
+                    p1[0] = pose.tx();
+                    p1[1] = pose.ty();
+                    p1[2] = pose.tz();
+
+                    float angle = VecAngle(p0, p1);
+                    if(Math.abs(angle) > maxAngleDeviation)
+                    {
+                        angle = Math.signum(angle) * maxAngleDeviation;
+
+                        float magnitude = VecMagnitude(p0, p1);
+                        float[] vecNorm = VecNormalized(p0, p1);
+
+                        float[] axis = VecCross(p0, p1);
+
+                        float[] rotatedVector = VecRotate(vecNorm, axis, angle);
+
+                        p1[0] = p0[0] + rotatedVector[0] * magnitude;
+                        p1[1] = p0[1] + rotatedVector[1] * magnitude;
+                        p1[2] = p0[2] + rotatedVector[2] * magnitude;
+                    }
+
+                    int start = i + 3;
+
+                    j = 0;
+                    for (float t = 0f; t < 1f; t += 0.05f)
+                    {
+                        float newX = p0[0] + t * (p1[0] - p0[0]);
+                        float newY = p0[1] + t * (p1[1] - p0[1]);
+                        float newZ = p0[2] + t * (p1[2] - p0[2]);
+
+                        verticesFloatArray[start + j * 3] = newX;
+                        verticesFloatArray[start + (j * 3) + 1] = newY;
+                        verticesFloatArray[start + (j * 3) + 2] = newZ;
+
+                        j++;
+                    }
+                }
+
                 k++;
             }
 
             FloatBuffer verticesBuffer = FloatBuffer.wrap(verticesFloatArray);
             verticesBuffer.put(verticesFloatArray).position(0);
 
-            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, numAnchors * BYTES_PER_POINT, verticesBuffer);
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, (totalPoints / 3) * BYTES_PER_POINT, verticesBuffer);
 
-            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, numAnchors);
+            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, (totalPoints / 3));
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         }
