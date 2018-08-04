@@ -294,8 +294,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-//        VideoCapturerAndroid.arCorePresent = false;
-
         super.onCreate(savedInstanceState);
         Instance = this;
 

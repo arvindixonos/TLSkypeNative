@@ -142,6 +142,19 @@ public class PointRenderer {
         return  normalized;
     }
 
+    public float[] VecNormalized(float[] p1)
+    {
+        float magnitude = VecMagnitude(p1);
+
+        float[] normalized = new float[3];
+
+        normalized[0] = (p1[0]) / magnitude;
+        normalized[1] = (p1[1]) / magnitude;
+        normalized[2] = (p1[2]) / magnitude;
+
+        return  normalized;
+    }
+
     public float VecDot(float[] p1, float[] p2)
     {
         return  p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
@@ -184,14 +197,11 @@ public class PointRenderer {
     {
         float angle = 0.0f;
 
-        angle = (float) Math.acos(VecDot(p1, p2)/ VecMagnitude(p1) * VecMagnitude(p2));
+        angle = (float) Math.atan2(VecMagnitude(VecCross(p1, p2)), VecDot(p1, p2));
 
         float[] crossProduct = VecCross(p1, p2);
 
-        float dotOfCross = VecDot(crossProduct, p1);
-
-        if(dotOfCross < 0.0f)
-            angle = -angle;
+        float sign = -Math.signum(crossProduct[2]);
 
         return  angle;
     }
@@ -237,70 +247,120 @@ public class PointRenderer {
 
             int numAnchors = anchorsList.size();
 
-            int totalPoints = ((numAnchors - 1) * 20 + numAnchors) * 3;
+            int totalPoints = numAnchors * 3; // ((numAnchors - 1) * 20 + numAnchors) * 3;
 
             float[] verticesFloatArray = new float[totalPoints];
 
             int k = 0;
             int j = 0;
 
-            float maxAngleDeviation = 0.17f;
+            float maxAngleDeviation = 0.3f;
 
-            for (int i = 0; i < totalPoints; i += 63)
+            boolean nextPointSet = true;
+            Pose pose = anchorsList.get(0).getPose();
+            float[] nextPoint = pose.getTranslation();
+
+            for (int i = 0; i < totalPoints; i += 3)
             {
-                Pose pose = anchorsList.get(k).getPose();
+                pose = anchorsList.get(k).getPose();
 
-                verticesFloatArray[i] = pose.tx();
-                verticesFloatArray[i + 1] = pose.ty();
-                verticesFloatArray[i + 2] = pose.tz();
+//                if(!nextPointSet)
+                {
+//                    verticesFloatArray[i] = pose.tx();
+//                    verticesFloatArray[i + 1] = pose.ty();
+//                    verticesFloatArray[i + 2] = pose.tz();
+                }
+//                else
+//                {
+                    verticesFloatArray[i] = nextPoint[0];
+                    verticesFloatArray[i + 1] = nextPoint[1];
+                    verticesFloatArray[i + 2] = nextPoint[2];
+//
+//                    nextPointSet = false;
+//                }
 
                 if(k < numAnchors - 1)
                 {
-                    pose = anchorsList.get(k + 1).getPose();
+                    Pose nextPose = anchorsList.get(k + 1).getPose();
 
-                    float[] p0 = new float[3];
-                    p0[0] = verticesFloatArray[i];
-                    p0[1] = verticesFloatArray[i + 1];
-                    p0[2] = verticesFloatArray[i + 2];
+                    nextPose = new Pose(nextPose.getTranslation(), pose.getRotationQuaternion());
 
-                    float[] p1 = new float[3];
-                    p1[0] = pose.tx();
-                    p1[1] = pose.ty();
-                    p1[2] = pose.tz();
+                    nextPose = Pose.makeInterpolated(pose, nextPose, 0.1f);
 
-                    float angle = VecAngle(p0, p1);
-                    if(Math.abs(angle) > maxAngleDeviation)
-                    {
-                        angle = Math.signum(angle) * maxAngleDeviation;
-
-                        float magnitude = VecMagnitude(p0, p1);
-                        float[] vecNorm = VecNormalized(p0, p1);
-
-                        float[] axis = VecCross(p0, p1);
-
-                        float[] rotatedVector = VecRotate(vecNorm, axis, angle);
-
-                        p1[0] = p0[0] + rotatedVector[0] * magnitude;
-                        p1[1] = p0[1] + rotatedVector[1] * magnitude;
-                        p1[2] = p0[2] + rotatedVector[2] * magnitude;
-                    }
-
-                    int start = i + 3;
-
-                    j = 0;
-                    for (float t = 0f; t < 1f; t += 0.05f)
-                    {
-                        float newX = p0[0] + t * (p1[0] - p0[0]);
-                        float newY = p0[1] + t * (p1[1] - p0[1]);
-                        float newZ = p0[2] + t * (p1[2] - p0[2]);
-
-                        verticesFloatArray[start + j * 3] = newX;
-                        verticesFloatArray[start + (j * 3) + 1] = newY;
-                        verticesFloatArray[start + (j * 3) + 2] = newZ;
-
-                        j++;
-                    }
+                    nextPoint = nextPose.getTranslation();
                 }
+
+//                if(k < numAnchors - 1)
+//                {
+//                    Pose newPose = anchorsList.get(k + 1).getPose();
+//
+//                    float[] p0 = new float[3];
+//                    p0[0] = verticesFloatArray[i];
+//                    p0[1] = verticesFloatArray[i + 1];
+//                    p0[2] = verticesFloatArray[i + 2];
+//
+//                    float[] p1 = new float[3];
+//                    p1[0] = newPose.tx();
+//                    p1[1] = newPose.ty();
+//                    p1[2] = newPose.tz();
+//
+//                    float[] normalizedVector = VecNormalized(p0);
+//
+//                    float mag = VecMagnitude(normalizedVector);
+//
+//                    normalizedVector[0] = 0;
+//                    normalizedVector[1] = 0;
+//                    normalizedVector[2] = 0;
+//
+//                    normalizedVector = pose.rotateVector(normalizedVector);
+//
+//                    mag = VecMagnitude(normalizedVector);
+//
+//                    p0 = VecNormalized(p0);
+//
+//                    mag = VecMagnitude(normalizedVector);
+//
+//                    float angle = VecAngle(p0, normalizedVector);
+//
+//                    Log.d(TAG, "Asd");
+////                    if(Math.abs(angle) > maxAngleDeviation)
+////                    {
+////                        angle = Math.signum(angle) * maxAngleDeviation;
+////
+////                        float magnitude = VecMagnitude(p0, p1);
+////                        float[] vecNorm = VecNormalized(p0, p1);
+////
+////                        float[] axis = VecCross(p0, p1);
+////
+////                        float[] rotatedVector = VecRotate(vecNorm, axis, angle);
+////
+////                        p1[0] = p0[0] + rotatedVector[0] * magnitude;
+////                        p1[1] = p0[1] + rotatedVector[1] * magnitude;
+////                        p1[2] = p0[2] + rotatedVector[2] * magnitude;
+////
+////                        nextPointSet = true;
+////
+////                        nextPoint[0] = p1[0];
+////                        nextPoint[1] = p1[1];
+////                        nextPoint[2] = p1[2];
+////                    }
+//
+////                    int start = i + 3;
+////
+////                    j = 0;
+////                    for (float t = 0f; t < 1f; t += 0.05f)
+////                    {
+////                        float newX = p0[0] + t * (p1[0] - p0[0]);
+////                        float newY = p0[1] + t * (p1[1] - p0[1]);
+////                        float newZ = p0[2] + t * (p1[2] - p0[2]);
+////
+////                        verticesFloatArray[start + j * 3] = newX;
+////                        verticesFloatArray[start + (j * 3) + 1] = newY;
+////                        verticesFloatArray[start + (j * 3) + 2] = newZ;
+////
+////                        j++;
+////                    }
+//                }
 
                 k++;
             }
