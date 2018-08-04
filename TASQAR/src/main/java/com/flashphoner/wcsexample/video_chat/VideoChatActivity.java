@@ -295,20 +295,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-//        VideoCapturerAndroid.arCorePresent = false;
-
-        float[] p1 = new float[3];
-        p1[0] = 1.0f;
-        p1[1] = 0.0f;
-        p1[2] = 0.0f;
-
-        float[] p2 = new float[3];
-        p2[0] = 0.0f;
-        p2[1] = -1.0f;
-        p2[2] = 0.0f;
-
-        float angle = (float) Math.toDegrees(pointRenderer.VecAngle(p1, p2));
-
         super.onCreate(savedInstanceState);
         Instance = this;
 
