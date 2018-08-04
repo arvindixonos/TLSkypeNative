@@ -422,7 +422,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         cameraSwitchHandler = new VideoCapturerAndroid.CameraSwitchHandler()
         {
             @Override
-            public void onCameraSwitchDone(boolean frontCamera) {
+            public void onCameraSwitchDone(boolean frontCamera)
+            {
 
                 if(!frontCamera && VideoCapturerAndroid.arCorePresent)
                 {
@@ -432,7 +433,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
             @Override
-            public void onCameraSwitchError(String s) {
+            public void onCameraSwitchError(String s)
+            {
 
             }
         };
@@ -694,7 +696,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
-
+        if(camera != null && uiHandler.cameraTorchMode == MainUIHandler.CameraTorchMode.TO_TURN_ON)
+        {
+            uiHandler.camera = camera;
+            uiHandler.CameraFlashHandler();
+        }
         if (videoCapturerAndroid == null)
             return;
 
@@ -1070,6 +1076,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             stream = room.publish(localRenderer, VideoChatActivity.this);
                             stream.unmuteAudio();
                         }
+
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
                          */
@@ -1102,12 +1109,18 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 participant.play(participantView.surfaceViewRenderer);
                             }
                         }
+                        if(participantPublishing)
+                        {
+                            uiHandler.StartTimer();
+                        }
                     }
 
                     @Override
                     public void onJoined(final Participant participant) {
 
                         Log.d(TAG, "ON JOINED " + participant.getName());
+
+                        uiHandler.StartTimer();
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
@@ -1188,6 +1201,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
 
+                uiHandler.StopTimer();
                 stream = null;
             }
         });
