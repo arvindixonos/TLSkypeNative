@@ -111,7 +111,7 @@ public class PointRenderer {
     {
         Log.d(VideoChatActivity.TAG, "Adding Break");
 
-        RemoveAllZeroAnchors();
+//        RemoveAllZeroAnchors();
         currentAnchorList = new ArrayList<Anchor>();
         anchors.add(currentAnchorList);
     }
@@ -272,9 +272,15 @@ public class PointRenderer {
                 }
 //                else
 //                {
-                    verticesFloatArray[i] = nextPoint[0];
+                    verticesFloatArray[i]     = nextPoint[0];
                     verticesFloatArray[i + 1] = nextPoint[1];
                     verticesFloatArray[i + 2] = nextPoint[2];
+//                    verticesFloatArray[i + 3] = nextPoint[0] - 0.2f;
+//                    verticesFloatArray[i + 4] = nextPoint[1] + 0.2f;
+//                    verticesFloatArray[i + 5] = nextPoint[2] - 0.2f;
+//                    verticesFloatArray[i + 6] = nextPoint[0] + 0.2f;
+//                    verticesFloatArray[i + 7] = nextPoint[1] - 0.2f;
+//                    verticesFloatArray[i + 8] = nextPoint[2] + 0.2f;
 //
 //                    nextPointSet = false;
 //                }
@@ -370,7 +376,7 @@ public class PointRenderer {
 
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, (totalPoints / 3) * BYTES_PER_POINT, verticesBuffer);
 
-            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, (totalPoints / 3));
+            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, (totalPoints / 3));
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         }
