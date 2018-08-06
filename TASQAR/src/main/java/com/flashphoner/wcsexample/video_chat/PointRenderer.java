@@ -3,28 +3,14 @@ package com.flashphoner.wcsexample.video_chat;
 import android.content.Context;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.text.InputFilter;
 import android.util.Log;
 
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
-import org.apache.commons.math3.geometry.euclidean.threed.RotationConvention;
-import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.apache.commons.math3.linear.MatrixUtils;
-
 import java.io.IOException;
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.IntStream;
-
-import javax.microedition.khronos.opengles.GL;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
@@ -235,76 +221,81 @@ public class PointRenderer {
     }
 
     float lineLength = 0.05f;
-    float[] unitCubeVertices = new float[] {    0, 0, 0, 1, 0, 0, 0, 1, 0, // 0
-                                                0, 1, 0, 1, 0, 0, 1, 1, 0, // 1
 
-                                                0, 0, 0, 0, 0, 1, 0, 1, 0, // 2
-                                                0, 0, 1, 0, 1, 1, 0, 1, 0, // 3
+    int[] unitCubeIndices = new int[] {         0, 1, 2, // 0
+                                                0, 3, 2, // 1
 
-                                                0, 0, 1, 1, 0, 1, 1, 1, 1, // 4
-                                                0, 0, 1, 0, 1, 1, 1, 1, 1, // 5
+                                                0, 4, 3, // 2
+                                                4, 7, 3, // 3
 
-                                                1, 0, 1, 1, 0, 0, 1, 1, 0, // 6
-                                                1, 0, 1, 1, 1, 0, 1, 1, 1, // 7
+                                                4, 5, 6, // 4
+                                                4, 7, 6, // 5
 
-                                                0, 0, 1, 1, 0, 1, 1, 0, 0, // 8
-                                                0, 0, 1, 0, 0, 0, 1, 0, 0, // 9
+                                                5, 1, 2, // 6
+                                                5, 2, 6, // 7
 
-                                                0, 1, 1, 1, 1, 1, 1, 1, 0, // 10
-                                                0, 1, 1, 1, 1, 0, 0, 1, 0  // 11
+                                                4, 5, 1, // 8
+                                                4, 0, 1, // 9
+
+                                                7, 6, 2, // 10
+                                                7, 2, 3  // 11
                                                 };
+
+    float[] unitCubeVertices = new float[]
+            {
+            0, 0, 0, //0
+            1, 0, 0, //1
+            1, 1, 0, //2
+            0, 1, 0, //3
+            0, 0, 1, //4
+            1, 0, 1, //5
+            1, 1, 1, //6
+            0, 1, 1  //7
+            };
 
     float[] edgePoints = new float[3 * 4];
 
-    float[] getCubeVertices(float[] originPoint, int faceID)
+    float[] getFaceFromPoints(float[] p1, float[] p2, float[] p3, float[] p4, int index)
     {
         float[] cubeVertices = new float[9];
 
-        cubeVertices[0] = originPoint[0] + unitCubeVertices[faceID * 9 + 0] * lineLength;
-        cubeVertices[1] = originPoint[1] + unitCubeVertices[faceID * 9 + 1] * lineLength;
-        cubeVertices[2] = originPoint[2] + unitCubeVertices[faceID * 9 + 2] * lineLength;
-        cubeVertices[3] = originPoint[0] + unitCubeVertices[faceID * 9 + 3] * lineLength;
-        cubeVertices[4] = originPoint[1] + unitCubeVertices[faceID * 9 + 4] * lineLength;
-        cubeVertices[5] = originPoint[2] + unitCubeVertices[faceID * 9 + 5] * lineLength;
-        cubeVertices[6] = originPoint[0] + unitCubeVertices[faceID * 9 + 6] * lineLength;
-        cubeVertices[7] = originPoint[1] + unitCubeVertices[faceID * 9 + 7] * lineLength;
-        cubeVertices[8] = originPoint[2] + unitCubeVertices[faceID * 9 + 8] * lineLength;
+        if(index == 0)
+        {
+            System.arraycopy(p1, 0, cubeVertices, 0, 3);
+            System.arraycopy(p2, 0, cubeVertices, 3, 3);
+            System.arraycopy(p3, 0, cubeVertices, 6, 3);
+        }
+        else
+        {
+            System.arraycopy(p3, 0, cubeVertices, 0, 3);
+            System.arraycopy(p4, 0, cubeVertices, 3, 3);
+            System.arraycopy(p1, 0, cubeVertices, 6, 3);
+        }
 
         return  cubeVertices;
     }
 
-    float[] getEdgeVertices(float[] originPoint, int edgeFaceID)
+    float[] getCubePoint(float[] originPoint, int pointIndex)
     {
-        float[] cubeVertices = new float[9];
+        float[] finalPoints = new float[3];
 
-//        if(edgeFaceID == 0)
-//        {
-//            cubeVertices[0] = originPoint[0] + unitCubeVertices[faceID * 9 + 0] * lineLength;
-//            cubeVertices[1] = originPoint[1] + unitCubeVertices[faceID * 9 + 1] * lineLength;
-//            cubeVertices[2] = originPoint[2] + unitCubeVertices[faceID * 9 + 2] * lineLength;
-//            cubeVertices[3] = originPoint[0] + unitCubeVertices[faceID * 9 + 3] * lineLength;
-//            cubeVertices[4] = originPoint[1] + unitCubeVertices[faceID * 9 + 4] * lineLength;
-//            cubeVertices[5] = originPoint[2] + unitCubeVertices[faceID * 9 + 5] * lineLength;
-//            cubeVertices[6] = originPoint[0] + unitCubeVertices[faceID * 9 + 6] * lineLength;
-//            cubeVertices[7] = originPoint[1] + unitCubeVertices[faceID * 9 + 7] * lineLength;
-//            cubeVertices[8] = originPoint[2] + unitCubeVertices[faceID * 9 + 8] * lineLength;
-//        }
-//        else if(edgeFaceID == 1)
-//        {
-//            cubeVertices[0] = originPoint[0] + unitCubeVertices[faceID * 9 + 0] * lineLength;
-//            cubeVertices[1] = originPoint[1] + unitCubeVertices[faceID * 9 + 1] * lineLength;
-//            cubeVertices[2] = originPoint[2] + unitCubeVertices[faceID * 9 + 2] * lineLength;
-//            cubeVertices[3] = originPoint[0] + unitCubeVertices[faceID * 9 + 3] * lineLength;
-//            cubeVertices[4] = originPoint[1] + unitCubeVertices[faceID * 9 + 4] * lineLength;
-//            cubeVertices[5] = originPoint[2] + unitCubeVertices[faceID * 9 + 5] * lineLength;
-//            cubeVertices[6] = originPoint[0] + unitCubeVertices[faceID * 9 + 6] * lineLength;
-//            cubeVertices[7] = originPoint[1] + unitCubeVertices[faceID * 9 + 7] * lineLength;
-//            cubeVertices[8] = originPoint[2] + unitCubeVertices[faceID * 9 + 8] * lineLength;
-//        }
+        finalPoints[0] = originPoint[0] + unitCubeVertices[pointIndex * 3 + 0] * lineLength;
+        finalPoints[1] = originPoint[1] + unitCubeVertices[pointIndex * 3 + 1] * lineLength;
+        finalPoints[2] = originPoint[2] + unitCubeVertices[pointIndex * 3 + 2] * lineLength;
 
-        return  cubeVertices;
+        return  finalPoints;
     }
 
+    int[] getCubeIndices(int index)
+    {
+        int[] finalPoints = new int[3];
+
+        System.arraycopy(unitCubeIndices, index * 3, finalPoints, 0, 3);
+
+        return  finalPoints;
+    }
+
+    boolean toggle = false;
     public void draw(float[] cameraView, float[] cameraPerspective) {
 
         ShaderUtil.checkGLError(TAG, "Before draw");
@@ -328,6 +319,8 @@ public class PointRenderer {
         int numAnchorsList = anchors.size();
         int numFaces = 0;
 
+        toggle = !toggle;
+
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
         {
             ArrayList<Anchor> anchorsList = anchors.get(anchorsListCount);
@@ -343,7 +336,7 @@ public class PointRenderer {
             for (int i = 0; i < numAnchors; i++)
             {
                 Pose pose  = anchorsList.get(i).getPose();
-                float[] nextPoint = pose.getTranslation();
+                float[] originPoint = pose.getTranslation();
 
                 int numFacesPoint = i == 0 ? 12 : 14;
 
@@ -355,7 +348,19 @@ public class PointRenderer {
                     {
                         fetchFaceID = faceID;
 
-                        cubeArray = getCubeVertices(nextPoint, fetchFaceID);
+                        int[] indices = getCubeIndices(fetchFaceID);
+
+                        for(int index = 0; index < 3; index++)
+                        {
+                            float[] point = getCubePoint(originPoint, indices[index]);
+
+                            System.arraycopy(point, 0, cubeArray, index * 3, 3);
+                        }
+
+                        System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
+                        System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
+                        System.arraycopy(getCubePoint(originPoint, 2), 0, edgePoints, 6, 3);
+                        System.arraycopy(getCubePoint(originPoint, 3), 0, edgePoints, 9, 3);
                     }
                     else
                     {
@@ -363,23 +368,36 @@ public class PointRenderer {
                         {
                             fetchFaceID = faceID - 2;
 
-                            cubeArray = getCubeVertices(nextPoint, fetchFaceID);
+                            int[] indices = getCubeIndices(fetchFaceID);
+
+                            for(int index = 0; index < 3; index++)
+                            {
+                                float[] point = getCubePoint(originPoint, indices[index]);
+
+                                System.arraycopy(point, 0, cubeArray, index * 3, 3);
+                            }
+
+                            if(faceID == 2)
+                            {
+                                System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
+                                System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
+                                System.arraycopy(getCubePoint(originPoint, 2), 0, edgePoints, 6, 3);
+                                System.arraycopy(getCubePoint(originPoint, 3), 0, edgePoints, 9, 3);
+                            }
                         }
                         else
                         {
-                            cubeArray = getEdgeVertices(nextPoint, faceID);
-                        }
-                    }
+                            float[] p1 = getCubePoint(originPoint, 4);
+                            float[] p2 = getCubePoint(originPoint, 5);
+                            float[] p3 = new float[3];
+                            System.arraycopy(edgePoints, 0, p3, 0, 3);
+                            float[] p4 = new float[3];
+                            System.arraycopy(edgePoints, 3, p4, 0, 3);
 
-                    if(fetchFaceID == 0)
-                    {
-                        System.arraycopy(cubeArray, 0, edgePoints, 0, 3);
-                        System.arraycopy(cubeArray, 3, edgePoints, 3, 3);
-                        System.arraycopy(cubeArray, 6, edgePoints, 6, 3);
-                    }
-                    else if(fetchFaceID == 1)
-                    {
-                        System.arraycopy(cubeArray, 9, edgePoints, 9, 3);
+                            int edgeFaceIndex = 1;
+
+                            cubeArray = getFaceFromPoints(p1, p1, p1, p1, edgeFaceIndex);
+                        }
                     }
 
                     verticesBuffer = FloatBuffer.wrap(cubeArray);
