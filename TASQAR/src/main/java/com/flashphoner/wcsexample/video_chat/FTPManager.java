@@ -21,7 +21,9 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 
-    public class FTPManager extends AsyncTask {
+import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
+
+public class FTPManager extends AsyncTask {
 
     FTPClient ftpClient = new FTPClient();
 
@@ -32,6 +34,7 @@ import org.apache.commons.net.ftp.FTPReply;
 
     int uploadORdownload = 1;
     String filePath = "";
+    String fileDate = "";
     Context applicationContext;
 
     boolean transferSuccess = false;
@@ -47,13 +50,15 @@ import org.apache.commons.net.ftp.FTPReply;
     {
         running = true;
 
-        try {
+        try
+        {
             ftpClient.connect(server, port);
             showServerReply(ftpClient);
 
             int replyCode = ftpClient.getReplyCode();
-            if (!FTPReply.isPositiveCompletion(replyCode)) {
-                Log.d(VideoChatActivity.TAG, "Connect failed");
+            if (!FTPReply.isPositiveCompletion(replyCode))
+            {
+                Log.d(TAG, "Connect failed");
                 return null;
             }
 
@@ -61,7 +66,7 @@ import org.apache.commons.net.ftp.FTPReply;
             showServerReply(ftpClient);
 
             if (!success) {
-                Log.d(VideoChatActivity.TAG,"Could not login to the server");
+                Log.d(TAG,"Could not login to the server");
                 return null;
             }
 
@@ -71,7 +76,7 @@ import org.apache.commons.net.ftp.FTPReply;
             if(uploadORdownload == 1)
             {
 
-                Log.d(VideoChatActivity.TAG, fileInputStream.available() + " ");
+                Log.d(TAG, fileInputStream.available() + " ");
 
                 success = ftpClient.storeFile(GetFileName(filePath), fileInputStream);
 
@@ -109,7 +114,15 @@ import org.apache.commons.net.ftp.FTPReply;
                 {
                     ToastFunction("Successfully Downloaded File " + GetFileName(filePath));
                     transferSuccess = true;
-                    VideoChatActivity.getInstance().OpenFile(filePath);
+                    File thisFile = new File(filePath);
+                    String pathName = "";
+                    if (thisFile.exists())
+                    {
+                        pathName = "/sdcard/ReceivedFiles/" + VideoChatActivity.getInstance()
+                                .uiHandler.AddTimeStampToName(GetFileName(filePath).replace("/", ""), fileDate);
+                        thisFile.renameTo(new File(pathName));
+                    }
+                    VideoChatActivity.getInstance().OpenFile(pathName);
                 }
                 else
                 {
@@ -128,7 +141,6 @@ import org.apache.commons.net.ftp.FTPReply;
         }
 
         running = false;
-
         return null;
     }
 
@@ -167,7 +179,7 @@ import org.apache.commons.net.ftp.FTPReply;
         if (replies != null && replies.length > 0) {
             for (String aReply : replies)
             {
-                Log.d(VideoChatActivity.TAG, "Server " + aReply);
+                Log.d(TAG, "Server " + aReply);
             }
         }
     }

@@ -57,13 +57,13 @@ public class PlaneRenderer {
   private static final int INITIAL_BUFFER_BOUNDARY_VERTS = 64;
 
   private static final int INITIAL_VERTEX_BUFFER_SIZE_BYTES =
-      BYTES_PER_FLOAT * COORDS_PER_VERTEX * VERTS_PER_BOUNDARY_VERT * INITIAL_BUFFER_BOUNDARY_VERTS;
+          BYTES_PER_FLOAT * COORDS_PER_VERTEX * VERTS_PER_BOUNDARY_VERT * INITIAL_BUFFER_BOUNDARY_VERTS;
 
   private static final int INITIAL_INDEX_BUFFER_SIZE_BYTES =
-      BYTES_PER_SHORT
-          * INDICES_PER_BOUNDARY_VERT
-          * INDICES_PER_BOUNDARY_VERT
-          * INITIAL_BUFFER_BOUNDARY_VERTS;
+          BYTES_PER_SHORT
+                  * INDICES_PER_BOUNDARY_VERT
+                  * INDICES_PER_BOUNDARY_VERT
+                  * INITIAL_BUFFER_BOUNDARY_VERTS;
 
   private static final float FADE_RADIUS_M = 0.25f;
   private static final float DOTS_PER_METER = 10.0f;
@@ -91,13 +91,13 @@ public class PlaneRenderer {
   private int planeUvMatrixUniform;
 
   private FloatBuffer vertexBuffer =
-      ByteBuffer.allocateDirect(INITIAL_VERTEX_BUFFER_SIZE_BYTES)
-          .order(ByteOrder.nativeOrder())
-          .asFloatBuffer();
+          ByteBuffer.allocateDirect(INITIAL_VERTEX_BUFFER_SIZE_BYTES)
+                  .order(ByteOrder.nativeOrder())
+                  .asFloatBuffer();
   private ShortBuffer indexBuffer =
-      ByteBuffer.allocateDirect(INITIAL_INDEX_BUFFER_SIZE_BYTES)
-          .order(ByteOrder.nativeOrder())
-          .asShortBuffer();
+          ByteBuffer.allocateDirect(INITIAL_INDEX_BUFFER_SIZE_BYTES)
+                  .order(ByteOrder.nativeOrder())
+                  .asShortBuffer();
 
   // Temporary lists/matrices allocated here to reduce number of allocations for each frame.
   private final float[] modelMatrix = new float[16];
@@ -105,7 +105,7 @@ public class PlaneRenderer {
   private final float[] modelViewProjectionMatrix = new float[16];
   private final float[] planeColor = new float[4];
   private final float[] planeAngleUvMatrix =
-      new float[4]; // 2x2 rotation matrix applied to uv coords.
+          new float[4]; // 2x2 rotation matrix applied to uv coords.
 
   private final Map<Plane, Integer> planeIndexMap = new HashMap<>();
 
@@ -113,16 +113,16 @@ public class PlaneRenderer {
 
   /**
    * Allocates and initializes OpenGL resources needed by the plane renderer. Must be called on the
-   * OpenGL thread, typically in {@link GLSurfaceView.Renderer#onSurfaceCreated(GL10, EGLConfig)}.
+   * OpenGL thread, typically in {@link GLSurfaceView.Renderer#//onSurfaceCreated(GL10, EGLConfig)}.
    *
    * @param context Needed to access shader source and texture PNG.
    * @param gridDistanceTextureName Name of the PNG file containing the grid texture.
    */
   public void createOnGlThread(Context context, String gridDistanceTextureName) throws IOException {
     int vertexShader =
-        ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
+            ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
     int passthroughShader =
-        ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
+            ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
 
     planeProgram = GLES20.glCreateProgram();
     GLES20.glAttachShader(planeProgram, vertexShader);
@@ -134,14 +134,14 @@ public class PlaneRenderer {
 
     // Read the texture.
     Bitmap textureBitmap =
-        BitmapFactory.decodeStream(context.getAssets().open(gridDistanceTextureName));
+            BitmapFactory.decodeStream(context.getAssets().open(gridDistanceTextureName));
 
     GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
     GLES20.glGenTextures(textures.length, textures, 0);
     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
 
     GLES20.glTexParameteri(
-        GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
+            GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
     GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
     GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
     GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
@@ -154,7 +154,7 @@ public class PlaneRenderer {
     planeModelUniform = GLES20.glGetUniformLocation(planeProgram, "u_Model");
     planeNormalUniform = GLES20.glGetUniformLocation(planeProgram, "u_Normal");
     planeModelViewProjectionUniform =
-        GLES20.glGetUniformLocation(planeProgram, "u_ModelViewProjection");
+            GLES20.glGetUniformLocation(planeProgram, "u_ModelViewProjection");
     textureUniform = GLES20.glGetUniformLocation(planeProgram, "u_Texture");
     lineColorUniform = GLES20.glGetUniformLocation(planeProgram, "u_lineColor");
     dotColorUniform = GLES20.glGetUniformLocation(planeProgram, "u_dotColor");
@@ -166,7 +166,7 @@ public class PlaneRenderer {
 
   /** Updates the plane model transform matrix and extents. */
   private void updatePlaneParameters(
-      float[] planeMatrix, float extentX, float extentZ, FloatBuffer boundary) {
+          float[] planeMatrix, float extentX, float extentZ, FloatBuffer boundary) {
     System.arraycopy(planeMatrix, 0, modelMatrix, 0, 16);
     if (boundary == null) {
       vertexBuffer.limit(0);
@@ -193,9 +193,9 @@ public class PlaneRenderer {
         size *= 2;
       }
       vertexBuffer =
-          ByteBuffer.allocateDirect(BYTES_PER_FLOAT * size)
-              .order(ByteOrder.nativeOrder())
-              .asFloatBuffer();
+              ByteBuffer.allocateDirect(BYTES_PER_FLOAT * size)
+                      .order(ByteOrder.nativeOrder())
+                      .asFloatBuffer();
     }
     vertexBuffer.rewind();
     vertexBuffer.limit(numVertices * COORDS_PER_VERTEX);
@@ -206,9 +206,9 @@ public class PlaneRenderer {
         size *= 2;
       }
       indexBuffer =
-          ByteBuffer.allocateDirect(BYTES_PER_SHORT * size)
-              .order(ByteOrder.nativeOrder())
-              .asShortBuffer();
+              ByteBuffer.allocateDirect(BYTES_PER_SHORT * size)
+                      .order(ByteOrder.nativeOrder())
+                      .asShortBuffer();
     }
     indexBuffer.rewind();
     indexBuffer.limit(numIndices);
@@ -259,22 +259,22 @@ public class PlaneRenderer {
     // Set the position of the plane
     vertexBuffer.rewind();
     GLES20.glVertexAttribPointer(
-        planeXZPositionAlphaAttribute,
-        COORDS_PER_VERTEX,
-        GLES20.GL_FLOAT,
-        false,
-        BYTES_PER_FLOAT * COORDS_PER_VERTEX,
-        vertexBuffer);
+            planeXZPositionAlphaAttribute,
+            COORDS_PER_VERTEX,
+            GLES20.GL_FLOAT,
+            false,
+            BYTES_PER_FLOAT * COORDS_PER_VERTEX,
+            vertexBuffer);
 
     // Set the Model and ModelViewProjection matrices in the shader.
     GLES20.glUniformMatrix4fv(planeModelUniform, 1, false, modelMatrix, 0);
     GLES20.glUniform3f(planeNormalUniform, planeNormal[0], planeNormal[1], planeNormal[2]);
     GLES20.glUniformMatrix4fv(
-        planeModelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+            planeModelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
 
     indexBuffer.rewind();
     GLES20.glDrawElements(
-        GLES20.GL_TRIANGLE_STRIP, indexBuffer.limit(), GLES20.GL_UNSIGNED_SHORT, indexBuffer);
+            GLES20.GL_TRIANGLE_STRIP, indexBuffer.limit(), GLES20.GL_UNSIGNED_SHORT, indexBuffer);
     ShaderUtil.checkGLError(TAG, "Drawing plane");
   }
 
@@ -313,13 +313,13 @@ public class PlaneRenderer {
       sortedPlanes.add(new SortablePlane(distance, plane));
     }
     Collections.sort(
-        sortedPlanes,
-        new Comparator<SortablePlane>() {
-          @Override
-          public int compare(SortablePlane a, SortablePlane b) {
-            return Float.compare(a.distance, b.distance);
-          }
-        });
+            sortedPlanes,
+            new Comparator<SortablePlane>() {
+              @Override
+              public int compare(SortablePlane a, SortablePlane b) {
+                return Float.compare(a.distance, b.distance);
+              }
+            });
 
     float[] cameraView = new float[16];
     cameraPose.inverse().toMatrix(cameraView, 0);
@@ -338,8 +338,8 @@ public class PlaneRenderer {
     // Additive blending, masked by alpha channel, clearing alpha channel.
     GLES20.glEnable(GLES20.GL_BLEND);
     GLES20.glBlendFuncSeparate(
-        GLES20.GL_DST_ALPHA, GLES20.GL_ONE, // RGB (src, dest)
-        GLES20.GL_ZERO, GLES20.GL_ONE_MINUS_SRC_ALPHA); // ALPHA (src, dest)
+            GLES20.GL_DST_ALPHA, GLES20.GL_ONE, // RGB (src, dest)
+            GLES20.GL_ZERO, GLES20.GL_ONE_MINUS_SRC_ALPHA); // ALPHA (src, dest)
 
     // Set up the shader.
     GLES20.glUseProgram(planeProgram);
@@ -367,7 +367,7 @@ public class PlaneRenderer {
       plane.getCenterPose().getTransformedAxis(1, 1.0f, normal, 0);
 
       updatePlaneParameters(
-          planeMatrix, plane.getExtentX(), plane.getExtentZ(), plane.getPolygon());
+              planeMatrix, plane.getExtentX(), plane.getExtentZ(), plane.getPolygon());
 
       // Get plane index. Keep a map to assign same indices to same planes.
       Integer planeIndex = planeIndexMap.get(plane);
@@ -416,8 +416,8 @@ public class PlaneRenderer {
     planePose.getTransformedAxis(1, 1.0f, normal, 0);
     // Compute dot product of plane's normal with vector from camera to plane center.
     return (cameraX - planePose.tx()) * normal[0]
-        + (cameraY - planePose.ty()) * normal[1]
-        + (cameraZ - planePose.tz()) * normal[2];
+            + (cameraY - planePose.ty()) * normal[1]
+            + (cameraZ - planePose.tz()) * normal[2];
   }
 
   private static void colorRgbaToFloat(float[] planeColor, int colorRgba) {
@@ -428,21 +428,21 @@ public class PlaneRenderer {
   }
 
   private static final int[] PLANE_COLORS_RGBA = {
-    0xFFFFFFFF,
-    0xF44336FF,
-    0xE91E63FF,
-    0x9C27B0FF,
-    0x673AB7FF,
-    0x3F51B5FF,
-    0x2196F3FF,
-    0x03A9F4FF,
-    0x00BCD4FF,
-    0x009688FF,
-    0x4CAF50FF,
-    0x8BC34AFF,
-    0xCDDC39FF,
-    0xFFEB3BFF,
-    0xFFC107FF,
-    0xFF9800FF,
+          0xFFFFFFFF,
+          0xF44336FF,
+          0xE91E63FF,
+          0x9C27B0FF,
+          0x673AB7FF,
+          0x3F51B5FF,
+          0x2196F3FF,
+          0x03A9F4FF,
+          0x00BCD4FF,
+          0x009688FF,
+          0x4CAF50FF,
+          0x8BC34AFF,
+          0xCDDC39FF,
+          0xFFEB3BFF,
+          0xFFC107FF,
+          0xFF9800FF,
   };
 }

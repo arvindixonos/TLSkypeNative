@@ -4,14 +4,25 @@ import android.app.Activity;
 import android.app.PictureInPictureParams;
 import android.app.RemoteAction;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.graphics.Rect;
+import android.hardware.Camera;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
 import android.os.Build;
+import android.os.Handler;
+import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v7.app.AlertDialog;
 import android.text.Layout;
 import android.util.Log;
 import android.util.Rational;
@@ -30,22 +41,35 @@ import com.flashphoner.fpwcsapi.session.Stream;
 
 import org.webrtc.SurfaceViewRenderer;
 
+import java.security.Policy;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
-public class MainUIHandler
+public class MainUIHandler extends CameraCaptureSession.StateCallback
 {
     private boolean     drawMode;
     private boolean     switched;
     private boolean     minimisedSwitched;
     private boolean     videoView = false;
-    private boolean     backCam = true;
+    private boolean     backCam = false;
     private boolean     recording;
     private boolean     pointMode = false;
     private boolean     isAboveEight;
+    private boolean     timerRunning = false;
+    private boolean     flashOn;
     private Activity    currentActivity;
     private static  String TAG = "UI_TEST";
     private VideoChatActivity chatActivity;
+    private Handler     timerHandler;
+    private Runnable    timerRunnable;
+    private long        startTime;
+    public CameraTorchMode cameraTorchMode;
 
+    public Camera      camera;
     public FileButtonHelper    fileButtonHelper;
 
     SurfaceViewRendererCustom remote1Render;
@@ -63,9 +87,11 @@ public class MainUIHandler
     FloatingActionButton mPointToPlaneButton;
     FloatingActionButton mHistoryButton;
     FloatingActionButton mHistoryBackButton;
+    FloatingActionButton mFlashButton;
 
     TextView recordingText;
     TextView pointModeText;
+    TextView timerText;
 
     LinearLayout historyScreen;
 
@@ -82,9 +108,35 @@ public class MainUIHandler
     private final PictureInPictureParams.Builder mPictureInPictureParamsBuilder =
             new PictureInPictureParams.Builder();
 
+    public enum CameraTorchMode
+    {
+        ON,
+        OFF,
+        TO_TURN_ON
+    }
+
     public MainUIHandler (Activity activity)
     {
+
+//        if (!isFlashAvailable) {
+//
+//            AlertDialog alert = new AlertDialog.Builder(currentActivity)
+//                    .create();
+//            alert.setTitle("Error !!");
+//            alert.setMessage("Your device doesn't support flash light!");
+//            alert.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener()
+//            {
+//                public void onClick(DialogInterface dialog, int which)
+//                {
+//                    // closing the application
+//                    System.exit(0);
+//                }
+//            });
+//            alert.show();
+//            return;
+//        }
         currentActivity = activity;
+
         chatActivity = VideoChatActivity.getInstance();
 
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
@@ -102,9 +154,11 @@ public class MainUIHandler
         mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
         mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
         mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
+        mFlashButton = currentActivity.findViewById(R.id.FlashButton);
 
         recordingText = currentActivity.findViewById(R.id.startRecord);
         pointModeText = currentActivity.findViewById(R.id.Point2Plane);
+        timerText = currentActivity.findViewById(R.id.timerText);
 
         mButton = currentActivity.findViewById(R.id.button);
 
@@ -159,6 +213,132 @@ public class MainUIHandler
 //            }
 //        });
 //test
+        mFlashButton.setOnClickListener(new View.OnClickListener()
+        {
+            CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
+
+
+            @Override
+            public void onClick(View v)
+            {
+                boolean isFlashAvailable = currentActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+
+                if(!isFlashAvailable)
+                {
+                    VideoChatActivity.ShowToast("Flash not Available", currentActivity);
+                    return;
+                }
+                else
+                {
+                    VideoChatActivity.ShowToast("Flash Available", currentActivity);
+                }
+                if(camera == null)
+                {
+                    Log.d(TAG, "No Camera Present");
+                }
+                if(!flashOn)
+                {
+                    try
+                    {
+//                        if(backCam)
+//                        {
+//                            Camera.Parameters parameters = camera.getParameters();
+//                            List<String> strs = parameters.getSupportedFlashModes();
+//                            for (String str:strs)
+//                            {
+//                                Log.d(TAG, "Message string is " + str);
+//                            }
+//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+//                            camera.setParameters(parameters);
+//                            camera.startPreview();
+//
+//                        }
+//                        else
+//                        {
+                            try
+                            {
+                                String cameraId = cameraManager.getCameraIdList()[0];
+                                cameraManager.setTorchMode(cameraId, true);
+                            }
+                            catch(CameraAccessException e)
+                            {
+                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+                            }
+//                        }
+                        mFlashButton.setImageResource(R.drawable.flash_off);
+                        mFlashButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
+                        flashOn = true;
+                    }
+                    catch (Exception e)
+                    {
+                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+                    }
+                }
+                else
+                {
+                    try
+                    {
+//                        if(backCam)
+//                        {
+//                            Camera.Parameters parameters = camera.getParameters();
+//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+//                            camera.setParameters(parameters);
+//                            camera.startPreview();
+//                        }
+//                        else
+//                        {
+                            try
+                            {
+                                String cameraId = cameraManager.getCameraIdList()[0];
+                                cameraManager.setTorchMode(cameraId, false);
+                            }
+                            catch(CameraAccessException e)
+                            {
+                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+                            }
+//                        }
+                        mFlashButton.setImageResource(R.drawable.flash_on);
+                        mFlashButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+                        flashOn = false;
+                    }
+                    catch (Exception e)
+                    {
+                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+                    }
+                }
+            }
+        });
+
+        mFlashButton.callOnClick();
+        mSwitchCamera.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                VideoChatActivity.getInstance().ToggleCamera();
+
+                if(backCam)
+                {
+                    mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
+                    backCam = false;
+                    if(flashOn)
+                    {
+                        cameraTorchMode = CameraTorchMode.TO_TURN_ON;
+                        flashOn = false;
+                    }
+                }
+                else
+                {
+                    mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
+                    backCam = true;
+                    if(flashOn)
+                    {
+                        cameraTorchMode = CameraTorchMode.TO_TURN_ON;
+                        flashOn = false;
+                    }
+                }
+            }
+        });
 
         mHistoryBackButton.setOnClickListener(new View.OnClickListener()
         {
@@ -255,6 +435,10 @@ public class MainUIHandler
                 chatActivity.SendMessage("Disconnect");
                 chatActivity.Disconnect();
                 ChangeActivity();
+                if(flashOn)
+                {
+                    mFlashButton.callOnClick();
+                }
             }
         });
 
@@ -289,26 +473,6 @@ public class MainUIHandler
                     remote1Render.drawEnabled = false;
                     mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_white_18dp);
                     mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
-                }
-            }
-        });
-
-        mSwitchCamera.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                VideoChatActivity.getInstance().ToggleCamera();
-
-                if(backCam)
-                {
-                    mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
-                    backCam = false;
-                }
-                else
-                {
-                    mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
-                    backCam = true;
                 }
             }
         });
@@ -363,6 +527,35 @@ public class MainUIHandler
                 }));
             }
         });
+        timerHandler = new Handler();
+        timerRunnable = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                long millis = System.currentTimeMillis() - startTime;
+                int seconds = (int) (millis / 1000);
+                int minutes = seconds / 60;
+                seconds = seconds % 60;
+
+                timerText.setText(String.format("%d:%02d", minutes, seconds));
+
+                timerHandler.postDelayed(this, 500);
+            }
+        };
+    }
+
+    @Override
+    public void onConfigured(@NonNull CameraCaptureSession session)
+    {
+        CameraDevice device = session.getDevice();
+
+    }
+
+    @Override
+    public void onConfigureFailed(@NonNull CameraCaptureSession session)
+    {
+
     }
 
     void backKey ()
@@ -376,12 +569,40 @@ public class MainUIHandler
         }
     }
 
-    void ChangeActivity ()
+    private void ChangeActivity ()
     {
         Intent intent = new Intent(currentActivity, AppManager.class);
         intent.putExtra("KEY", "loggedin");
         currentActivity.finish();
         currentActivity.startActivity(intent);
+    }
+
+    public void CameraFlashHandler()
+    {
+        if(cameraTorchMode == CameraTorchMode.TO_TURN_ON)
+        {
+            cameraTorchMode = CameraTorchMode.ON;
+            mFlashButton.callOnClick();
+        }
+    }
+
+    public void StartTimer ()
+    {
+        if(timerRunning)
+            return;
+
+        startTime = System.currentTimeMillis();
+        timerHandler.postDelayed(timerRunnable, 0);
+        timerRunning = true;
+    }
+
+    public void StopTimer()
+    {
+        if(!timerRunning)
+            return;
+
+        timerHandler.removeCallbacks(timerRunnable);
+        timerRunning = false;
     }
 
     public void Minimise ()
@@ -486,6 +707,27 @@ public class MainUIHandler
                 mEndCall.setVisibility(View.VISIBLE);
             mPlusButton.setVisibility(View.VISIBLE);
         }
+    }
+
+    public String AddTimeStampToName(String fileName, String timeStamp)
+    {
+        String[] fileNames = fileName.split(Pattern.quote("."));
+
+        return fileNames[0] + timeStamp + "." + fileNames[1];
+    }
+
+    public String GetDate()
+    {
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        DateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy_HH-mm-ss");
+
+        return dateFormat.format(date);
+    }
+
+    void TorchCallBack()
+    {
+
     }
 
     public void ToggleVideoView ()

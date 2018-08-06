@@ -128,8 +128,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private static VideoChatActivity Instance;
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
-//    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom";
+    //    String roomName = "room-cd696c";
+    String roomName = "TLSkypeRoom-SuperCoolRoom";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -196,7 +196,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private final PointRenderer      pointRenderer = new PointRenderer();
 
     private final ObjectRenderer virtualObject = new ObjectRenderer();
-//    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+    //    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
     private final float[] anchorMatrix = new float[16];
@@ -698,6 +698,18 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         if (videoCapturerAndroid == null)
             return;
 
+        if(camera != null && uiHandler.cameraTorchMode == MainUIHandler.CameraTorchMode.TO_TURN_ON)
+        {
+            Log.d(TAG, "THis Was called");
+            uiHandler.camera = camera;
+            uiHandler.CameraFlashHandler();
+        }
+
+        if(camera == null)
+        {
+            Log.d(TAG, "Camera Null");
+        }
+
         if(VideoCapturerAndroid.arCorePresent && WebRTCMediaProvider.cameraID == 0)
         {
             long captureTimeNs = TimeUnit.MILLISECONDS.toNanos(SystemClock.elapsedRealtime());
@@ -1103,6 +1115,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 participant.play(participantView.surfaceViewRenderer);
                             }
                         }
+                        if(participantPublishing)
+                        {
+                            uiHandler.StartTimer();
+                        }
                     }
 
                     @Override
@@ -1112,6 +1128,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
+                        uiHandler.StartTimer();
                     }
 
                     @Override
@@ -1188,7 +1205,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             public void onDisconnection(final Connection connection) {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
-
+                uiHandler.StopTimer();
                 stream = null;
             }
         });
@@ -1212,30 +1229,30 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         switch (requestCode)
         {
             case PICKFILE_RESULT_CODE:
-            if (resultCode == RESULT_OK)
-            {
-                ContentResolver contentResolver = getApplicationContext().getContentResolver();
-                try
+                if (resultCode == RESULT_OK)
                 {
-                    InputStream fileInputStream = contentResolver.openInputStream(data.getData());
-                    String FilePath = data.getData().getPath();
-                    Log.d(TAG, " The File Path is " + FilePath);
-                     try
-                     {
-                         UploadFile(FilePath, fileInputStream);
-                     }
-                     catch (RuntimeException e)
-                     {
-                         Log.d(TAG, e.getMessage());
-                     }
+                    ContentResolver contentResolver = getApplicationContext().getContentResolver();
+                    try
+                    {
+                        InputStream fileInputStream = contentResolver.openInputStream(data.getData());
+                        String FilePath = data.getData().getPath();
+                        Log.d(TAG, " The File Path is " + FilePath);
+                        try
+                        {
+                            UploadFile(FilePath, fileInputStream);
+                        }
+                        catch (RuntimeException e)
+                        {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    }
+                    catch (FileNotFoundException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
-                catch (FileNotFoundException e)
-                {
-                    e.printStackTrace();
-                }
-            }
 
-            break;
+                break;
 
             case ScreenRecorder.PERMISSION_CODE:
                 if (resultCode == RESULT_OK)
@@ -1252,7 +1269,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                     handler.postDelayed(runnable, 200);
                 }
-            break;
+                break;
         }
     }
 
@@ -1313,15 +1330,24 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void run()
                     {
                         ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+
+                        }
+
+                        String[] fileNames = filePath.split("/");
+                        uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
                     }
                 });
             }
         }).start();
     }
 
-    public void DownloadFile(String fileName) {
+    public void DownloadFile(final String fileName)
+    {
+        final String fileDate = uiHandler.GetDate();
 
-        String filePath = "/sdcard/ReceivedFiles/" + fileName;
+        final String filePath = "/sdcard/ReceivedFiles/" + fileName;//uiHandler.AddTimeStampToName(fileName, fileDate);
         final FTPManager ftpManager = new FTPManager();
 
         if (ftpManager.running) {
@@ -1331,6 +1357,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         ftpManager.uploadORdownload = 2;
         ftpManager.applicationContext = getApplicationContext();
+        ftpManager.fileDate = fileDate;
         ftpManager.filePath = filePath;
         new Thread(new Runnable() {
             @Override
@@ -1343,7 +1370,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void run()
                     {
                         ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+
+                        }
+                        uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" +
+                                uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
                     }
+
                 });
             }
         }).start();

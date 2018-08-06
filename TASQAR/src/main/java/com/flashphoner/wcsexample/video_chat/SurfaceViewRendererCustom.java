@@ -30,7 +30,8 @@ import java.io.IOException;
  * Created by TakeLeap05 on 04-07-2018.
  */
 
-public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
+public class SurfaceViewRendererCustom extends SurfaceViewRenderer
+{
     private static final float TOUCH_TOLERANCE = 4;
     private Bitmap mBitmap;
     private Canvas mCanvas;
@@ -53,7 +54,8 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
     Rect nullRect = new Rect(0,0,0,0);
     //End DrawPicture Vars
 
-    public SurfaceViewRendererCustom(Context context) {
+    public SurfaceViewRendererCustom(Context context)
+    {
         super(context);
         this.setWillNotDraw(false);
 
@@ -134,12 +136,14 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
     }
 
     @Override
-    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    protected void onSizeChanged(int w, int h, int oldw, int oldh)
+    {
         super.onSizeChanged(w, h, oldw, oldh);
 
         Log.d(VideoChatActivity.TAG, w + " " + h + " " + oldw + " " + oldh);
 
-        if (w != 0 && h != 0) {
+        if (w != 0 && h != 0)
+        {
             newWidth = w;
             newHeight = h;
         }
@@ -260,7 +264,7 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer {
                 break;
             case MotionEvent.ACTION_UP:
 
-                VideoChatActivity.getInstance().AddBreak();
+//                VideoChatActivity.getInstance().AddBreak();
 
                 drawTouch_up(event.getX(), event.getY());
                 invalidate();
