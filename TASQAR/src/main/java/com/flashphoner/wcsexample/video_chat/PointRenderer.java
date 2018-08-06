@@ -127,10 +127,14 @@ public class PointRenderer {
         anchors.add(currentAnchorList);
     }
 
+    boolean first = true;
+
     public void AddPoint(Anchor anchor)
     {
-        Log.d(VideoChatActivity.TAG, "Adding Point");
-        currentAnchorList.add(anchor);
+        if(first)
+            currentAnchorList.add(anchor);
+
+        first = !first;
     }
 
     public float VecMagnitude(float[] p1, float[] p2)
@@ -294,18 +298,12 @@ public class PointRenderer {
         cubeVertices[7] = originPoint[1] + unitCubeVertices[faceID * 9 + 7] * lineLength;
         cubeVertices[8] = originPoint[2] + unitCubeVertices[faceID * 9 + 8] * lineLength;
 
-//        Vector3D rotationAxis = rotation.getAxis(RotationConvention.FRAME_TRANSFORM);
-//        double rotationAngle = rotation.getAngle();
-//
-//        Matrix.rotateM(cubeVertices, 0, (float)rotationAngle, (float)rotationAxis.getX(), (float)rotationAxis.getY(), (float)rotationAxis.getZ());
-
         return  cubeVertices;
     }
 
     public void draw(float[] cameraView, float[] cameraPerspective) {
 
-        float[] modelViewProjection = new float[16];
-        Matrix.multiplyMM(modelViewProjection, 0, cameraPerspective, 0, cameraView, 0);
+
 
         ShaderUtil.checkGLError(TAG, "Before draw");
 
@@ -314,7 +312,7 @@ public class PointRenderer {
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
         GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
         GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
-        GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);
+//        GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
         GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
         GLES20.glLineWidth(6.0f);
@@ -350,6 +348,21 @@ public class PointRenderer {
                     verticesBuffer.put(cubeArray).position(0);
 
                     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+
+                    float[] modelMatrix = new float[16];
+                    float[] modelViewMatrix = new float[16];
+                    float[] modelViewProjectionMatrix = new float[16];
+                    Matrix.setIdentityM(modelMatrix, 0);
+
+                    Vector3D rotationAxis = rotation.getAxis(RotationConvention.FRAME_TRANSFORM);
+                    double rotationAngle = rotation.getAngle();
+                    Matrix.rotateM(modelMatrix, 0, (float)rotationAngle, (float)rotationAxis.getX(), (float)rotationAxis.getY(), (float)rotationAxis.getZ());
+
+                    Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
+                    Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
+
+
+                    GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
 
                     GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, 3 * BYTES_PER_POINT, verticesBuffer);
 
