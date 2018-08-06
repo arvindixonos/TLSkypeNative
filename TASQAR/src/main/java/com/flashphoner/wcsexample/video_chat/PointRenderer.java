@@ -127,14 +127,16 @@ public class PointRenderer {
         anchors.add(currentAnchorList);
     }
 
-    boolean first = true;
+    int count = 0;
 
     public void AddPoint(Anchor anchor)
     {
-        if(first)
-            currentAnchorList.add(anchor);
+        count += 1;
 
-        first = !first;
+        if(count == 4) {
+            currentAnchorList.add(anchor);
+            count = 0;
+        }
     }
 
     public float VecMagnitude(float[] p1, float[] p2)
@@ -232,7 +234,7 @@ public class PointRenderer {
         return cross;
     }
 
-    float lineLength = 0.02f;
+    float lineLength = 0.05f;
     float[] unitCubeVertices = new float[] {    0, 0, 0, 1, 0, 0, 0, 1, 0, // 0
                                                 0, 1, 0, 1, 0, 0, 1, 1, 0, // 1
 
@@ -252,39 +254,9 @@ public class PointRenderer {
                                                 0, 1, 1, 1, 1, 0, 0, 1, 0  // 11
                                                 };
 
-    public float[] getMatrix(float[] rotationQuaternion) {
+    float[] edgePoints = new float[3 * 4];
 
-        // products
-        float q0q0  = rotationQuaternion[0] * rotationQuaternion[0];
-        float q0q1  = rotationQuaternion[0] * rotationQuaternion[1];
-        float q0q2  = rotationQuaternion[0] * rotationQuaternion[2];
-        float q0q3  = rotationQuaternion[0] * rotationQuaternion[3];
-        float q1q1  = rotationQuaternion[1] * rotationQuaternion[1];
-        float q1q2  = rotationQuaternion[1] * rotationQuaternion[2];
-        float q1q3  = rotationQuaternion[1] * rotationQuaternion[3];
-        float q2q2  = rotationQuaternion[2] * rotationQuaternion[2];
-        float q2q3  = rotationQuaternion[2] * rotationQuaternion[3];
-        float q3q3  = rotationQuaternion[3] * rotationQuaternion[3];
-
-        // create the matrix
-        float[] m = new float[9];
-
-        m [0] = 2.0f * (q0q0 + q1q1) - 1.0f;
-        m [1] = 2.0f * (q1q2 - q0q3);
-        m [2] = 2.0f * (q1q3 + q0q2);
-
-        m [3] = 2.0f * (q1q2 + q0q3);
-        m [4] = 2.0f * (q0q0 + q2q2) - 1.0f;
-        m [5] = 2.0f * (q2q3 - q0q1);
-
-        m [6] = 2.0f * (q1q3 - q0q2);
-        m [7] = 2.0f * (q2q3 + q0q1);
-        m [8] = 2.0f * (q0q0 + q3q3) - 1.0f;
-
-        return m;
-    }
-
-    float[] getCubeVertices(float[] originPoint, int faceID, Rotation rotation)
+    float[] getCubeVertices(float[] originPoint, int faceID)
     {
         float[] cubeVertices = new float[9];
 
@@ -301,9 +273,39 @@ public class PointRenderer {
         return  cubeVertices;
     }
 
+    float[] getEdgeVertices(float[] originPoint, int edgeFaceID)
+    {
+        float[] cubeVertices = new float[9];
+
+//        if(edgeFaceID == 0)
+//        {
+//            cubeVertices[0] = originPoint[0] + unitCubeVertices[faceID * 9 + 0] * lineLength;
+//            cubeVertices[1] = originPoint[1] + unitCubeVertices[faceID * 9 + 1] * lineLength;
+//            cubeVertices[2] = originPoint[2] + unitCubeVertices[faceID * 9 + 2] * lineLength;
+//            cubeVertices[3] = originPoint[0] + unitCubeVertices[faceID * 9 + 3] * lineLength;
+//            cubeVertices[4] = originPoint[1] + unitCubeVertices[faceID * 9 + 4] * lineLength;
+//            cubeVertices[5] = originPoint[2] + unitCubeVertices[faceID * 9 + 5] * lineLength;
+//            cubeVertices[6] = originPoint[0] + unitCubeVertices[faceID * 9 + 6] * lineLength;
+//            cubeVertices[7] = originPoint[1] + unitCubeVertices[faceID * 9 + 7] * lineLength;
+//            cubeVertices[8] = originPoint[2] + unitCubeVertices[faceID * 9 + 8] * lineLength;
+//        }
+//        else if(edgeFaceID == 1)
+//        {
+//            cubeVertices[0] = originPoint[0] + unitCubeVertices[faceID * 9 + 0] * lineLength;
+//            cubeVertices[1] = originPoint[1] + unitCubeVertices[faceID * 9 + 1] * lineLength;
+//            cubeVertices[2] = originPoint[2] + unitCubeVertices[faceID * 9 + 2] * lineLength;
+//            cubeVertices[3] = originPoint[0] + unitCubeVertices[faceID * 9 + 3] * lineLength;
+//            cubeVertices[4] = originPoint[1] + unitCubeVertices[faceID * 9 + 4] * lineLength;
+//            cubeVertices[5] = originPoint[2] + unitCubeVertices[faceID * 9 + 5] * lineLength;
+//            cubeVertices[6] = originPoint[0] + unitCubeVertices[faceID * 9 + 6] * lineLength;
+//            cubeVertices[7] = originPoint[1] + unitCubeVertices[faceID * 9 + 7] * lineLength;
+//            cubeVertices[8] = originPoint[2] + unitCubeVertices[faceID * 9 + 8] * lineLength;
+//        }
+
+        return  cubeVertices;
+    }
+
     public void draw(float[] cameraView, float[] cameraPerspective) {
-
-
 
         ShaderUtil.checkGLError(TAG, "Before draw");
 
@@ -312,12 +314,19 @@ public class PointRenderer {
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
         GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
         GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
-//        GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+        float[] modelMatrix = new float[16];
+        float[] modelViewMatrix = new float[16];
+        float[] modelViewProjectionMatrix = new float[16];
+        Matrix.setIdentityM(modelMatrix, 0);
+        Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
+        Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
+        GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
         GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
         GLES20.glLineWidth(6.0f);
 
         int numAnchorsList = anchors.size();
+        int numFaces = 0;
 
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
         {
@@ -336,55 +345,58 @@ public class PointRenderer {
                 Pose pose  = anchorsList.get(i).getPose();
                 float[] nextPoint = pose.getTranslation();
 
-                for(int faceID = 0; faceID < 12; faceID++)
+                int numFacesPoint = i == 0 ? 12 : 14;
+
+                for(int faceID = 0; faceID < numFacesPoint; faceID++)
                 {
-                    float[] rotationQuaternion = pose.getRotationQuaternion();
+                    int fetchFaceID = -1;
 
-                    Rotation rotation = new Rotation(rotationQuaternion[0], rotationQuaternion[1], rotationQuaternion[2], rotationQuaternion[3], true);
+                    if(i == 0)
+                    {
+                        fetchFaceID = faceID;
 
-                    cubeArray = getCubeVertices(nextPoint, faceID, rotation);
+                        cubeArray = getCubeVertices(nextPoint, fetchFaceID);
+                    }
+                    else
+                    {
+                        if(faceID >= 2)
+                        {
+                            fetchFaceID = faceID - 2;
+
+                            cubeArray = getCubeVertices(nextPoint, fetchFaceID);
+                        }
+                        else
+                        {
+                            cubeArray = getEdgeVertices(nextPoint, faceID);
+                        }
+                    }
+
+                    if(fetchFaceID == 0)
+                    {
+                        System.arraycopy(cubeArray, 0, edgePoints, 0, 3);
+                        System.arraycopy(cubeArray, 3, edgePoints, 3, 3);
+                        System.arraycopy(cubeArray, 6, edgePoints, 6, 3);
+                    }
+                    else if(fetchFaceID == 1)
+                    {
+                        System.arraycopy(cubeArray, 9, edgePoints, 9, 3);
+                    }
 
                     verticesBuffer = FloatBuffer.wrap(cubeArray);
                     verticesBuffer.put(cubeArray).position(0);
 
                     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
 
-                    float[] modelMatrix = new float[16];
-                    float[] modelViewMatrix = new float[16];
-                    float[] modelViewProjectionMatrix = new float[16];
-                    Matrix.setIdentityM(modelMatrix, 0);
+                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, numFaces * 36, 3 * BYTES_PER_POINT, verticesBuffer);
 
-                    Vector3D rotationAxis = rotation.getAxis(RotationConvention.FRAME_TRANSFORM);
-                    double rotationAngle = rotation.getAngle();
-                    Matrix.rotateM(modelMatrix, 0, (float)rotationAngle, (float)rotationAxis.getX(), (float)rotationAxis.getY(), (float)rotationAxis.getZ());
-
-                    Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
-                    Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
-
-
-                    GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
-
-                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, 3 * BYTES_PER_POINT, verticesBuffer);
-
-                    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
-
-                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                    numFaces++;
                 }
-
-                // pose.getRotationQuaternion();
-
-//                if(k < numAnchors - 1)
-//                {
-//                    Pose nextPose = anchorsList.get(k + 1).getPose();
-//
-//                    nextPose = new Pose(nextPose.getTranslation(), pose.getRotationQuaternion());
-//
-//                    nextPose = Pose.makeInterpolated(pose, nextPose, 0.1f);
-//
-//                    nextPoint = nextPose.getTranslation();
-//                }
             }
         }
+
+        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3 * numFaces);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
