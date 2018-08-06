@@ -125,8 +125,8 @@ public class PointRenderer {
     public float VecMagnitude(float[] p1, float[] p2)
     {
         return (float) Math.sqrt(   (p2[0] - p1[0]) *  (p2[0] - p1[0]) +
-                            (p2[1] - p1[1]) *  (p2[1] - p1[1]) +
-                            (p2[2] - p1[2]) *  (p2[2] - p1[2]));
+                (p2[1] - p1[1]) *  (p2[1] - p1[1]) +
+                (p2[2] - p1[2]) *  (p2[2] - p1[2]));
     }
 
     public float[] VecNormalized(float[] p1, float[] p2)
@@ -163,8 +163,8 @@ public class PointRenderer {
     public float VecMagnitude(float[] p)
     {
         return (float) Math.sqrt(   (p[0]) *  (p[0]) +
-                                    (p[1]) *  (p[1]) +
-                                    (p[2]) *  (p[2]));
+                (p[1]) *  (p[1]) +
+                (p[2]) *  (p[2]));
     }
 
     public float[] VecRotate(float[] vec, float[] axis, float angle)
@@ -272,9 +272,9 @@ public class PointRenderer {
                 }
 //                else
 //                {
-                    verticesFloatArray[i] = nextPoint[0];
-                    verticesFloatArray[i + 1] = nextPoint[1];
-                    verticesFloatArray[i + 2] = nextPoint[2];
+                verticesFloatArray[i] = nextPoint[0];
+                verticesFloatArray[i + 1] = nextPoint[1];
+                verticesFloatArray[i + 2] = nextPoint[2];
 //
 //                    nextPointSet = false;
 //                }

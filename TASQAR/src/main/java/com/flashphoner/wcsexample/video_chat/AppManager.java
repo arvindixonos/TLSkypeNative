@@ -157,8 +157,9 @@ public class AppManager extends AppCompatActivity
         }
 
         if( ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
-                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
+        {
 
             RequestAllPermissions();
         }
@@ -177,19 +178,29 @@ public class AppManager extends AppCompatActivity
         else
         {
             Log.d(TAG, "not Logged in");
-            setContentView(R.layout.activity_login);
+            try
+            {
+                setContentView(R.layout.activity_login);
+            }
+            catch(Exception e)
+            {
+                Log.d(TAG, "Exception is " + e.getMessage());
+            }
+            Log.d(TAG, "not Logged in a second time");
         }
     }
 
     public void RequestAllPermissions()
     {
         ActivityCompat.requestPermissions(AppManager.this,
-                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission_group.CAMERA},
                 ALL_PERMISSIONS);
     }
 
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
-        switch (requestCode) {
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+    {
+        switch (requestCode)
+        {
             case ALL_PERMISSIONS:
                 int permissionsCount = grantResults.length;
                 allPermissionsGiven = true;
@@ -197,7 +208,6 @@ public class AppManager extends AppCompatActivity
                 {
                     allPermissionsGiven = allPermissionsGiven & (grantResults[i] == PackageManager.PERMISSION_GRANTED);
                 }
-
                 break;
         }
     }

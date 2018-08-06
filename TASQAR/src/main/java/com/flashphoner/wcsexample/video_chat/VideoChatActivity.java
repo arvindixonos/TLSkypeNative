@@ -28,6 +28,7 @@ import android.os.PowerManager;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.provider.Settings;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
@@ -35,6 +36,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.Rational;
 import android.view.Display;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -98,13 +100,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -127,7 +128,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private static VideoChatActivity Instance;
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
-//    String roomName = "room-cd696c";
+    //    String roomName = "room-cd696c";
     String roomName = "TLSkypeRoom-SuperCoolRoom";
 //    UI references.
 
@@ -195,7 +196,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private final PointRenderer      pointRenderer = new PointRenderer();
 
     private final ObjectRenderer virtualObject = new ObjectRenderer();
-//    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+    //    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
     private final float[] anchorMatrix = new float[16];
@@ -368,6 +369,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void AddBreak()
     {
+        motionEvents.clear();
         pointRenderer.AddBreak();
     }
 
@@ -420,8 +422,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         cameraSwitchHandler = new VideoCapturerAndroid.CameraSwitchHandler()
         {
             @Override
-            public void onCameraSwitchDone(boolean frontCamera)
-            {
+            public void onCameraSwitchDone(boolean frontCamera) {
 
                 if(!frontCamera && VideoCapturerAndroid.arCorePresent)
                 {
@@ -431,8 +432,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
             @Override
-            public void onCameraSwitchError(String s)
-            {
+            public void onCameraSwitchError(String s) {
 
             }
         };
@@ -694,13 +694,21 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
+
+        if (videoCapturerAndroid == null)
+            return;
+
         if(camera != null && uiHandler.cameraTorchMode == MainUIHandler.CameraTorchMode.TO_TURN_ON)
         {
+            Log.d(TAG, "THis Was called");
             uiHandler.camera = camera;
             uiHandler.CameraFlashHandler();
         }
-        if (videoCapturerAndroid == null)
-            return;
+
+        if(camera == null)
+        {
+            Log.d(TAG, "Camera Null");
+        }
 
         if(VideoCapturerAndroid.arCorePresent && WebRTCMediaProvider.cameraID == 0)
         {
@@ -1074,7 +1082,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             stream = room.publish(localRenderer, VideoChatActivity.this);
                             stream.unmuteAudio();
                         }
-
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
                          */
@@ -1117,11 +1124,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void onJoined(final Participant participant) {
 
                         Log.d(TAG, "ON JOINED " + participant.getName());
-
-                        uiHandler.StartTimer();
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
+                        uiHandler.StartTimer();
                     }
 
                     @Override
@@ -1198,7 +1204,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             public void onDisconnection(final Connection connection) {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
-
                 uiHandler.StopTimer();
                 stream = null;
             }
@@ -1223,30 +1228,30 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         switch (requestCode)
         {
             case PICKFILE_RESULT_CODE:
-            if (resultCode == RESULT_OK)
-            {
-                ContentResolver contentResolver = getApplicationContext().getContentResolver();
-                try
+                if (resultCode == RESULT_OK)
                 {
-                    InputStream fileInputStream = contentResolver.openInputStream(data.getData());
-                    String FilePath = data.getData().getPath();
-                    Log.d(TAG, " The File Path is " + FilePath);
-                     try
-                     {
-                         UploadFile(FilePath, fileInputStream);
-                     }
-                     catch (RuntimeException e)
-                     {
-                         Log.d(TAG, e.getMessage());
-                     }
+                    ContentResolver contentResolver = getApplicationContext().getContentResolver();
+                    try
+                    {
+                        InputStream fileInputStream = contentResolver.openInputStream(data.getData());
+                        String FilePath = data.getData().getPath();
+                        Log.d(TAG, " The File Path is " + FilePath);
+                        try
+                        {
+                            UploadFile(FilePath, fileInputStream);
+                        }
+                        catch (RuntimeException e)
+                        {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    }
+                    catch (FileNotFoundException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
-                catch (FileNotFoundException e)
-                {
-                    e.printStackTrace();
-                }
-            }
 
-            break;
+                break;
 
             case ScreenRecorder.PERMISSION_CODE:
                 if (resultCode == RESULT_OK)
@@ -1263,7 +1268,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                     handler.postDelayed(runnable, 200);
                 }
-            break;
+                break;
         }
     }
 

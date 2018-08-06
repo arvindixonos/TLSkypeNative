@@ -53,7 +53,7 @@ public class PointCloudRenderer {
 
   public PointCloudRenderer() {}
 
-//  /**
+  //  /**
 //   * Allocates and initializes OpenGL resources needed by the plane renderer. Must be called on the
 //   * OpenGL thread, typically in {@link GLSurfaceView.Renderer#onSurfaceCreated(GL10, EGLConfig)}.
 //   *
@@ -74,9 +74,9 @@ public class PointCloudRenderer {
     ShaderUtil.checkGLError(TAG, "buffer alloc");
 
     int vertexShader =
-        ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
+            ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
     int passthroughShader =
-        ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
+            ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
 
     programName = GLES20.glCreateProgram();
     GLES20.glAttachShader(programName, vertexShader);
@@ -119,7 +119,7 @@ public class PointCloudRenderer {
     }
 
     GLES20.glBufferSubData(
-        GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, lastPointCloud.getPoints());
+            GLES20.GL_ARRAY_BUFFER, 0, numPoints * BYTES_PER_POINT, lastPointCloud.getPoints());
     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
     ShaderUtil.checkGLError(TAG, "after update");

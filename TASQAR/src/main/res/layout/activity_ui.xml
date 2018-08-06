@@ -46,9 +46,9 @@
         android:adjustViewBounds="false"
         android:contentDescription="TODO"
         android:scaleType="fitXY"
-        app:srcCompat="@drawable/bg"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:srcCompat="@color/blueBG" />
 
     <RelativeLayout
         android:id="@+id/RenderHolder"
