@@ -40,6 +40,10 @@ android {
             }
         }
     }
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
 }
 
 dependencies {
@@ -59,6 +63,7 @@ dependencies {
     implementation project(':flashphoner')
     implementation project(':libjingle_peerconnection')
     compile 'org.apache.commons:commons-lang3:3.7'
+    compile 'org.apache.commons:commons-math3:3.6.1'
 }
 
 play {

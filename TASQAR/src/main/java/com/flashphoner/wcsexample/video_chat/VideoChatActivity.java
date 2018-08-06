@@ -816,6 +816,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //                    }
 //                }
 
+                    break;
                 }
             }
         }
