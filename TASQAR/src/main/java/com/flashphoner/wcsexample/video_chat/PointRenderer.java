@@ -376,7 +376,7 @@ public class PointRenderer {
 
             GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, (totalPoints / 3) * BYTES_PER_POINT, verticesBuffer);
 
-            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, (totalPoints / 3));
+            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, (totalPoints / 3));
 
             GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         }

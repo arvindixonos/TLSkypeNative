@@ -49,7 +49,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class MainUIHandler extends CameraCaptureSession.StateCallback
+public class MainUIHandler
 {
     private boolean     drawMode;
     private boolean     switched;
@@ -117,24 +117,6 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
 
     public MainUIHandler (Activity activity)
     {
-
-//        if (!isFlashAvailable) {
-//
-//            AlertDialog alert = new AlertDialog.Builder(currentActivity)
-//                    .create();
-//            alert.setTitle("Error !!");
-//            alert.setMessage("Your device doesn't support flash light!");
-//            alert.setButton(DialogInterface.BUTTON_POSITIVE, "OK", new DialogInterface.OnClickListener()
-//            {
-//                public void onClick(DialogInterface dialog, int which)
-//                {
-//                    // closing the application
-//                    System.exit(0);
-//                }
-//            });
-//            alert.show();
-//            return;
-//        }
         currentActivity = activity;
 
         chatActivity = VideoChatActivity.getInstance();
@@ -221,40 +203,40 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
             @Override
             public void onClick(View v)
             {
-                boolean isFlashAvailable = currentActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
-
-                if(!isFlashAvailable)
-                {
-                    VideoChatActivity.ShowToast("Flash not Available", currentActivity);
-                    return;
-                }
-                else
-                {
-                    VideoChatActivity.ShowToast("Flash Available", currentActivity);
-                }
-                if(camera == null)
-                {
-                    Log.d(TAG, "No Camera Present");
-                }
+//                boolean isFlashAvailable = currentActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
+//
+//                if(!isFlashAvailable)
+//                {
+//                    VideoChatActivity.ShowToast("Flash not Available", currentActivity);
+//                    return;
+//                }
+//                else
+//                {
+//                    VideoChatActivity.ShowToast("Flash Available", currentActivity);
+//                }
+//                if(camera == null)
+//                {
+//                    Log.d(TAG, "No Camera Present");
+//                }
                 if(!flashOn)
                 {
                     try
                     {
-//                        if(backCam)
-//                        {
-//                            Camera.Parameters parameters = camera.getParameters();
-//                            List<String> strs = parameters.getSupportedFlashModes();
-//                            for (String str:strs)
-//                            {
-//                                Log.d(TAG, "Message string is " + str);
-//                            }
-//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-//                            camera.setParameters(parameters);
-//                            camera.startPreview();
-//
-//                        }
-//                        else
-//                        {
+                        if(backCam)
+                        {
+                            Camera.Parameters parameters = camera.getParameters();
+                            List<String> strs = parameters.getSupportedFlashModes();
+                            for (String str:strs)
+                            {
+                                Log.d(TAG, "Message string is " + str);
+                            }
+                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                            camera.setParameters(parameters);
+                            camera.startPreview();
+
+                        }
+                        else
+                        {
                             try
                             {
                                 String cameraId = cameraManager.getCameraIdList()[0];
@@ -264,7 +246,7 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
                             {
                                 VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
                             }
-//                        }
+                        }
                         mFlashButton.setImageResource(R.drawable.flash_off);
                         mFlashButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
                         flashOn = true;
@@ -278,15 +260,15 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
                 {
                     try
                     {
-//                        if(backCam)
-//                        {
-//                            Camera.Parameters parameters = camera.getParameters();
-//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-//                            camera.setParameters(parameters);
-//                            camera.startPreview();
-//                        }
-//                        else
-//                        {
+                        if(backCam)
+                        {
+                            Camera.Parameters parameters = camera.getParameters();
+                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                            camera.setParameters(parameters);
+                            camera.startPreview();
+                        }
+                        else
+                        {
                             try
                             {
                                 String cameraId = cameraManager.getCameraIdList()[0];
@@ -296,7 +278,7 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
                             {
                                 VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
                             }
-//                        }
+                        }
                         mFlashButton.setImageResource(R.drawable.flash_on);
                         mFlashButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
                         flashOn = false;
@@ -309,7 +291,6 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
             }
         });
 
-        mFlashButton.callOnClick();
         mSwitchCamera.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -543,19 +524,6 @@ public class MainUIHandler extends CameraCaptureSession.StateCallback
                 timerHandler.postDelayed(this, 500);
             }
         };
-    }
-
-    @Override
-    public void onConfigured(@NonNull CameraCaptureSession session)
-    {
-        CameraDevice device = session.getDevice();
-
-    }
-
-    @Override
-    public void onConfigureFailed(@NonNull CameraCaptureSession session)
-    {
-
     }
 
     void backKey ()
