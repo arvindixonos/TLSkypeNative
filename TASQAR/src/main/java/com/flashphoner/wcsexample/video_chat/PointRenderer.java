@@ -119,13 +119,13 @@ public class PointRenderer {
     {
         count += 1;
 
-        if(count == 2) {
+        if(count == 3) {
             currentAnchorList.add(anchor);
             count = 0;
         }
     }
 
-    float lineLength = 0.01f;
+    float lineLength = 0.015f;
 
     int[] unitCubeIndices = new int[] {         0, 1, 2, // 0
                                                 0, 3, 2, // 1
