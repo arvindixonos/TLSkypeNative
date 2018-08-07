@@ -253,27 +253,7 @@ public class PointRenderer {
             0, 1, 1  //7
             };
 
-    float[] edgePoints = new float[3 * 4];
-
-    float[] getFaceFromPoints(float[] p1, float[] p2, float[] p3, float[] p4, int index)
-    {
-        float[] cubeVertices = new float[9];
-
-        if(index == 0)
-        {
-            System.arraycopy(p1, 0, cubeVertices, 0, 3);
-            System.arraycopy(p2, 0, cubeVertices, 3, 3);
-            System.arraycopy(p3, 0, cubeVertices, 6, 3);
-        }
-        else
-        {
-            System.arraycopy(p3, 0, cubeVertices, 0, 3);
-            System.arraycopy(p4, 0, cubeVertices, 3, 3);
-            System.arraycopy(p1, 0, cubeVertices, 6, 3);
-        }
-
-        return  cubeVertices;
-    }
+    float[] edgePoints = new float[3 * 4 * 2];
 
     float[] getCubePoint(float[] originPoint, int pointIndex)
     {
@@ -338,10 +318,12 @@ public class PointRenderer {
                 Pose pose  = anchorsList.get(i).getPose();
                 float[] originPoint = pose.getTranslation();
 
-                int numFacesPoint = i == 0 ? 12 : 14;
+                int numFacesPoint = i == 0 ? 12 : 24;
 
                 for(int faceID = 0; faceID < numFacesPoint; faceID++)
                 {
+                    GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
+
                     int fetchFaceID = -1;
 
                     if(i == 0)
@@ -364,9 +346,9 @@ public class PointRenderer {
                     }
                     else
                     {
-                        if(faceID >= 2)
+                        if(faceID >= 12)
                         {
-                            fetchFaceID = faceID - 2;
+                            fetchFaceID = faceID - 12;
 
                             int[] indices = getCubeIndices(fetchFaceID);
 
@@ -387,16 +369,31 @@ public class PointRenderer {
                         }
                         else
                         {
-                            float[] p1 = getCubePoint(originPoint, 4);
-                            float[] p2 = getCubePoint(originPoint, 5);
-                            float[] p3 = new float[3];
-                            System.arraycopy(edgePoints, 0, p3, 0, 3);
-                            float[] p4 = new float[3];
-                            System.arraycopy(edgePoints, 3, p4, 0, 3);
+                            if(faceID == 0)
+                            {
+                                System.arraycopy(getCubePoint(originPoint, 4), 0, edgePoints, 12, 3);
+                                System.arraycopy(getCubePoint(originPoint, 5), 0, edgePoints, 15, 3);
+                                System.arraycopy(getCubePoint(originPoint, 6), 0, edgePoints, 18, 3);
+                                System.arraycopy(getCubePoint(originPoint, 7), 0, edgePoints, 21, 3);
+                            }
 
-                            int edgeFaceIndex = 1;
+                            int[] indices = getCubeIndices(faceID);
 
-                            cubeArray = getFaceFromPoints(p1, p1, p1, p1, edgeFaceIndex);
+                            for(int indicesIndex = 0; indicesIndex < 3; indicesIndex++)
+                            {
+                                System.arraycopy(edgePoints, indices[indicesIndex] * 3, cubeArray, indicesIndex * 3, 3);
+                            }
+
+                            int edgeFaceIndex = faceID % 2;
+
+                            if(edgeFaceIndex == 0)
+                            {
+                                GLES20.glUniform4f(colorUniform, 0.2f, 0.6f, 0.1f, 1.0f);
+                            }
+                            else
+                            {
+                                GLES20.glUniform4f(colorUniform, 1f, 0.5f, 0f, 1.0f);
+                            }
                         }
                     }
 
@@ -405,16 +402,17 @@ public class PointRenderer {
 
                     GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
 
-                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, numFaces * 36, 3 * BYTES_PER_POINT, verticesBuffer);
+                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, 3 * BYTES_PER_POINT, verticesBuffer);
+
+                    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
+                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
                     numFaces++;
                 }
             }
         }
 
-        GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3 * numFaces);
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
