@@ -119,108 +119,13 @@ public class PointRenderer {
     {
         count += 1;
 
-        if(count == 4) {
+        if(count == 2) {
             currentAnchorList.add(anchor);
             count = 0;
         }
     }
 
-    public float VecMagnitude(float[] p1, float[] p2)
-    {
-        return (float) Math.sqrt(   (p2[0] - p1[0]) *  (p2[0] - p1[0]) +
-                            (p2[1] - p1[1]) *  (p2[1] - p1[1]) +
-                            (p2[2] - p1[2]) *  (p2[2] - p1[2]));
-    }
-
-    public float[] VecNormalized(float[] p1, float[] p2)
-    {
-        float magnitude = VecMagnitude(p1, p2);
-
-        float[] normalized = new float[3];
-
-        normalized[0] = (p2[0] - p1[0]) / magnitude;
-        normalized[1] = (p2[1] - p1[1]) / magnitude;
-        normalized[2] = (p2[2] - p1[2]) / magnitude;
-
-        return  normalized;
-    }
-
-    public float[] VecNormalized(float[] p1)
-    {
-        float magnitude = VecMagnitude(p1);
-
-        float[] normalized = new float[3];
-
-        normalized[0] = (p1[0]) / magnitude;
-        normalized[1] = (p1[1]) / magnitude;
-        normalized[2] = (p1[2]) / magnitude;
-
-        return  normalized;
-    }
-
-    public float VecDot(float[] p1, float[] p2)
-    {
-        return  p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
-    }
-
-    public float VecMagnitude(float[] p)
-    {
-        return (float) Math.sqrt(   (p[0]) *  (p[0]) +
-                                    (p[1]) *  (p[1]) +
-                                    (p[2]) *  (p[2]));
-    }
-
-    public float[] VecRotate(float[] vec, float[] axis, float angle)
-    {
-        float[] rotatedVec = new float[3];
-
-        float[] part1 = new float[3];
-        part1[0] = (float) (vec[0] * Math.cos(Math.PI / 2.0f));
-        part1[1] = (float) (vec[1] * Math.cos(Math.PI / 2.0f));
-        part1[2] = (float) (vec[2] * Math.cos(Math.PI / 2.0f));
-
-        float[] part2 = new float[3];
-        part2[0] = (float) (axis[0] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
-        part2[1] = (float) (axis[1] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
-        part2[2] = (float) (axis[2] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
-
-        float[] part3 = new float[3];
-        part3[0] = (float) (VecCross(vec, axis)[0] * Math.sin(Math.PI / 2.0f));
-        part3[1] = (float) (VecCross(vec, axis)[1] * Math.sin(Math.PI / 2.0f));
-        part3[2] = (float) (VecCross(vec, axis)[2] * Math.sin(Math.PI / 2.0f));
-
-        rotatedVec[0] = part1[0] + part2[0] + part3[0];
-        rotatedVec[1] = part1[1] + part2[1] + part3[1];
-        rotatedVec[2] = part1[2] + part2[2] + part3[2];
-
-        return rotatedVec;
-    }
-
-    public float VecAngle(float[] p1, float[] p2)
-    {
-        float angle = 0.0f;
-
-        angle = (float) Math.atan2(VecMagnitude(VecCross(p1, p2)), VecDot(p1, p2));
-
-        float[] crossProduct = VecCross(p1, p2);
-
-        float sign = -Math.signum(crossProduct[2]);
-
-        return  angle;
-    }
-
-    public float[] VecCross(float[] p1, float[] p2)
-    {
-        float[] cross = new float[3];               //a × b = {aybz - azby; azbx - axbz; axby - aybx}
-
-        cross[0] = p1[1] * p2[2] - p1[2] * p2[1];
-        cross[1] = p1[2] * p2[0] - p1[0] * p2[2];
-        cross[2] = p1[0] * p2[1] - p1[1] * p2[0];
-
-        return cross;
-    }
-
-    float lineLength = 0.05f;
+    float lineLength = 0.01f;
 
     int[] unitCubeIndices = new int[] {         0, 1, 2, // 0
                                                 0, 3, 2, // 1
@@ -275,7 +180,6 @@ public class PointRenderer {
         return  finalPoints;
     }
 
-    boolean toggle = false;
     public void draw(float[] cameraView, float[] cameraPerspective) {
 
         ShaderUtil.checkGLError(TAG, "Before draw");
@@ -294,12 +198,10 @@ public class PointRenderer {
         GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
         GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
-        GLES20.glLineWidth(6.0f);
+        GLES20.glLineWidth(3.0f);
 
         int numAnchorsList = anchors.size();
         int numFaces = 0;
-
-        toggle = !toggle;
 
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
         {
@@ -322,8 +224,6 @@ public class PointRenderer {
 
                 for(int faceID = 0; faceID < numFacesPoint; faceID++)
                 {
-                    GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
-
                     int fetchFaceID = -1;
 
                     if(i == 0)
@@ -359,7 +259,7 @@ public class PointRenderer {
                                 System.arraycopy(point, 0, cubeArray, index * 3, 3);
                             }
 
-                            if(faceID == 2)
+                            if(fetchFaceID == 2)
                             {
                                 System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
                                 System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
@@ -383,17 +283,6 @@ public class PointRenderer {
                             {
                                 System.arraycopy(edgePoints, indices[indicesIndex] * 3, cubeArray, indicesIndex * 3, 3);
                             }
-
-                            int edgeFaceIndex = faceID % 2;
-
-                            if(edgeFaceIndex == 0)
-                            {
-                                GLES20.glUniform4f(colorUniform, 0.2f, 0.6f, 0.1f, 1.0f);
-                            }
-                            else
-                            {
-                                GLES20.glUniform4f(colorUniform, 1f, 0.5f, 0f, 1.0f);
-                            }
                         }
                     }
 
@@ -411,8 +300,6 @@ public class PointRenderer {
                 }
             }
         }
-
-
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);

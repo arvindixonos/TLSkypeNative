@@ -264,7 +264,7 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
                 break;
             case MotionEvent.ACTION_UP:
 
-//                VideoChatActivity.getInstance().AddBreak();
+                VideoChatActivity.getInstance().AddBreak();
 
                 drawTouch_up(event.getX(), event.getY());
                 invalidate();
