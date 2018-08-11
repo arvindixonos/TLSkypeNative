@@ -16,6 +16,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewDebug;
 
 import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturerAndroid;
@@ -240,6 +241,9 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
                 int width = getWidth();
                 int height = getHeight();
 
+                if(VideoChatActivity.getInstance().arrowMode)
+                    VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
+
 //                VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
                 if(drawEnabled)
                     drawTouch_start(event.getX(), event.getY());
@@ -256,7 +260,8 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
 
 //                Log.d(VideoChatActivity.TAG, "SURF " + xPos + " " + yPos);
 
-                VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
+                if(!VideoChatActivity.getInstance().arrowMode)
+                    VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
 
                 if(drawEnabled)
                     drawTouch_move(event.getX(), event.getY());
@@ -264,7 +269,8 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
                 break;
             case MotionEvent.ACTION_UP:
 
-                VideoChatActivity.getInstance().AddBreak();
+                if(!VideoChatActivity.getInstance().arrowMode)
+                    VideoChatActivity.getInstance().AddBreak();
 
                 drawTouch_up(event.getX(), event.getY());
                 invalidate();

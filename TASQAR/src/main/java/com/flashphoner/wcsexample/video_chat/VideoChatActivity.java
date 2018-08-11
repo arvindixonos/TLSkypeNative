@@ -130,7 +130,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom";
+    String roomName = "TLSkypeRoom-CoolRoom1";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -197,10 +197,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private final PointRenderer      pointRenderer = new PointRenderer();
 
     private final ObjectRenderer virtualObject = new ObjectRenderer();
-//    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
     private final float[] anchorMatrix = new float[16];
+
+    public      boolean arrowMode = false;
 
     // Anchors created from taps used for object placing with a given color.
     private static class ColoredAnchor {
@@ -232,12 +234,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/sphere.obj", "models/andy.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-//            virtualObjectShadow.createOnGlThread(this, "models/andy_shadow.obj", "models/andy_shadow.png");
-//            virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
-//            virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
+            virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/andy_shadow.png");
+            virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
+            virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
         } catch (IOException e) {
             Log.e(TAG, "Failed to read an asset file", e);
@@ -454,55 +456,57 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onClick(View view)
             {
-                final Context ctx = VideoChatActivity.this;
-                new ChooserDialog(ctx)
-                        .withStartFile(null)
-//                        .withResources(R.string.title_choose_any_file, R.string.title_choose, R.string.dialog_cancel)
-//                        .withFileIconsRes(false, R.mipmap.ic_my_file, R.mipmap.ic_my_folder)
-                        .withAdapterSetter(new ChooserDialog.AdapterSetter() {
-                            @Override
-                            public void apply(DirAdapter adapter) {
-                                //
-                            }
-                        })
-                        .withChosenListener(new ChooserDialog.Result() {
-                            @Override
-                            public void onChoosePath(String path, File pathFile) {
-                                Toast.makeText(ctx, "FILE: " + path, Toast.LENGTH_SHORT).show();
-                                InputStream fileInputStream = null;
-                                try {
-                                    fileInputStream = new FileInputStream(pathFile);
-                                    UploadFile(path, fileInputStream);
 
-                                } catch (FileNotFoundException e) {
-                                    e.printStackTrace();
-                                }
-                                catch (RuntimeException e)
-                                {
-                                    Log.d(TAG, e.getMessage());
-                                }
-                            }
-                        })
-                        .build()
-                        .show();
-
-//                nHandler.post(new Runnable()
-//                {
-//                    @Override
-//                    public void run()
-//                    {
-//                        Intent fileintent = new Intent(Intent.ACTION_GET_CONTENT);
-//                        fileintent.setType("gagt/sdf");
-//                        try
-//                        {
-//                            startActivityForResult(fileintent, PICKFILE_RESULT_CODE);
-//                        }
-//                        catch (ActivityNotFoundException e)
-//                        {
-//                            Log.e("tag", "No activity can handle picking a file. Showing alternatives.");
-//                        }
-//                    }
-//                });
+                arrowMode = !arrowMode;
+//                final Context ctx = VideoChatActivity.this;
+//                new ChooserDialog(ctx)
+//                        .withStartFile(null)
+////                        .withResources(R.string.title_choose_any_file, R.string.title_choose, R.string.dialog_cancel)
+////                        .withFileIconsRes(false, R.mipmap.ic_my_file, R.mipmap.ic_my_folder)
+//                        .withAdapterSetter(new ChooserDialog.AdapterSetter() {
+//                            @Override
+//                            public void apply(DirAdapter adapter) {
+//                                //
+//                            }
+//                        })
+//                        .withChosenListener(new ChooserDialog.Result() {
+//                            @Override
+//                            public void onChoosePath(String path, File pathFile) {
+//                                Toast.makeText(ctx, "FILE: " + path, Toast.LENGTH_SHORT).show();
+//                                InputStream fileInputStream = null;
+//                                try {
+//                                    fileInputStream = new FileInputStream(pathFile);
+//                                    UploadFile(path, fileInputStream);
+//
+//                                } catch (FileNotFoundException e) {
+//                                    e.printStackTrace();
+//                                }
+//                                catch (RuntimeException e)
+//                                {
+//                                    Log.d(TAG, e.getMessage());
+//                                }
+//                            }
+//                        })
+//                        .build()
+//                        .show();
+//
+////                nHandler.post(new Runnable()
+////                {
+////                    @Override
+////                    public void run()
+////                    {
+////                        Intent fileintent = new Intent(Intent.ACTION_GET_CONTENT);
+////                        fileintent.setType("gagt/sdf");
+////                        try
+////                        {
+////                            startActivityForResult(fileintent, PICKFILE_RESULT_CODE);
+////                        }
+////                        catch (ActivityNotFoundException e)
+////                        {
+////                            Log.e("tag", "No activity can handle picking a file. Showing alternatives.");
+////                        }
+////                    }
+////                });
             }
         });
 
@@ -586,24 +590,28 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
             }
 
-            // Visualize anchors created by touch.
-//            float scaleFactor = 0.05f;
-//            for (ColoredAnchor coloredAnchor : anchors) {
-//                if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
-//                    continue;
-//                }
-//                // Get the current pose of an Anchor in world space. The Anchor pose is updated
-//                // during calls to session.update() as ARCore refines its estimate of the world.
-//                coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
-//
-//                // Update and draw the model and its shadow.
-//                virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-////                virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
-//                virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-////                virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-//            }
+            if(arrowMode)
+            {
+//             Visualize anchors created by touch.
+                float scaleFactor = 0.3f;
+                for (ColoredAnchor coloredAnchor : anchors) {
+                    if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
+                        continue;
+                    }
+                    // Get the current pose of an Anchor in world space. The Anchor pose is updated
+                    // during calls to session.update() as ARCore refines its estimate of the world.
+                    coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
 
-            pointRenderer.draw(viewmtx, projmtx);
+                    // Update and draw the model and its shadow.
+                    virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
+                    virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
+                    virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+                    virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+                }
+            }
+            else {
+                pointRenderer.draw(viewmtx, projmtx);
+            }
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -611,6 +619,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             // Avoid crashing the application due to unhandled exceptions.
             Log.e(TAG, "Exception on the OpenGL thread", t);
         }
+
     }
 
     public void SavePicture() throws IOException {
@@ -799,24 +808,29 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
 //                    Log.d(TAG, "HIT FOUND");
 
+                if(!arrowMode)
+                {
                     SpawnPoint(hit);
+                }
+                else
+                {
+                    if(pointsOrPlaneSpawn)
+                    {
+                        if(currentTrackable instanceof com.google.ar.core.Point)
+                        {
+                            SpawnArrow(hit, camera);
+                        }
+                    }
+                    else
+                    {
+                        if(currentTrackable instanceof com.google.ar.core.Plane)
+                        {
+                            SpawnArrow(hit, camera);
+                        }
+                    }
+                }
 
-//                if(pointsOrPlaneSpawn)
-//                {
-//                    if(currentTrackable instanceof com.google.ar.core.Point)
-//                    {
-//                        SpawnArrow(hit, camera);
-//                    }
-//                }
-//                else
-//                {
-//                    if(currentTrackable instanceof com.google.ar.core.Plane)
-//                    {
-//                        SpawnArrow(hit, camera);
-//                    }
-//                }
-
-                    break;
+                break;
 
                 }
             }

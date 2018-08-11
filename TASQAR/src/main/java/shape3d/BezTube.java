@@ -18,7 +18,7 @@ import shapes3d.utils.Rot;
 import shapes3d.utils.TubeRadius;
 import shapes3d.utils.VectorUtil;
 
-public class BezTube extends shape3d.Mesh2DCoreWithCaps {
+public class BezTube extends shapes3d.Mesh2DCoreWithCaps {
     protected P_Bezier3D bz;
     protected I_RadiusGen tRad;
 
@@ -151,8 +151,8 @@ public class BezTube extends shape3d.Mesh2DCoreWithCaps {
             var15[var13] = new PVector(var12.x, var12.y, var12.z);
         }
 
-        this.startEC.calcShape(var15, this.ewSteps, 1);
-        this.endEC.calcShape(var14, this.ewSteps, -1);
+//        this.startEC.calcShape(var15, this.ewSteps, 1);
+//        this.endEC.calcShape(var14, this.ewSteps, -1);
     }
 
     protected PVector[] createCircleAboutAxis(PVector var1) {
