@@ -73,8 +73,8 @@ dependencies {
     //    implementation project(':google_ar_required')
     implementation project(':processing-core')
     //noinspection GradleCompatible
-    implementation project(':Shapes3d')
     compile 'com.google.android.support:wearable:1.1.+'
+    implementation project(':Shapes3d')
 }
 
 play {

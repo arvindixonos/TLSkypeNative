@@ -302,6 +302,7 @@ public class BezTube extends shapes3d.Mesh2DCoreWithCaps {
     }
 
     protected void drawWithoutTexture(MeshSection var1) {
+
         for(int var4 = var1.sNS; var4 < var1.eNS - 1; ++var4) {
             this.app.beginShape(18);
 

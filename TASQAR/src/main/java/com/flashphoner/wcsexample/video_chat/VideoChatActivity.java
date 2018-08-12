@@ -116,6 +116,11 @@ import java.util.concurrent.TimeUnit;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import processing.core.PVector;
+import shape3d.BezTube;
+import shapes3d.utils.MeshSection;
+import shapes3d.utils.P_Bezier3D;
+
 
 /**
  * Example for two way video chat.
@@ -133,7 +138,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom1";
+    String roomName = "TLSkypeRoom-CoolRoom10";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -303,6 +308,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         super.onCreate(savedInstanceState);
         Instance = this;
+
 
         currentActivityIntent = getIntent();
         String Message = currentActivityIntent.getStringExtra("MIN");
@@ -865,7 +871,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     private void SpawnPoint(HitResult hit)
     {
-        pointRenderer.AddPoint(hit.createAnchor());
+        pointRenderer.AddPoint(hit.createAnchor(), hit.getHitPose());
     }
 
     public void SetLocalRendererMirror()
