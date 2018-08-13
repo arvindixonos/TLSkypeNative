@@ -11,7 +11,23 @@
     <string name="_7">7</string>
     <string name="_8">8</string>
     <string name="_9">9</string>
-
+    <string-array name="planets_array">
+        <item>Mercury</item>
+        <item>Venus</item>
+        <item>Earth</item>
+        <item>Mars</item>
+        <item>Jupiter</item>
+        <item>Saturn</item>
+        <item>Uranus</item>
+        <item>Neptune</item>
+    </string-array>
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
     <!-- Strings related to login -->
-
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="nav_header_title">TASQAR</string>
+    <string name="nav_header_subtitle">support@takeleap.com</string>
+    <string name="nav_header_desc">Options Menu</string>
+    <string name="action_settings">Settings</string>
 </resources>

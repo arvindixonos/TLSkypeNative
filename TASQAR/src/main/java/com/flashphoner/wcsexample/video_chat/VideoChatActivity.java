@@ -16,6 +16,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.Image;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -38,14 +39,17 @@ import android.util.Rational;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -128,13 +132,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public static Context applicationContext;
     private static VideoChatActivity Instance;
     public boolean connected = false;
+    public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom1";
+    String roomName = "TLSkypeRoom-SuperCoolRoom1";
 //    UI references.
 
     private ImageButton mConnectButton;
-    private ImageButton mFileUploadButton;
     private Button mPlaneOrPointButton;
     private EditText mJoinRoomView;
     private TextView mJoinStatus;
@@ -234,10 +238,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/andy.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/arrow_tex.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-            virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/andy_shadow.png");
+            virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/arrow_tex.png");
             virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
             virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -300,6 +304,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         super.onCreate(savedInstanceState);
         Instance = this;
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         currentActivityIntent = getIntent();
         String Message = currentActivityIntent.getStringExtra("MIN");
@@ -366,8 +373,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             displayRotationHelper.onResume();
         }
 
-        if(screenRecorder != null)
-            screenRecorder.ResumeRecording();
+//        if(screenRecorder != null)
+//            screenRecorder.ResumeRecording();
     }
 
     public void AddBreak()
@@ -378,7 +385,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     void SetupCallScreen ()
     {
-        setContentView(R.layout.activity_ui);
+        setContentView(R.layout.activity_drawer);
         localRenderer = findViewById(R.id.CurrentRender);
         remoteRenderer = findViewById(R.id.StreamRender);
         participantView = new ParticipantView(remoteRenderer, mParticipantName);
@@ -457,38 +464,38 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             public void onClick(View view)
             {
 
-                arrowMode = !arrowMode;
-//                final Context ctx = VideoChatActivity.this;
-//                new ChooserDialog(ctx)
-//                        .withStartFile(null)
-////                        .withResources(R.string.title_choose_any_file, R.string.title_choose, R.string.dialog_cancel)
-////                        .withFileIconsRes(false, R.mipmap.ic_my_file, R.mipmap.ic_my_folder)
-//                        .withAdapterSetter(new ChooserDialog.AdapterSetter() {
-//                            @Override
-//                            public void apply(DirAdapter adapter) {
-//                                //
-//                            }
-//                        })
-//                        .withChosenListener(new ChooserDialog.Result() {
-//                            @Override
-//                            public void onChoosePath(String path, File pathFile) {
-//                                Toast.makeText(ctx, "FILE: " + path, Toast.LENGTH_SHORT).show();
-//                                InputStream fileInputStream = null;
-//                                try {
-//                                    fileInputStream = new FileInputStream(pathFile);
-//                                    UploadFile(path, fileInputStream);
-//
-//                                } catch (FileNotFoundException e) {
-//                                    e.printStackTrace();
-//                                }
-//                                catch (RuntimeException e)
-//                                {
-//                                    Log.d(TAG, e.getMessage());
-//                                }
-//                            }
-//                        })
-//                        .build()
-//                        .show();
+//                arrowMode = !arrowMode;
+                final Context ctx = VideoChatActivity.this;
+                new ChooserDialog(ctx)
+                        .withStartFile(null)
+//                        .withResources(R.string.title_choose_any_file, R.string.title_choose, R.string.dialog_cancel)
+//                        .withFileIconsRes(false, R.mipmap.ic_my_file, R.mipmap.ic_my_folder)
+                        .withAdapterSetter(new ChooserDialog.AdapterSetter() {
+                            @Override
+                            public void apply(DirAdapter adapter) {
+                                //
+                            }
+                        })
+                        .withChosenListener(new ChooserDialog.Result() {
+                            @Override
+                            public void onChoosePath(String path, File pathFile) {
+                                Toast.makeText(ctx, "FILE: " + path, Toast.LENGTH_SHORT).show();
+                                InputStream fileInputStream = null;
+                                try {
+                                    fileInputStream = new FileInputStream(pathFile);
+                                    UploadFile(path, fileInputStream);
+
+                                } catch (FileNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                                catch (RuntimeException e)
+                                {
+                                    Log.d(TAG, e.getMessage());
+                                }
+                            }
+                        })
+                        .build()
+                        .show();
 //
 ////                nHandler.post(new Runnable()
 ////                {
@@ -798,16 +805,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             {
 //                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
-                for (HitResult hit : frame.hitTest(tap)) {
-//                if (anchors.size() >= 20) {
-//                    anchors.get(0).anchor.detach();
-//                    anchors.remove(0);
-//                }
-
+                for (HitResult hit : frame.hitTest(tap))
+                {
                     Trackable currentTrackable = hit.getTrackable();
-
-//                    Log.d(TAG, "HIT FOUND");
-
                 if(!arrowMode)
                 {
                     SpawnPoint(hit);
@@ -1117,6 +1117,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 participantPublishing = true;
                                 participant.play(participantView.surfaceViewRenderer);
                             }
+
+                            if(participantPublishing)
+                            {
+                                uiHandler.StartTimer();
+                            }
                         }
                     }
 
@@ -1124,6 +1129,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void onJoined(final Participant participant) {
 
                         Log.d(TAG, "ON JOINED " + participant.getName());
+                        uiHandler.StartTimer();
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
@@ -1203,7 +1209,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             public void onDisconnection(final Connection connection) {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
-
+                uiHandler.StopTimer();
                 stream = null;
             }
         });
@@ -1257,7 +1263,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 {
                     final Intent localDataCopy = data;
                     Handler handler = new Handler();
-                    Runnable runnable = new Runnable() {
+                    Runnable runnable = new Runnable()
+                    {
                         @Override
                         public void run()
                         {
@@ -1305,7 +1312,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public void UploadFile(final String filePath, final InputStream inputStream) {
 
         final FTPManager ftpManager = new FTPManager();
-
         ftpManager.fileInputStream = inputStream;
         ftpManager.uploadORdownload = 1;
         ftpManager.applicationContext = getApplicationContext();
@@ -1315,8 +1321,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             ShowToast("FTP Manager Running Already", this.getApplicationContext());
             return;
         }
-
-        new Thread(new Runnable() {
+        uiHandler.showNotification(getApplicationContext(), "Upload", filePath, new Intent());
+        new Thread(new Runnable()
+        {
             @Override
             public void run() {
 
@@ -1328,15 +1335,32 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void run()
                     {
                         ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+//                            runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//
+//                                    uiHandler.SetProgress(ftpManager.percent);
+//
+//                                }
+//                            });
+                        }
+
+                        uiHandler.StopNotification();
+                        String[] fileNames = filePath.split("/");
+                        uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
                     }
                 });
             }
         }).start();
     }
 
-    public void DownloadFile(String fileName) {
+    public void DownloadFile(final String fileName)
+    {
+        final String fileDate = uiHandler.GetDate();
 
-        String filePath = "/sdcard/ReceivedFiles/" + fileName;
+        final String filePath = "/sdcard/ReceivedFiles/" + fileName;//uiHandler.AddTimeStampToName(fileName, fileDate);
         final FTPManager ftpManager = new FTPManager();
 
         if (ftpManager.running) {
@@ -1346,6 +1370,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         ftpManager.uploadORdownload = 2;
         ftpManager.applicationContext = getApplicationContext();
+        ftpManager.fileDate = fileDate;
         ftpManager.filePath = filePath;
         new Thread(new Runnable() {
             @Override
@@ -1358,11 +1383,17 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void run()
                     {
                         ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+
+                        }
+                        uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" +
+                                uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
                     }
+
                 });
             }
         }).start();
-
     }
 
     public void OpenFile(String filePath) {
@@ -1428,8 +1459,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             session.pause();
         }
 
-        if(screenRecorder != null)
-            screenRecorder.PauseRecording();;
+//        if(screenRecorder != null)
+//            screenRecorder.PauseRecording();;
     }
 
     @Override

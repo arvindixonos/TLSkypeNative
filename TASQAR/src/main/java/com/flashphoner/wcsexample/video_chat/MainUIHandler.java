@@ -1,8 +1,14 @@
 package com.flashphoner.wcsexample.video_chat;
 
 import android.app.Activity;
+import android.app.AutomaticZenRule;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
 import android.app.RemoteAction;
+import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -10,6 +16,7 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
@@ -19,27 +26,49 @@ import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.internal.NavigationMenu;
+import android.support.design.internal.NavigationMenuItemView;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
+import android.support.v7.widget.RecyclerView;
 import android.text.Layout;
 import android.util.Log;
 import android.util.Rational;
+import android.view.Display;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
+import android.widget.SlidingDrawer;
+import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.ToggleButton;
 
 import com.flashphoner.fpwcsapi.room.Room;
 import com.flashphoner.fpwcsapi.room.RoomManager;
 import com.flashphoner.fpwcsapi.session.Stream;
+import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
 
 import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoCapturerAndroid;
 
 import java.security.Policy;
 import java.text.DateFormat;
@@ -49,7 +78,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class MainUIHandler
+public class MainUIHandler implements NavigationView.OnNavigationItemSelectedListener, NavigationMenuItemView.OnClickListener
 {
     private boolean     drawMode;
     private boolean     switched;
@@ -61,6 +90,7 @@ public class MainUIHandler
     private boolean     isAboveEight;
     private boolean     timerRunning = false;
     private boolean     flashOn;
+    private boolean     drawerOpen = false;
     private Activity    currentActivity;
     private static  String TAG = "UI_TEST";
     private VideoChatActivity chatActivity;
@@ -68,9 +98,15 @@ public class MainUIHandler
     private Runnable    timerRunnable;
     private long        startTime;
     public CameraTorchMode cameraTorchMode;
+    public  boolean      startTransfer = false;
+    private ActionBarDrawerToggle mDrawerToggle;
 
     public Camera      camera;
     public FileButtonHelper    fileButtonHelper;
+
+    DrawerLayout    drawerLayout;
+
+    ImageView progessBar;
 
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
@@ -88,6 +124,24 @@ public class MainUIHandler
     FloatingActionButton mHistoryButton;
     FloatingActionButton mHistoryBackButton;
     FloatingActionButton mFlashButton;
+
+    RelativeLayout switchLayoutItem;
+    RelativeLayout togglePointItem;
+    RelativeLayout toggleFlashItem;
+    RelativeLayout toggleDrawingItem;
+    RelativeLayout toggleRecordingItem;
+    RelativeLayout toggleBackcamItem;
+    RelativeLayout toggleArrowMode;
+
+    Switch  switchLayoutButton;
+    Switch  togglePointButton;
+    Switch  toggleFlashButton;
+    Switch  toggleDrawingButton;
+    Switch  toggleRecordingButton;
+    Switch  toggleBackcamButton;
+    Switch  toggleArrowButton;
+
+    DrawerLayout drawer;
 
     TextView recordingText;
     TextView pointModeText;
@@ -115,11 +169,44 @@ public class MainUIHandler
         TO_TURN_ON
     }
 
+    @Override
+    public void onClick(View v) {
+        VideoChatActivity.ShowToast("Selected", currentActivity);
+    }
+
     public MainUIHandler (Activity activity)
     {
+
+//        WCSAudioManager wcsAudioManager = WCSAudioManager.create(getApplicationContext(), deviceStateChangedListener);
+//        deviceStateChangedListener = new Runnable() {
+//            @Override
+//            public void run()
+//            {
+//                Log.d(TAG, "device state changed");
+//            }
+//        };
+//        boolean earPiece = false;
+//        wcsAudioManager.init();
+//        Log.d(TAG, "onCreate");
+//        Set<WCSAudioManager.AudioDevice> devices = wcsAudioManager.getAudioDevices();
+//        for (WCSAudioManager.AudioDevice aud: devices)
+//        {
+//            if(aud.name().contains("EARPIECE"))
+//            {
+//                earPiece = true;
+//                Log.d(TAG, "EARpiece detected");
+//                wcsAudioManager.setAudioDevice(aud);
+//            }
+//            Log.d(TAG, aud.name());
+//        }
+
         currentActivity = activity;
 
+        width = GetScreeenWidth();
+
         chatActivity = VideoChatActivity.getInstance();
+
+        progessBar = currentActivity.findViewById(R.id.ProgressBar);
 
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
         localRender = currentActivity.findViewById(R.id.CurrentRender);
@@ -137,6 +224,8 @@ public class MainUIHandler
         mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
         mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
         mFlashButton = currentActivity.findViewById(R.id.FlashButton);
+
+        drawer = currentActivity.findViewById(R.id.drawer_layout);
 
         recordingText = currentActivity.findViewById(R.id.startRecord);
         pointModeText = currentActivity.findViewById(R.id.Point2Plane);
@@ -158,6 +247,106 @@ public class MainUIHandler
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
+                (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        {
+            public void onDrawerClosed(View view)
+            {
+                super.onDrawerClosed(view);
+                drawerOpen = false;
+            }
+
+            public void onDrawerOpened(View drawerView)
+            {
+                super.onDrawerOpened(drawerView);
+                drawerOpen = true;
+
+                switchLayoutItem = currentActivity.findViewById(R.id.app_bar_switch);
+                switchLayoutButton = (Switch) switchLayoutItem.getChildAt(0);
+                switchLayoutButton.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        mSwitchLayoutButton.callOnClick();
+                    }
+                });
+
+                togglePointItem = currentActivity.findViewById(R.id.point2plane);
+                togglePointButton = (Switch) togglePointItem.getChildAt(0);
+                togglePointButton.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        mPointToPlaneButton.callOnClick();
+                    }
+                });
+
+//                toggleFlashItem = currentActivity.findViewById(R.id.flash_toggle);
+//                toggleFlashButton = (Switch) toggleFlashItem.getChildAt(0);
+//                toggleFlashButton.setOnClickListener(new View.OnClickListener()
+//                {
+//                    @Override
+//                    public void onClick(View v)
+//                    {
+//                        mFlashButton.callOnClick();
+//                    }
+//                });
+
+//                toggleDrawingItem = currentActivity.findViewById(R.id.drawing_mode_toggle);
+//                toggleDrawingButton = (Switch) toggleDrawingItem.getChildAt(0);
+//                toggleDrawingButton.setOnClickListener(new View.OnClickListener()
+//                {
+//                    @Override
+//                    public void onClick(View v)
+//                    {
+//                        mToggleDrawingMode.callOnClick();
+//                    }
+//                });
+
+//                toggleRecordingItem = currentActivity.findViewById(R.id.record_toggle);
+//                toggleRecordingButton = (Switch) toggleRecordingItem.getChildAt(0);
+//                toggleRecordingButton.setOnClickListener(new View.OnClickListener()
+//                {
+//                    @Override
+//                    public void onClick(View v)
+//                    {
+//                        mStartRecordingButton.callOnClick();
+//                    }
+//                });
+                toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
+                toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
+                toggleBackcamButton.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        mSwitchCamera.callOnClick();
+                    }
+                });
+
+                toggleArrowMode = currentActivity.findViewById(R.id.arrow_mode);
+                toggleArrowButton = (Switch) toggleArrowMode.getChildAt(0);
+                toggleArrowButton.setOnClickListener(new View.OnClickListener()
+                {
+                    @Override
+                    public void onClick(View v)
+                    {
+                        chatActivity.arrowMode = !chatActivity.arrowMode;
+                    }
+                });
+            }
+        };
+
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = currentActivity.findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+//        switchLayoutButton = (Switch) switchLayout.getChildAt(0);
+
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.N)
         {
             mRenderHolder.removeView(streamRenderLayout);
@@ -173,51 +362,23 @@ public class MainUIHandler
         {
             Log.d(TAG, "Current Version is 7 or below");
         }
-//test
-//        final FileButtonHelper fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
-//
-//        testButton.setOnClickListener(new View.OnClickListener()
+
+//        switchLayoutButton.setOnClickListener(new View.OnClickListener()
 //        {
 //            @Override
 //            public void onClick(View v)
 //            {
-//                fileButtonHelper.AddButton();
+//                VideoChatActivity.ShowToast("On Toggle", currentActivity);
 //            }
 //        });
-//
-//        Button testButton2 = currentActivity.findViewById(R.id.button4);
-//        testButton2.setOnClickListener(new View.OnClickListener()
-//        {
-//            @Override
-//            public void onClick(View v)
-//            {
-//                fileButtonHelper.GetData();
-//            }
-//        });
-//test
+
         mFlashButton.setOnClickListener(new View.OnClickListener()
         {
             CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
 
-
             @Override
             public void onClick(View v)
             {
-//                boolean isFlashAvailable = currentActivity.getPackageManager().hasSystemFeature(PackageManager.FEATURE_CAMERA_FLASH);
-//
-//                if(!isFlashAvailable)
-//                {
-//                    VideoChatActivity.ShowToast("Flash not Available", currentActivity);
-//                    return;
-//                }
-//                else
-//                {
-//                    VideoChatActivity.ShowToast("Flash Available", currentActivity);
-//                }
-//                if(camera == null)
-//                {
-//                    Log.d(TAG, "No Camera Present");
-//                }
                 if(!flashOn)
                 {
                     try
@@ -248,7 +409,6 @@ public class MainUIHandler
                             }
                         }
                         mFlashButton.setImageResource(R.drawable.flash_off);
-                        mFlashButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
                         flashOn = true;
                     }
                     catch (Exception e)
@@ -280,7 +440,6 @@ public class MainUIHandler
                             }
                         }
                         mFlashButton.setImageResource(R.drawable.flash_on);
-                        mFlashButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
                         flashOn = false;
                     }
                     catch (Exception e)
@@ -337,6 +496,8 @@ public class MainUIHandler
             {
 
                 mHistoryScreen.setVisibility(View.VISIBLE);
+                mFlashButton.setVisibility(View.GONE);
+                mStartRecordingButton.setVisibility(View.GONE);
                 mFloatingButtonsLayout.setVisibility(View.GONE);
                 mEndCallButton.setVisibility(View.GONE);
                 mRenderHolder.setVisibility(View.GONE);
@@ -393,7 +554,7 @@ public class MainUIHandler
                     chatActivity.screenRecorder.GetPermission();
                     mStartRecordingButton.setImageResource(R.drawable.button_stop);
                     recordingText.setText("Stop Recording");
-                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
+//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
                     recording = true;
                 }
                 else
@@ -401,7 +562,7 @@ public class MainUIHandler
                     chatActivity.screenRecorder.StopRecording();
                     mStartRecordingButton.setImageResource(R.drawable.button_record);
                     recordingText.setText("Start Recording");
-                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
                     recording = false;
                 }
             }
@@ -428,7 +589,15 @@ public class MainUIHandler
             @Override
             public void onClick(View v)
             {
-                Minimise();
+                count += 10;
+                SetProgress(count);
+//                DisplayNotification();
+//                if(count == 0)
+//                    showNotification(currentActivity, "Title", "This is download", new Intent());
+//                else
+//                    UpdateNotification(count);
+//
+//                count += 10;
             }
         });
 
@@ -526,12 +695,107 @@ public class MainUIHandler
         };
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item)
+    {
+        int num = item.getItemId();
+        switch(num)
+        {
+            case R.id.nav_history:
+                mHistoryButton.callOnClick();
+                drawer.closeDrawers();
+                break;
+            case R.id.nav_upload:
+                chatActivity.mFileUploadButton.callOnClick();
+                drawer.closeDrawers();
+                break;
+        }
+
+        return true;
+    }
+    int count = 0;
+    int width;
+    public void DisplayNotification()
+    {
+
+    }
+
+    private NotificationManager notificationManager;
+    private NotificationChannel mChannel;
+    private NotificationCompat.Builder mBuilder;
+    private TaskStackBuilder stackBuilder;
+    private PendingIntent resultPendingIntent;
+    private int notificationId = 1;
+    private String channelId = "channel-01";
+    private String channelName = "Channel Name";
+    private int importance = NotificationManager.IMPORTANCE_HIGH;
+
+    public void showNotification(Context context, String title, String body, Intent intent)
+    {
+        notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            mChannel = new NotificationChannel(channelId, channelName, importance);
+            notificationManager.createNotificationChannel(mChannel);
+        }
+
+        mBuilder = new NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setContentTitle(title)
+                .setContentText(body)
+                .setProgress(100, 0, false);
+
+        stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addNextIntent(intent);
+        resultPendingIntent = stackBuilder.getPendingIntent
+        (
+                0,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+        mBuilder.setContentIntent(resultPendingIntent);
+        notificationManager.notify(notificationId, mBuilder.build());
+    }
+
+    public void UpdateNotification (int progress)
+    {
+        mBuilder.setProgress(100, progress, false);
+        mBuilder.build();
+//        notificationManager.notify(notificationId, mBuilder.build());
+    }
+
+    public void StopNotification ()
+    {
+        notificationManager.cancel(notificationId);
+    }
+
+    public void SetProgress (float scale)
+    {
+        currentActivity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ViewGroup.LayoutParams layoutParams = progessBar.getLayoutParams();
+
+                layoutParams.width = (int) ((scale * width));
+
+                progessBar.setLayoutParams(layoutParams);
+                progessBar.invalidate();
+            }
+        });
+    }
+
     void backKey ()
     {
-        if(historyScreen.getVisibility() == View.VISIBLE)
+        if(drawerOpen)
+        {
+            drawer.closeDrawers();
+        }
+        if(mHistoryScreen.getVisibility() == View.VISIBLE)
         {
             mHistoryScreen.setVisibility(View.GONE);
             mFloatingButtonsLayout.setVisibility(View.VISIBLE);
+            mFlashButton.setVisibility(View.VISIBLE);
+            mStartRecordingButton.setVisibility(View.VISIBLE);
             mEndCallButton.setVisibility(View.VISIBLE);
             mRenderHolder.setVisibility(View.VISIBLE);
         }
@@ -591,8 +855,6 @@ public class MainUIHandler
         mPictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build();
         currentActivity.enterPictureInPictureMode(mPictureInPictureParamsBuilder.build());
     }
-
-    List<RemoteAction> remoteActions;
 
     public void PreMinimise ()
     {
@@ -666,14 +928,20 @@ public class MainUIHandler
             mEndCall.setVisibility(View.GONE);
             mPlusButton.setVisibility(View.GONE);
             mSpawnButtonLayout.setVisibility(View.GONE);
+            mFlashButton.setVisibility(View.GONE);
+            mStartRecordingButton.setVisibility(View.GONE);
         }
         else
         {
             Log.d(TAG, "Screen is big");
             currentRender.setVisibility(View.VISIBLE);
-            if(!(historyScreen.getVisibility() == View.VISIBLE))
+            if((mHistoryScreen.getVisibility() != View.VISIBLE))
+            {
                 mEndCall.setVisibility(View.VISIBLE);
-            mPlusButton.setVisibility(View.VISIBLE);
+
+                mFlashButton.setVisibility(View.VISIBLE);
+                mStartRecordingButton.setVisibility(View.VISIBLE);
+            }
         }
     }
 
@@ -696,6 +964,28 @@ public class MainUIHandler
     void TorchCallBack()
     {
 
+        WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
+        VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
+        Camera camera = videoCapturerAndroid.camera;
+
+        if(camera != null)
+        {
+            Log.d(TAG, "Camera Present");
+        }
+
+        Camera.Parameters parameters = camera.getParameters();
+        parameters.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+        camera.setParameters(parameters);
+        camera.startPreview();
+    }
+
+    public int GetScreeenWidth()
+    {
+        Display display = currentActivity.getWindowManager().getDefaultDisplay();
+        Point size = new Point ();
+        display.getSize(size);
+
+        return size.x;
     }
 
     public void ToggleVideoView ()

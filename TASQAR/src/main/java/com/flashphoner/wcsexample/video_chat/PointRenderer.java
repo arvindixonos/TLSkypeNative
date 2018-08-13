@@ -9,8 +9,11 @@ import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
@@ -108,79 +111,116 @@ public class PointRenderer {
     {
         Log.d(VideoChatActivity.TAG, "Adding Break");
 
-//        RemoveAllZeroAnchors();
+        RemoveAllZeroAnchors();
         currentAnchorList = new ArrayList<Anchor>();
         anchors.add(currentAnchorList);
     }
 
-    int count = 0;
-
     public void AddPoint(Anchor anchor)
     {
-        count += 1;
-
-        if(count == 3) {
-            currentAnchorList.add(anchor);
-            count = 0;
-        }
+        Log.d(VideoChatActivity.TAG, "Adding Point");
+        currentAnchorList.add(anchor);
     }
 
-    float lineLength = 0.015f;
-
-    int[] unitCubeIndices = new int[] {         0, 1, 2, // 0
-                                                0, 3, 2, // 1
-
-                                                0, 4, 3, // 2
-                                                4, 7, 3, // 3
-
-                                                4, 5, 6, // 4
-                                                4, 7, 6, // 5
-
-                                                5, 1, 2, // 6
-                                                5, 2, 6, // 7
-
-                                                4, 5, 1, // 8
-                                                4, 0, 1, // 9
-
-                                                7, 6, 2, // 10
-                                                7, 2, 3  // 11
-                                                };
-
-    float[] unitCubeVertices = new float[]
-            {
-            0, 0, 0, //0
-            1, 0, 0, //1
-            1, 1, 0, //2
-            0, 1, 0, //3
-            0, 0, 1, //4
-            1, 0, 1, //5
-            1, 1, 1, //6
-            0, 1, 1  //7
-            };
-
-    float[] edgePoints = new float[3 * 4 * 2];
-
-    float[] getCubePoint(float[] originPoint, int pointIndex)
+    public float VecMagnitude(float[] p1, float[] p2)
     {
-        float[] finalPoints = new float[3];
-
-        finalPoints[0] = originPoint[0] + unitCubeVertices[pointIndex * 3 + 0] * lineLength;
-        finalPoints[1] = originPoint[1] + unitCubeVertices[pointIndex * 3 + 1] * lineLength;
-        finalPoints[2] = originPoint[2] + unitCubeVertices[pointIndex * 3 + 2] * lineLength;
-
-        return  finalPoints;
+        return (float) Math.sqrt(   (p2[0] - p1[0]) *  (p2[0] - p1[0]) +
+                (p2[1] - p1[1]) *  (p2[1] - p1[1]) +
+                (p2[2] - p1[2]) *  (p2[2] - p1[2]));
     }
 
-    int[] getCubeIndices(int index)
+    public float[] VecNormalized(float[] p1, float[] p2)
     {
-        int[] finalPoints = new int[3];
+        float magnitude = VecMagnitude(p1, p2);
 
-        System.arraycopy(unitCubeIndices, index * 3, finalPoints, 0, 3);
+        float[] normalized = new float[3];
 
-        return  finalPoints;
+        normalized[0] = (p2[0] - p1[0]) / magnitude;
+        normalized[1] = (p2[1] - p1[1]) / magnitude;
+        normalized[2] = (p2[2] - p1[2]) / magnitude;
+
+        return  normalized;
+    }
+
+    public float[] VecNormalized(float[] p1)
+    {
+        float magnitude = VecMagnitude(p1);
+
+        float[] normalized = new float[3];
+
+        normalized[0] = (p1[0]) / magnitude;
+        normalized[1] = (p1[1]) / magnitude;
+        normalized[2] = (p1[2]) / magnitude;
+
+        return  normalized;
+    }
+
+    public float VecDot(float[] p1, float[] p2)
+    {
+        return  p1[0] * p2[0] + p1[1] * p2[1] + p1[2] * p2[2];
+    }
+
+    public float VecMagnitude(float[] p)
+    {
+        return (float) Math.sqrt(   (p[0]) *  (p[0]) +
+                (p[1]) *  (p[1]) +
+                (p[2]) *  (p[2]));
+    }
+
+    public float[] VecRotate(float[] vec, float[] axis, float angle)
+    {
+        float[] rotatedVec = new float[3];
+
+        float[] part1 = new float[3];
+        part1[0] = (float) (vec[0] * Math.cos(Math.PI / 2.0f));
+        part1[1] = (float) (vec[1] * Math.cos(Math.PI / 2.0f));
+        part1[2] = (float) (vec[2] * Math.cos(Math.PI / 2.0f));
+
+        float[] part2 = new float[3];
+        part2[0] = (float) (axis[0] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
+        part2[1] = (float) (axis[1] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
+        part2[2] = (float) (axis[2] * VecDot(axis, vec) * (1.0f - Math.cos(Math.PI / 2.0f)));
+
+        float[] part3 = new float[3];
+        part3[0] = (float) (VecCross(vec, axis)[0] * Math.sin(Math.PI / 2.0f));
+        part3[1] = (float) (VecCross(vec, axis)[1] * Math.sin(Math.PI / 2.0f));
+        part3[2] = (float) (VecCross(vec, axis)[2] * Math.sin(Math.PI / 2.0f));
+
+        rotatedVec[0] = part1[0] + part2[0] + part3[0];
+        rotatedVec[1] = part1[1] + part2[1] + part3[1];
+        rotatedVec[2] = part1[2] + part2[2] + part3[2];
+
+        return rotatedVec;
+    }
+
+    public float VecAngle(float[] p1, float[] p2)
+    {
+        float angle = 0.0f;
+
+        angle = (float) Math.atan2(VecMagnitude(VecCross(p1, p2)), VecDot(p1, p2));
+
+        float[] crossProduct = VecCross(p1, p2);
+
+        float sign = -Math.signum(crossProduct[2]);
+
+        return  angle;
+    }
+
+    public float[] VecCross(float[] p1, float[] p2)
+    {
+        float[] cross = new float[3];               //a × b = {aybz - azby; azbx - axbz; axby - aybx}
+
+        cross[0] = p1[1] * p2[2] - p1[2] * p2[1];
+        cross[1] = p1[2] * p2[0] - p1[0] * p2[2];
+        cross[2] = p1[0] * p2[1] - p1[1] * p2[0];
+
+        return cross;
     }
 
     public void draw(float[] cameraView, float[] cameraPerspective) {
+
+        float[] modelViewProjection = new float[16];
+        Matrix.multiplyMM(modelViewProjection, 0, cameraPerspective, 0, cameraView, 0);
 
         ShaderUtil.checkGLError(TAG, "Before draw");
 
@@ -189,19 +229,12 @@ public class PointRenderer {
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
         GLES20.glVertexAttribPointer(positionAttribute, 4, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
         GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
-        float[] modelMatrix = new float[16];
-        float[] modelViewMatrix = new float[16];
-        float[] modelViewProjectionMatrix = new float[16];
-        Matrix.setIdentityM(modelMatrix, 0);
-        Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
-        Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
-        GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+        GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjection, 0);
         GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
-        GLES20.glLineWidth(3.0f);
+        GLES20.glLineWidth(6.0f);
 
         int numAnchorsList = anchors.size();
-        int numFaces = 0;
 
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
         {
@@ -210,95 +243,136 @@ public class PointRenderer {
             if(anchorsList.size() == 0)
                 continue;
 
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
+
             int numAnchors = anchorsList.size();
 
-            float[] cubeArray = new float[9];
-            FloatBuffer verticesBuffer = FloatBuffer.wrap(cubeArray);
+            int totalPoints = numAnchors * 3; // ((numAnchors - 1) * 20 + numAnchors) * 3;
 
-            for (int i = 0; i < numAnchors; i++)
+            float[] verticesFloatArray = new float[totalPoints];
+
+            int k = 0;
+            int j = 0;
+
+            float maxAngleDeviation = 0.3f;
+
+            boolean nextPointSet = true;
+            Pose pose = anchorsList.get(0).getPose();
+            float[] nextPoint = pose.getTranslation();
+
+            for (int i = 0; i < totalPoints; i += 3)
             {
-                Pose pose  = anchorsList.get(i).getPose();
-                float[] originPoint = pose.getTranslation();
+                pose = anchorsList.get(k).getPose();
 
-                int numFacesPoint = i == 0 ? 12 : 24;
-
-                for(int faceID = 0; faceID < numFacesPoint; faceID++)
+//                if(!nextPointSet)
                 {
-                    int fetchFaceID = -1;
-
-                    if(i == 0)
-                    {
-                        fetchFaceID = faceID;
-
-                        int[] indices = getCubeIndices(fetchFaceID);
-
-                        for(int index = 0; index < 3; index++)
-                        {
-                            float[] point = getCubePoint(originPoint, indices[index]);
-
-                            System.arraycopy(point, 0, cubeArray, index * 3, 3);
-                        }
-
-                        System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
-                        System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
-                        System.arraycopy(getCubePoint(originPoint, 2), 0, edgePoints, 6, 3);
-                        System.arraycopy(getCubePoint(originPoint, 3), 0, edgePoints, 9, 3);
-                    }
-                    else
-                    {
-                        if(faceID >= 12)
-                        {
-                            fetchFaceID = faceID - 12;
-
-                            int[] indices = getCubeIndices(fetchFaceID);
-
-                            for(int index = 0; index < 3; index++)
-                            {
-                                float[] point = getCubePoint(originPoint, indices[index]);
-
-                                System.arraycopy(point, 0, cubeArray, index * 3, 3);
-                            }
-
-                            if(fetchFaceID == 2)
-                            {
-                                System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
-                                System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
-                                System.arraycopy(getCubePoint(originPoint, 2), 0, edgePoints, 6, 3);
-                                System.arraycopy(getCubePoint(originPoint, 3), 0, edgePoints, 9, 3);
-                            }
-                        }
-                        else
-                        {
-                            if(faceID == 0)
-                            {
-                                System.arraycopy(getCubePoint(originPoint, 4), 0, edgePoints, 12, 3);
-                                System.arraycopy(getCubePoint(originPoint, 5), 0, edgePoints, 15, 3);
-                                System.arraycopy(getCubePoint(originPoint, 6), 0, edgePoints, 18, 3);
-                                System.arraycopy(getCubePoint(originPoint, 7), 0, edgePoints, 21, 3);
-                            }
-
-                            int[] indices = getCubeIndices(faceID);
-
-                            for(int indicesIndex = 0; indicesIndex < 3; indicesIndex++)
-                            {
-                                System.arraycopy(edgePoints, indices[indicesIndex] * 3, cubeArray, indicesIndex * 3, 3);
-                            }
-                        }
-                    }
-
-                    verticesBuffer = FloatBuffer.wrap(cubeArray);
-                    verticesBuffer.put(cubeArray).position(0);
-
-                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-
-                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, 3 * BYTES_PER_POINT, verticesBuffer);
-
-                    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
-                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-
-                    numFaces++;
+//                    verticesFloatArray[i] = pose.tx();
+//                    verticesFloatArray[i + 1] = pose.ty();
+//                    verticesFloatArray[i + 2] = pose.tz();
                 }
+//                else
+//                {
+                verticesFloatArray[i] = nextPoint[0];
+                verticesFloatArray[i + 1] = nextPoint[1];
+                verticesFloatArray[i + 2] = nextPoint[2];
+//
+//                    nextPointSet = false;
+//                }
+
+                if(k < numAnchors - 1)
+                {
+                    Pose nextPose = anchorsList.get(k + 1).getPose();
+
+                    nextPose = new Pose(nextPose.getTranslation(), pose.getRotationQuaternion());
+
+                    nextPose = Pose.makeInterpolated(pose, nextPose, 0.1f);
+
+                    nextPoint = nextPose.getTranslation();
+                }
+
+//                if(k < numAnchors - 1)
+//                {
+//                    Pose newPose = anchorsList.get(k + 1).getPose();
+//
+//                    float[] p0 = new float[3];
+//                    p0[0] = verticesFloatArray[i];
+//                    p0[1] = verticesFloatArray[i + 1];
+//                    p0[2] = verticesFloatArray[i + 2];
+//
+//                    float[] p1 = new float[3];
+//                    p1[0] = newPose.tx();
+//                    p1[1] = newPose.ty();
+//                    p1[2] = newPose.tz();
+//
+//                    float[] normalizedVector = VecNormalized(p0);
+//
+//                    float mag = VecMagnitude(normalizedVector);
+//
+//                    normalizedVector[0] = 0;
+//                    normalizedVector[1] = 0;
+//                    normalizedVector[2] = 0;
+//
+//                    normalizedVector = pose.rotateVector(normalizedVector);
+//
+//                    mag = VecMagnitude(normalizedVector);
+//
+//                    p0 = VecNormalized(p0);
+//
+//                    mag = VecMagnitude(normalizedVector);
+//
+//                    float angle = VecAngle(p0, normalizedVector);
+//
+//                    Log.d(TAG, "Asd");
+////                    if(Math.abs(angle) > maxAngleDeviation)
+////                    {
+////                        angle = Math.signum(angle) * maxAngleDeviation;
+////
+////                        float magnitude = VecMagnitude(p0, p1);
+////                        float[] vecNorm = VecNormalized(p0, p1);
+////
+////                        float[] axis = VecCross(p0, p1);
+////
+////                        float[] rotatedVector = VecRotate(vecNorm, axis, angle);
+////
+////                        p1[0] = p0[0] + rotatedVector[0] * magnitude;
+////                        p1[1] = p0[1] + rotatedVector[1] * magnitude;
+////                        p1[2] = p0[2] + rotatedVector[2] * magnitude;
+////
+////                        nextPointSet = true;
+////
+////                        nextPoint[0] = p1[0];
+////                        nextPoint[1] = p1[1];
+////                        nextPoint[2] = p1[2];
+////                    }
+//
+////                    int start = i + 3;
+////
+////                    j = 0;
+////                    for (float t = 0f; t < 1f; t += 0.05f)
+////                    {
+////                        float newX = p0[0] + t * (p1[0] - p0[0]);
+////                        float newY = p0[1] + t * (p1[1] - p0[1]);
+////                        float newZ = p0[2] + t * (p1[2] - p0[2]);
+////
+////                        verticesFloatArray[start + j * 3] = newX;
+////                        verticesFloatArray[start + (j * 3) + 1] = newY;
+////                        verticesFloatArray[start + (j * 3) + 2] = newZ;
+////
+////                        j++;
+////                    }
+//                }
+
+                k++;
             }
+
+            FloatBuffer verticesBuffer = FloatBuffer.wrap(verticesFloatArray);
+            verticesBuffer.put(verticesFloatArray).position(0);
+
+            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, (totalPoints / 3) * BYTES_PER_POINT, verticesBuffer);
+
+            GLES20.glDrawArrays(GLES20.GL_LINE_STRIP, 0, (totalPoints / 3));
+
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
         }
 
         GLES20.glDisableVertexAttribArray(positionAttribute);

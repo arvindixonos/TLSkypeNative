@@ -4,4 +4,5 @@
     <color name="blueDark">#ff0099cc</color>
     <color name="blueGlow">#29f2ef</color>
     <color name="blueBG">#07274b</color>
+    <color name="FlashColor">#33494949</color>
 </resources>

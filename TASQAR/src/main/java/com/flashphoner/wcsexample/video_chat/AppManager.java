@@ -193,7 +193,7 @@ public class AppManager extends AppCompatActivity
     public void RequestAllPermissions()
     {
         ActivityCompat.requestPermissions(AppManager.this,
-                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission_group.CAMERA},
+                new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE},
                 ALL_PERMISSIONS);
     }
 

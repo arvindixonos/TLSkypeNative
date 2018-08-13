@@ -35,7 +35,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Minimise"
-        android:visibility="gone"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -59,9 +58,12 @@
 
         <RelativeLayout
             android:id="@+id/currentLayout"
-            android:layout_width="120dp"
-            android:layout_height="160dp"
-            android:layout_alignParentBottom="true">
+            android:layout_width="82.5dp"
+            android:layout_height="110dp"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginEnd="14dp"
+            android:layout_marginTop="12dp">
 
             <com.flashphoner.wcsexample.video_chat.SurfaceViewRendererCustom
                 android:id="@+id/CurrentRender"
@@ -88,7 +90,8 @@
             android:id="@+id/timerText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="false"
+            android:layout_alignParentStart="true" />
 
     </RelativeLayout>
 
@@ -96,8 +99,9 @@
         android:id="@+id/FloatingButtonsLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <android.support.design.widget.FloatingActionButton
             android:id="@+id/floatingActionButton4"
@@ -107,6 +111,7 @@
             android:layout_marginEnd="10dp"
             android:clickable="true"
             android:focusable="true"
+            android:visibility="gone"
             app:backgroundTint="@android:color/holo_blue_dark"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -119,7 +124,7 @@
             android:layout_height="wrap_content"
             android:gravity="bottom|right"
             android:orientation="vertical"
-            android:visibility="invisible"
+            android:visibility="gone"
             app:layout_constraintBottom_toTopOf="@+id/floatingActionButton4"
             app:layout_constraintEnd_toEndOf="parent">
 
@@ -142,21 +147,6 @@
                     android:text="Toggle Flash"
                     android:textColor="@android:color/background_light" />
 
-                <android.support.design.widget.FloatingActionButton
-                    android:id="@+id/FlashButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginEnd="0dp"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:scaleX="0.85"
-                    android:scaleY="0.85"
-                    app:backgroundTint="@android:color/holo_blue_dark"
-                    app:layout_constraintBottom_toTopOf="@+id/floatingActionButton4"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:rippleColor="@android:color/holo_purple"
-                    app:srcCompat="@drawable/flash_on" />
             </LinearLayout>
 
             <LinearLayout
@@ -166,7 +156,8 @@
                 android:layout_gravity="bottom|right"
                 android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="gone">
 
                 <TextView
                     android:id="@+id/History"
@@ -248,20 +239,6 @@
                     android:text="Start Recording"
                     android:textColor="@android:color/background_light" />
 
-                <android.support.design.widget.FloatingActionButton
-                    android:id="@+id/StartRecordingButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:scaleX="0.85"
-                    android:scaleY="0.85"
-                    app:backgroundTint="@android:color/holo_blue_dark"
-                    app:layout_constraintBottom_toTopOf="@+id/floatingActionButton4"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:rippleColor="@android:color/holo_purple"
-                    app:srcCompat="@drawable/button_record" />
             </LinearLayout>
 
             <LinearLayout
@@ -310,7 +287,6 @@
                 android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
                 android:orientation="horizontal"
-                android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/SwitchLayoutLayout"
                 app:layout_constraintEnd_toEndOf="parent">
 
@@ -376,7 +352,7 @@
                 android:layout_marginBottom="8dp"
                 android:layout_marginEnd="8dp"
                 android:orientation="horizontal"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/UploadFileLayout"
                 app:layout_constraintEnd_toEndOf="parent">
 
@@ -412,7 +388,7 @@
                 android:layout_marginBottom="8dp"
                 android:layout_weight="1"
                 android:orientation="horizontal"
-                android:visibility="visible"
+                android:visibility="gone"
                 app:layout_constraintBottom_toTopOf="@+id/CallExpertLayout"
                 app:layout_constraintEnd_toEndOf="parent">
 
@@ -516,5 +492,63 @@
         </ScrollView>
 
     </android.support.constraint.ConstraintLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/FlashButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:clickable="true"
+        android:focusable="auto"
+        android:scaleX="0.85"
+        android:scaleY="0.85"
+        app:backgroundTint="@color/FlashColor"
+        app:elevation="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/EndCallButton"
+        app:layout_constraintEnd_toStartOf="@+id/EndCallButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/EndCallButton"
+        app:rippleColor="@android:color/holo_purple"
+        app:srcCompat="@drawable/flash_on" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/StartRecordingButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_weight="1"
+        android:clickable="true"
+        android:focusable="true"
+        android:scaleX="0.85"
+        android:scaleY="0.85"
+        app:backgroundTint="@color/FlashColor"
+        app:elevation="0dp"
+        app:layout_constraintBottom_toBottomOf="@+id/EndCallButton"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/EndCallButton"
+        app:layout_constraintTop_toTopOf="@+id/EndCallButton"
+        app:rippleColor="@android:color/holo_purple"
+        app:srcCompat="@drawable/button_record" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:elevation="0dp">
+
+        <ImageView
+            android:id="@+id/ProgressBar"
+            android:layout_width="0dp"
+            android:layout_height="9dp"
+            android:elevation="0dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:color/holo_red_dark" />
+    </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>
