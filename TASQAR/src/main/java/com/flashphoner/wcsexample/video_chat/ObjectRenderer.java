@@ -143,15 +143,13 @@ public class ObjectRenderer {
 
         lightingParametersUniform = GLES20.glGetUniformLocation(program, "u_LightingParameters");
         materialParametersUniform = GLES20.glGetUniformLocation(program, "u_MaterialParameters");
-        colorCorrectionParameterUniform =
-                GLES20.glGetUniformLocation(program, "u_ColorCorrectionParameters");
+        colorCorrectionParameterUniform = GLES20.glGetUniformLocation(program, "u_ColorCorrectionParameters");
         colorUniform = GLES20.glGetUniformLocation(program, "u_ObjColor");
 
         ShaderUtil.checkGLError(TAG, "Program parameters");
 
         // Read the texture.
-        Bitmap textureBitmap =
-                BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
+        Bitmap textureBitmap = BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
 
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
         GLES20.glGenTextures(textures.length, textures, 0);

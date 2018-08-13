@@ -92,6 +92,9 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.obsez.android.lib.filechooser.tool.DirAdapter;
 
 import org.android.opensource.libraryyuv.Libyuv;
+import org.apache.commons.math3.complex.Quaternion;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 import org.webrtc.CameraEnumerationAndroid;
 import org.webrtc.RendererCommon;
 import org.webrtc.SurfaceViewRenderer;
@@ -117,6 +120,11 @@ import java.util.concurrent.TimeUnit;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import processing.android.PFragment;
+import processing.core.PVector;
+import shapes3d.utils.MeshSection;
+import shapes3d.utils.P_Bezier3D;
+
 
 /**
  * Example for two way video chat.
@@ -135,7 +143,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-SuperCoolRoom1";
+    String roomName = "TLSkypeRoom-CoolRoom10";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -234,7 +242,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
-            pointRenderer.createOnGlThread(this);
+            pointRenderer.createOnGlThread(this, "models/andy.png");
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
@@ -304,7 +312,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         super.onCreate(savedInstanceState);
         Instance = this;
-
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -609,6 +616,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     // during calls to session.update() as ARCore refines its estimate of the world.
                     coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
 
+                    float[] rotationQuaternion = coloredAnchor.anchor.getPose().getRotationQuaternion();
+
+                    Rotation ourRotation = new Rotation(rotationQuaternion[0], rotationQuaternion[1], rotationQuaternion[2], rotationQuaternion[3], false);
+
+                    double angle = ourRotation.getAngle();
+
+                    Vector3D axis = ourRotation.getAxis();
+
                     // Update and draw the model and its shadow.
                     virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
                     virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
@@ -617,7 +632,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 }
             }
             else {
-                pointRenderer.draw(viewmtx, projmtx);
+                pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
             }
 
             byte[] ardata = GetScreenPixels();
@@ -794,6 +809,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public  boolean pointsOrPlaneSpawn = false;
 
+    public  Pose    hitPose;
+    public Trackable currentTrackable;
+
     private void handleTap(Frame frame, Camera camera)
     {
         while (motionEvents.size() > 0)
@@ -805,9 +823,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             {
 //                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
-                for (HitResult hit : frame.hitTest(tap))
-                {
-                    Trackable currentTrackable = hit.getTrackable();
+                for (HitResult hit : frame.hitTest(tap)) {
+//                if (anchors.size() >= 20) {
+//                    anchors.get(0).anchor.detach();
+//                    anchors.remove(0);
+//                }
+//
+                currentTrackable = hit.getTrackable();
+                hitPose = hit.getHitPose();
+
                 if(!arrowMode)
                 {
                     SpawnPoint(hit);
@@ -816,14 +840,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 {
                     if(pointsOrPlaneSpawn)
                     {
-                        if(currentTrackable instanceof com.google.ar.core.Point)
+//                        if(currentTrackable instanceof com.google.ar.core.Point)
                         {
                             SpawnArrow(hit, camera);
                         }
                     }
                     else
                     {
-                        if(currentTrackable instanceof com.google.ar.core.Plane)
+//                        if(currentTrackable instanceof com.google.ar.core.Plane)
                         {
                             SpawnArrow(hit, camera);
                         }
@@ -847,12 +871,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
         float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
 
-        anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, camera.getDisplayOrientedPose()));
+        anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, hit.getHitPose()));
     }
 
     private void SpawnPoint(HitResult hit)
     {
-        pointRenderer.AddPoint(hit.createAnchor());
+        pointRenderer.AddPoint(hit.createAnchor(), hit.getHitPose());
     }
 
     public void SetLocalRendererMirror()

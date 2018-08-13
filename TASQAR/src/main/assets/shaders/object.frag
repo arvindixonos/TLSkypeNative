@@ -47,7 +47,7 @@ void main() {
     vec3 viewNormal = normalize(v_ViewNormal);
 
     // Flip the y-texture coordinate to address the texture from top-left.
-    vec4 objectColor = texture2D(u_Texture, vec2(v_TexCoord.x, 1.0 - v_TexCoord.y));
+    vec4 objectColor = u_ObjColor; //texture2D(u_Texture, vec2(v_TexCoord.x, 1.0 - v_TexCoord.y));
 
     // Apply color to grayscale image only if the alpha of u_ObjColor is
     // greater and equal to 255.0.
