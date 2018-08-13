@@ -116,6 +116,7 @@ import java.util.concurrent.TimeUnit;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import processing.android.PFragment;
 import processing.core.PVector;
 import shapes3d.utils.MeshSection;
 import shapes3d.utils.P_Bezier3D;
@@ -237,7 +238,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
-            pointRenderer.createOnGlThread(this);
+            pointRenderer.createOnGlThread(this, "models/andy.png");
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
@@ -308,6 +309,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         super.onCreate(savedInstanceState);
         Instance = this;
 
+//        PFragment fragment = new PFragment(pointRenderer);
+//        fragment.setView(uiHandler.localRender, this);
 
         currentActivityIntent = getIntent();
         String Message = currentActivityIntent.getStringExtra("MIN");
@@ -626,7 +629,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 }
             }
             else {
-                pointRenderer.draw(viewmtx, projmtx);
+                pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
             }
 
             byte[] ardata = GetScreenPixels();

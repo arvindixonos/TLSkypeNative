@@ -1,7 +1,10 @@
 package com.flashphoner.wcsexample.video_chat;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
+import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -12,10 +15,17 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
+import processing.core.PApplet;
 import processing.core.PVector;
+import processing.opengl.PGL;
+import processing.opengl.PGraphics3D;
+import processing.opengl.PGraphicsOpenGL;
+import processing.opengl.PShader;
 import shapes3d.Extrusion;
 import shapes3d.Mesh2DCore;
 import shapes3d.S3D;
@@ -32,11 +42,11 @@ import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
  * Created by TakeLeap05 on 02-08-2018.
  */
 
-public class PointRenderer {
+public class PointRenderer{
 
 
-    private static final String VERTEX_SHADER_NAME = "shaders/vert.glsl";
-    private static final String FRAGMENT_SHADER_NAME = "shaders/frag.glsl";
+    private static final String VERTEX_SHADER_NAME = "shaders/object.vert";
+    private static final String FRAGMENT_SHADER_NAME = "shaders/object.frag";
 
     private static final int BYTES_PER_FLOAT = Float.SIZE / 8;
     private static final int FLOATS_PER_POINT = 3; // X,Y,Z.
@@ -44,28 +54,57 @@ public class PointRenderer {
     private static final int INITIAL_BUFFER_POINTS = 50000;
 
     private int vertexVboId;
-    private int colorVboId;
+    private int normalVboId;
     private int vboSize;
 
     private int programName;
-    private int colorAttribute;
     private int positionAttribute;
+    private int normalAttribute;
+//    private int texCoordAttribute;
+
+    // Shader location: texture sampler.
+//    private int textureUniform;
+
+    private int modelViewUniform;
     private int modelViewProjectionUniform;
 
-    private int numPoints = 0;
+    // Shader location: environment properties.
+    private int lightingParametersUniform;
+
+    // Shader location: material properties.
+    private int materialParametersUniform;
+
+    // Shader location: color correction property
+    private int colorCorrectionParameterUniform;
+
+    // Shader location: object color property (to change the primary color of the object).
+    private int colorUniform;
+
 
     private ArrayList<ArrayList<Anchor>> anchors = new ArrayList<ArrayList<Anchor>>();
     private ArrayList<Anchor> currentAnchorList = new ArrayList<Anchor>();
 
+    private Pose previousPose = null;
 
-    public void createOnGlThread(Context context) throws IOException
+    private static final float[] LIGHT_DIRECTION = new float[] {0.250f, 0.866f, 0.433f, 0.0f};
+    private final float[] viewLightDirection = new float[4];
+
+    private float ambient = 0.3f;
+    private float diffuse = 1.0f;
+    private float specular = 1.0f;
+    private float specularPower = 6.0f;
+
+    private final int[] textures = new int[1];
+
+
+    public void createOnGlThread(Context context, String diffuseTextureAssetName) throws IOException
     {
         ShaderUtil.checkGLError(TAG, "before create");
 
         int[] buffers = new int[2];
         GLES20.glGenBuffers(2, buffers, 0);
         vertexVboId = buffers[0];
-        colorVboId = buffers[1];
+        normalVboId = buffers[1];
 
         ShaderUtil.checkGLError(TAG, "buffer alloc");
 
@@ -80,13 +119,41 @@ public class PointRenderer {
 
         ShaderUtil.checkGLError(TAG, "program");
 
-        positionAttribute = GLES20.glGetAttribLocation(programName, "vertex");
-        colorAttribute = GLES20.glGetAttribLocation(programName, "color");
-        modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "transform");
+        modelViewUniform = GLES20.glGetUniformLocation(programName, "u_ModelView");
+        modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "u_ModelViewProjection");
+
+        positionAttribute = GLES20.glGetAttribLocation(programName, "a_Position");
+        normalAttribute = GLES20.glGetAttribLocation(programName, "a_Normal");
+//        texCoordAttribute = GLES20.glGetAttribLocation(programName, "a_TexCoord");
+//
+//        textureUniform = GLES20.glGetUniformLocation(programName, "u_Texture");
+
+        lightingParametersUniform = GLES20.glGetUniformLocation(programName, "u_LightingParameters");
+        materialParametersUniform = GLES20.glGetUniformLocation(programName, "u_MaterialParameters");
+        colorCorrectionParameterUniform = GLES20.glGetUniformLocation(programName, "u_ColorCorrectionParameters");
+        colorUniform = GLES20.glGetUniformLocation(programName, "u_ObjColor");
 
         ShaderUtil.checkGLError(TAG, "program  params");
 
+//        // Read the texture.
+//        Bitmap textureBitmap = BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
+//
+//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+//        GLES20.glGenTextures(textures.length, textures, 0);
+//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+//
+//        GLES20.glTexParameteri(
+//                GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
+//        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+//        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
+//        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+//
+//        textureBitmap.recycle();
+
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+
+
 
         anchors.add(currentAnchorList);
     }
@@ -118,23 +185,38 @@ public class PointRenderer {
     {
         Log.d(VideoChatActivity.TAG, "Adding Break");
 
+        previousPose = null;
+
 //        RemoveAllZeroAnchors();
         currentAnchorList = new ArrayList<Anchor>();
         anchors.add(currentAnchorList);
     }
 
-    int count = 0;
-
     public void AddPoint(Anchor anchor, Pose hitPose)
     {
-        count += 1;
-
-//        if(count == 3)
+        if(previousPose != null)
         {
-            anchor.getPose().compose(hitPose);
-            currentAnchorList.add(anchor);
-            count = 0;
+            float threshold = 0.06f;
+
+            float px = previousPose.tx();
+            float py = previousPose.ty();
+            float pz = previousPose.tz();
+
+            float hx = hitPose.tx();
+            float hy = hitPose.ty();
+            float hz = hitPose.tz();
+
+            float cx = (Math.abs(hx) - Math.abs(px)) > threshold ? (Math.abs(px) + threshold) * Math.signum(hx) : hx;
+            float cy = (Math.abs(hy) - Math.abs(py)) > threshold ? (Math.abs(py) + threshold) * Math.signum(hy) : hy;
+            float cz = (Math.abs(hz) - Math.abs(pz)) > threshold ? (Math.abs(pz) + threshold) * Math.signum(hz) : hz;
+
+            hitPose = new Pose(new float[]{cx, cy, cz}, new float[]{hitPose.qx(), hitPose.qy(), hitPose.qz(), hitPose.qw()});
         }
+
+        anchor.getPose().compose(hitPose);
+        currentAnchorList.add(anchor);
+
+        previousPose = hitPose;
     }
 
     public class Building extends Contour {
@@ -146,7 +228,7 @@ public class PointRenderer {
 
     public Contour getBuildingContour() {
 
-        float scale = 0.01f;
+        float scale = 0.0045f;
 
         int numPoints = 20;
 
@@ -156,24 +238,28 @@ public class PointRenderer {
 
         for(int i = 0; i < numPoints; i++)
         {
-            points[i] = new PVector((float)Math.sin(i * angleInc) * scale, (float)Math.cos(i * angleInc) * scale);
+            points[i] = new PVector((float)Math.sin(i * angleInc), (float)Math.cos(i * angleInc));
+            points[i].mult(scale);
         }
 
         return new Building(points);
     }
 
     float[] vertices = new float[0];
-    float[] colors = new float[0];
+    float[] normals = new float[0];
 
     FloatBuffer vertexBuffer = null;
-    FloatBuffer colorBuffer = null;
-    public void draw(float[] cameraView, float[] cameraPerspective) {
+    FloatBuffer normalBuffer = null;
+    public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
+
+        GLES20.glEnable(GLES20.GL_BLEND);
 
         ShaderUtil.checkGLError(TAG, "Before draw");
 
         GLES20.glUseProgram(programName);
         GLES20.glEnableVertexAttribArray(positionAttribute);
-        GLES20.glEnableVertexAttribArray(colorAttribute);
+        GLES20.glEnableVertexAttribArray(normalAttribute);
+
 
         float[] modelMatrix = new float[16];
         float[] modelViewMatrix = new float[16];
@@ -181,7 +267,34 @@ public class PointRenderer {
         Matrix.setIdentityM(modelMatrix, 0);
         Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
         Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
+        GLES20.glUniformMatrix4fv(modelViewUniform, 1, false, modelViewMatrix, 0);
         GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+
+        Random rand = new  Random();
+
+        float[] lightDirection = new float[4];
+        lightDirection[0] = rand.nextFloat();
+        lightDirection[1] = rand.nextFloat();
+        lightDirection[2] = rand.nextFloat();
+        lightDirection[3] = rand.nextFloat();
+
+        Matrix.multiplyMV(viewLightDirection, 0, modelViewMatrix, 0, LIGHT_DIRECTION, 0);
+        normalizeVec3(viewLightDirection);
+        GLES20.glUniform4f(
+                lightingParametersUniform,
+                viewLightDirection[0],
+                viewLightDirection[1],
+                viewLightDirection[2],
+                1.f);
+        GLES20.glUniform4fv(colorCorrectionParameterUniform, 1, colorCorrectionRgba, 0);
+
+        float[] objColor = new float[]{0.0f, 0.9f, 0.0f, 0.95f};
+
+        // Set the object color property.
+        GLES20.glUniform4fv(colorUniform, 1, objColor, 0);
+
+        // Set the object material properties.
+        GLES20.glUniform4f(materialParametersUniform, ambient, diffuse, specular, specularPower);
 
         GLES20.glLineWidth(1.0f);
 
@@ -212,7 +325,7 @@ public class PointRenderer {
             conScale.scale(1f);
             contour.make_u_Coordinates();
 
-            Extrusion e = new Extrusion(null, path, 50, contour, conScale);
+            Extrusion e = new Extrusion(null, path, 40, contour, conScale);
             e.drawMode(S3D.TEXTURE );
 
             MakeExtrusionVerticesArray(e);
@@ -230,22 +343,34 @@ public class PointRenderer {
 
             { // COLOR
                 // bind VBO
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, colorVboId);
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, normalVboId);
                 // fill VBO with data
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * colors.length, colorBuffer, GLES20.GL_DYNAMIC_DRAW);
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * normals.length, normalBuffer, GLES20.GL_DYNAMIC_DRAW);
                 // associate currently bound VBO with shader attribute
-                GLES20.glVertexAttribPointer(colorAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
+                GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
             }
 
+
+                GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, numVertices);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, numVertices);
             }
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
-        GLES20.glDisableVertexAttribArray(colorAttribute);
+        GLES20.glDisableVertexAttribArray(normalAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
+        GLES20.glDisable(GLES20.GL_BLEND);
+
         ShaderUtil.checkGLError(TAG, "Draw");
+    }
+
+    private static void normalizeVec3(float[] v) {
+        float reciprocalLength = 1.0f / (float) Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+        v[0] *= reciprocalLength;
+        v[1] *= reciprocalLength;
+        v[2] *= reciprocalLength;
     }
 
     int numVertices = 0;
@@ -255,15 +380,13 @@ public class PointRenderer {
 
         MeshSection var1 = mesh2DCore.fullShape;
 
-        numVertices = ( var1.eNS - 2) * var1.eEW * 3;
+        numVertices = (var1.eNS - 2) * var1.eEW * 3;
 
         vertices = new float[numVertices * 3];
-        colors = new float[numVertices * 3];
-
-        Arrays.fill(colors, 0.5f);
+        normals = new float[numVertices * 3];
 
         vertexBuffer = allocateDirectFloatBuffer(numVertices * 3);
-        colorBuffer = allocateDirectFloatBuffer(numVertices * 3);
+        normalBuffer = allocateDirectFloatBuffer(numVertices * 3);
 
         int pointCounter = 0;
 
@@ -271,21 +394,33 @@ public class PointRenderer {
 
             for(int var5 = var1.sEW; var5 < var1.eEW; ++var5) {
                 PVector p1 = mesh2DCore.coord[var5][var4];
+                PVector n1 = mesh2DCore.norm[var5][var4];
                 vertices[pointCounter] = p1.x;
                 vertices[pointCounter + 1] = p1.y;
                 vertices[pointCounter + 2] = p1.z;
+                normals[pointCounter] = n1.x;
+                normals[pointCounter + 1] = n1.y;
+                normals[pointCounter + 2] = n1.z;
                 pointCounter += 3;
 
                 PVector p2 = mesh2DCore.coord[var5][var4 + 1];
+                PVector n2 = mesh2DCore.norm[var5][var4 + 1];
                 vertices[pointCounter] = p2.x;
                 vertices[pointCounter + 1] = p2.y;
                 vertices[pointCounter + 2] = p2.z;
+                normals[pointCounter] = n2.x;
+                normals[pointCounter + 1] = n2.y;
+                normals[pointCounter + 2] = n2.z;
                 pointCounter += 3;
 
                 PVector p3 = mesh2DCore.coord[var5][var4 + 2];
+                PVector n3 = mesh2DCore.norm[var5][var4 + 2];
                 vertices[pointCounter] = p3.x;
                 vertices[pointCounter + 1] = p3.y;
                 vertices[pointCounter + 2] = p3.z;
+                normals[pointCounter] = n3.x;
+                normals[pointCounter + 1] = n3.y;
+                normals[pointCounter + 2] = n3.z;
                 pointCounter += 3;
             }
         }
@@ -294,9 +429,9 @@ public class PointRenderer {
         vertexBuffer.put(vertices);
         vertexBuffer.rewind();
 
-        colorBuffer.rewind();
-        colorBuffer.put(colors);
-        colorBuffer.rewind();
+        normalBuffer.rewind();
+        normalBuffer.put(normals);
+        normalBuffer.rewind();
     }
 
     FloatBuffer allocateDirectFloatBuffer(int n) {

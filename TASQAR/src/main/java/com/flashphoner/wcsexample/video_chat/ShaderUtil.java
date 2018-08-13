@@ -107,7 +107,7 @@ public class ShaderUtil {
    * @param filename The filename of the asset file about to be turned into a shader.
    * @return The context of the text file, or null in case of error.
    */
-  private static String readRawTextFileFromAssets(Context context, String filename)
+  public static String readRawTextFileFromAssets(Context context, String filename)
       throws IOException {
     try (InputStream inputStream = context.getAssets().open(filename);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
