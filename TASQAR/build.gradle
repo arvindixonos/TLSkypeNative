@@ -71,10 +71,10 @@ dependencies {
     compile 'org.apache.commons:commons-math3:3.6.1'
     //    implementation project(':arcore_client')
     //    implementation project(':google_ar_required')
-    implementation project(':processing-core')
     //noinspection GradleCompatible
     compile 'com.google.android.support:wearable:1.1.+'
-    implementation project(':Shapes3d')
+    implementation project(':processing-core')
+    implementation project(':Shapes3D')
 }
 
 play {

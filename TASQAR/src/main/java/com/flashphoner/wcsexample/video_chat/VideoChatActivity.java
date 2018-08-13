@@ -117,7 +117,6 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 import processing.core.PVector;
-import shape3d.BezTube;
 import shapes3d.utils.MeshSection;
 import shapes3d.utils.P_Bezier3D;
 

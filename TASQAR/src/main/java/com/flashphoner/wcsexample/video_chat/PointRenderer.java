@@ -9,20 +9,21 @@ import com.google.ar.core.Anchor;
 import com.google.ar.core.Pose;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import processing.core.PVector;
-import shape3d.BezTube;
 import shapes3d.Extrusion;
+import shapes3d.Mesh2DCore;
 import shapes3d.S3D;
 import shapes3d.utils.CS_ConstantScale;
 import shapes3d.utils.Contour;
 import shapes3d.utils.ContourScale;
 import shapes3d.utils.MeshSection;
-import shapes3d.utils.P_Bezier3D;
 import shapes3d.utils.P_BezierSpline;
-import shapes3d.utils.P_LinearPath;
 import shapes3d.utils.Path;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
@@ -34,47 +35,42 @@ import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 public class PointRenderer {
 
 
-    private static final String VERTEX_SHADER_NAME = "shaders/point_cloud.vert";
-    private static final String FRAGMENT_SHADER_NAME = "shaders/point_cloud.frag";
+    private static final String VERTEX_SHADER_NAME = "shaders/vert.glsl";
+    private static final String FRAGMENT_SHADER_NAME = "shaders/frag.glsl";
 
     private static final int BYTES_PER_FLOAT = Float.SIZE / 8;
     private static final int FLOATS_PER_POINT = 3; // X,Y,Z.
     private static final int BYTES_PER_POINT = BYTES_PER_FLOAT * FLOATS_PER_POINT;
     private static final int INITIAL_BUFFER_POINTS = 50000;
 
-    private int vbo;
+    private int vertexVboId;
+    private int colorVboId;
     private int vboSize;
 
     private int programName;
+    private int colorAttribute;
     private int positionAttribute;
     private int modelViewProjectionUniform;
-    private int colorUniform;
-    private int pointSizeUniform;
 
     private int numPoints = 0;
 
     private ArrayList<ArrayList<Anchor>> anchors = new ArrayList<ArrayList<Anchor>>();
     private ArrayList<Anchor> currentAnchorList = new ArrayList<Anchor>();
 
+
     public void createOnGlThread(Context context) throws IOException
     {
         ShaderUtil.checkGLError(TAG, "before create");
 
-        int[] buffers = new int[1];
-        GLES20.glGenBuffers(1, buffers, 0);
-        vbo = buffers[0];
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-
-        vboSize = INITIAL_BUFFER_POINTS * BYTES_PER_POINT;
-        GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        int[] buffers = new int[2];
+        GLES20.glGenBuffers(2, buffers, 0);
+        vertexVboId = buffers[0];
+        colorVboId = buffers[1];
 
         ShaderUtil.checkGLError(TAG, "buffer alloc");
 
-        int vertexShader =
-                ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
-        int passthroughShader =
-                ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
+        int vertexShader = ShaderUtil.loadGLShader(TAG, context, GLES20.GL_VERTEX_SHADER, VERTEX_SHADER_NAME);
+        int passthroughShader = ShaderUtil.loadGLShader(TAG, context, GLES20.GL_FRAGMENT_SHADER, FRAGMENT_SHADER_NAME);
 
         programName = GLES20.glCreateProgram();
         GLES20.glAttachShader(programName, vertexShader);
@@ -84,12 +80,13 @@ public class PointRenderer {
 
         ShaderUtil.checkGLError(TAG, "program");
 
-        positionAttribute = GLES20.glGetAttribLocation(programName, "a_Position");
-        colorUniform = GLES20.glGetUniformLocation(programName, "u_Color");
-        modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "u_ModelViewProjection");
-        pointSizeUniform = GLES20.glGetUniformLocation(programName, "u_PointSize");
+        positionAttribute = GLES20.glGetAttribLocation(programName, "vertex");
+        colorAttribute = GLES20.glGetAttribLocation(programName, "color");
+        modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "transform");
 
         ShaderUtil.checkGLError(TAG, "program  params");
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         anchors.add(currentAnchorList);
     }
@@ -140,61 +137,6 @@ public class PointRenderer {
         }
     }
 
-    float lineLength = 0.015f;
-
-    int[] unitCubeIndices = new int[] {         0, 1, 2, // 0
-                                                0, 3, 2, // 1
-
-                                                0, 4, 3, // 2
-                                                4, 7, 3, // 3
-
-                                                4, 5, 6, // 4
-                                                4, 7, 6, // 5
-
-                                                5, 1, 2, // 6
-                                                5, 2, 6, // 7
-
-                                                4, 5, 1, // 8
-                                                4, 0, 1, // 9
-
-                                                7, 6, 2, // 10
-                                                7, 2, 3  // 11
-                                                };
-
-    float[] unitCubeVertices = new float[]
-            {
-            0, 0, 0, //0
-            1, 0, 0, //1
-            1, 1, 0, //2
-            0, 1, 0, //3
-            0, 0, 1, //4
-            1, 0, 1, //5
-            1, 1, 1, //6
-            0, 1, 1  //7
-            };
-
-    float[] edgePoints = new float[3 * 4 * 2];
-
-    float[] getCubePoint(float[] originPoint, int pointIndex)
-    {
-        float[] finalPoints = new float[3];
-
-        finalPoints[0] = originPoint[0] + unitCubeVertices[pointIndex * 3 + 0] * lineLength;
-        finalPoints[1] = originPoint[1] + unitCubeVertices[pointIndex * 3 + 1] * lineLength;
-        finalPoints[2] = originPoint[2] + unitCubeVertices[pointIndex * 3 + 2] * lineLength;
-
-        return  finalPoints;
-    }
-
-    int[] getCubeIndices(int index)
-    {
-        int[] finalPoints = new int[3];
-
-        System.arraycopy(unitCubeIndices, index * 3, finalPoints, 0, 3);
-
-        return  finalPoints;
-    }
-
     public class Building extends Contour {
 
         public Building(PVector[] c) {
@@ -220,16 +162,19 @@ public class PointRenderer {
         return new Building(points);
     }
 
+    float[] vertices = new float[0];
+    float[] colors = new float[0];
+
+    FloatBuffer vertexBuffer = null;
+    FloatBuffer colorBuffer = null;
     public void draw(float[] cameraView, float[] cameraPerspective) {
 
         ShaderUtil.checkGLError(TAG, "Before draw");
 
         GLES20.glUseProgram(programName);
         GLES20.glEnableVertexAttribArray(positionAttribute);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-        GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
+        GLES20.glEnableVertexAttribArray(colorAttribute);
 
-        GLES20.glUniform4f(colorUniform, 31.0f / 255.0f, 188.0f / 255.0f, 210.0f / 255.0f, 1.0f);
         float[] modelMatrix = new float[16];
         float[] modelViewMatrix = new float[16];
         float[] modelViewProjectionMatrix = new float[16];
@@ -237,18 +182,16 @@ public class PointRenderer {
         Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
         Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
         GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
-        GLES20.glUniform1f(pointSizeUniform, 5.0f);
 
         GLES20.glLineWidth(1.0f);
 
         int numAnchorsList = anchors.size();
-        int numFaces = 0;
 
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
         {
             ArrayList<Anchor> anchorsList = anchors.get(anchorsListCount);
 
-            if(anchorsList.size() == 0 || anchorsListCount == 0)
+            if(anchorsList.size() == 0)
                 continue;
 
             int numAnchors = anchorsList.size();
@@ -270,193 +213,93 @@ public class PointRenderer {
             contour.make_u_Coordinates();
 
             Extrusion e = new Extrusion(null, path, 50, contour, conScale);
-//            e.setTexture("wall.png", 1, 1);
             e.drawMode(S3D.TEXTURE );
-            // Extrusion end caps
-//            e.setTexture("grass.jpg", S3D.E_CAP);
-//            e.setTexture("sky.jpg", S3D.S_CAP);
-            e.drawMode(S3D.TEXTURE, S3D.BOTH_CAP);
 
-            MeshSection meshSection = e.fullShape;
+            MakeExtrusionVerticesArray(e);
 
-            int numPoints = (meshSection.eNS - 3) * meshSection.eEW * 12;
-            float[] points = new float[numPoints * 3];
+            final int vertexStride = 3 * Float.BYTES;
 
-            int pointCounter = 0;
-            for(int i = meshSection.sNS; i < meshSection.eNS - 3; i++) {
-
-                for(int j = meshSection.sEW; j < meshSection.eEW; j++) {
-
-                    PVector p1 = e.coord[j][i];
-                    PVector p2 = e.coord[j][i + 1];
-                    PVector p3 = e.coord[j][i + 2];
-                    PVector p4 = e.coord[j][i + 3];
-
-                    for(int k = 0; k < 3; k++)
-                    {
-                        if(k == 0)
-                        {
-                            points[pointCounter] = p1.x;
-                            points[pointCounter + 1] = p1.y;
-                            points[pointCounter + 2] = p1.z;
-
-                            points[pointCounter + 3] = p2.x;
-                            points[pointCounter + 4] = p2.y;
-                            points[pointCounter + 5] = p2.z;
-
-                            points[pointCounter + 6] = p3.x;
-                            points[pointCounter + 7] = p3.y;
-                            points[pointCounter + 8] = p3.z;
-                        }
-                        else if(k == 1)
-                        {
-                            points[pointCounter] = p2.x;
-                            points[pointCounter + 1] = p2.y;
-                            points[pointCounter + 2] = p2.z;
-
-                            points[pointCounter + 3] = p3.x;
-                            points[pointCounter + 4] = p3.y;
-                            points[pointCounter + 5] = p3.z;
-
-                            points[pointCounter + 6] = p4.x;
-                            points[pointCounter + 7] = p4.y;
-                            points[pointCounter + 8] = p4.z;
-                        }
-                        else if(k == 2)
-                        {
-                            points[pointCounter] = p3.x;
-                            points[pointCounter + 1] = p3.y;
-                            points[pointCounter + 2] = p3.z;
-
-                            points[pointCounter + 3] = p4.x;
-                            points[pointCounter + 4] = p4.y;
-                            points[pointCounter + 5] = p4.z;
-
-                            points[pointCounter + 6] = p1.x;
-                            points[pointCounter + 7] = p1.y;
-                            points[pointCounter + 8] = p1.z;
-                        }
-                        else
-                        {
-                            points[pointCounter] = p4.x;
-                            points[pointCounter + 1] = p4.y;
-                            points[pointCounter + 2] = p4.z;
-
-                            points[pointCounter + 3] = p1.x;
-                            points[pointCounter + 4] = p1.y;
-                            points[pointCounter + 5] = p1.z;
-
-                            points[pointCounter + 6] = p2.x;
-                            points[pointCounter + 7] = p2.y;
-                            points[pointCounter + 8] = p2.z;
-                        }
-
-                        pointCounter += 9;
-                    }
-                }
+            { // VERTEX
+                // bind VBO
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId);
+                // fill VBO with data
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * vertices.length, vertexBuffer, GLES20.GL_DYNAMIC_DRAW);
+                // associate currently bound VBO with shader attribute
+                GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
             }
 
-            if (numPoints * BYTES_PER_POINT > vboSize) {
-                while (numPoints * BYTES_PER_POINT > vboSize) {
-                    vboSize *= 2;
-                }
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, vboSize, null, GLES20.GL_DYNAMIC_DRAW);
+            { // COLOR
+                // bind VBO
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, colorVboId);
+                // fill VBO with data
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * colors.length, colorBuffer, GLES20.GL_DYNAMIC_DRAW);
+                // associate currently bound VBO with shader attribute
+                GLES20.glVertexAttribPointer(colorAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
             }
 
-            FloatBuffer verticesBuffer = FloatBuffer.allocate(points.length);
-            verticesBuffer.put(points).position(0);
-
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-            GLES20.glDisable(GLES20.GL_CULL_FACE);
-
-            GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, BYTES_PER_POINT, 0);
-            GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, verticesBuffer.capacity() * BYTES_PER_FLOAT, verticesBuffer);
-            GLES20.glDrawArrays(GLES20.GL_POINTS, 0, numPoints);
-
-                int numFacesPoint = 9 == 0 ? 12 : 24;
-//
-//                for(int faceID = 0; faceID < numFacesPoint; faceID++)
-//                {
-//                    int fetchFaceID = -1;
-//
-//                    if(i == 0)
-//                    {
-//                        fetchFaceID = faceID;
-//
-//                        int[] indices = getCubeIndices(fetchFaceID);
-//
-//                        for(int index = 0; index < 3; index++)
-//                        {
-//                            float[] point = getCubePoint(originPoint, indices[index]);
-//
-//                            System.arraycopy(point, 0, cubeArray, index * 3, 3);
-//                        }
-//
-//                        System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
-//                        System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
-//                        System.arraycopy(getCubePoint(originPoint, 2), 0, edgePoints, 6, 3);
-//                        System.arraycopy(getCubePoint(originPoint, 3), 0, edgePoints, 9, 3);
-//                    }
-//                    else
-//                    {
-//                        if(faceID >= 12)
-//                        {
-//                            fetchFaceID = faceID - 12;
-//
-//                            int[] indices = getCubeIndices(fetchFaceID);
-//
-//                            for(int index = 0; index < 3; index++)
-//                            {
-//                                float[] point = getCubePoint(originPoint, indices[index]);
-//
-//                                System.arraycopy(point, 0, cubeArray, index * 3, 3);
-//                            }
-//
-//                            if(fetchFaceID == 2)
-//                            {
-//                                System.arraycopy(getCubePoint(originPoint, 0), 0, edgePoints, 0, 3);
-//                                System.arraycopy(getCubePoint(originPoint, 1), 0, edgePoints, 3, 3);
-//                                System.arraycopy(getCubePoint(originPoint, 2), 0, edgePoints, 6, 3);
-//                                System.arraycopy(getCubePoint(originPoint, 3), 0, edgePoints, 9, 3);
-//                            }
-//                        }
-//                        else
-//                        {
-//                            if(faceID == 0)
-//                            {
-//                                System.arraycopy(getCubePoint(originPoint, 4), 0, edgePoints, 12, 3);
-//                                System.arraycopy(getCubePoint(originPoint, 5), 0, edgePoints, 15, 3);
-//                                System.arraycopy(getCubePoint(originPoint, 6), 0, edgePoints, 18, 3);
-//                                System.arraycopy(getCubePoint(originPoint, 7), 0, edgePoints, 21, 3);
-//                            }
-//
-//                            int[] indices = getCubeIndices(faceID);
-//
-//                            for(int indicesIndex = 0; indicesIndex < 3; indicesIndex++)
-//                            {
-//                                System.arraycopy(edgePoints, indices[indicesIndex] * 3, cubeArray, indicesIndex * 3, 3);
-//                            }
-//                        }
-//                    }
-//
-//                    verticesBuffer = FloatBuffer.wrap(cubeArray);
-//                    verticesBuffer.put(cubeArray).position(0);
-//
-//                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vbo);
-//
-//                    GLES20.glBufferSubData(GLES20.GL_ARRAY_BUFFER, 0, 3 * BYTES_PER_POINT, verticesBuffer);
-//
-//                    GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, 3);
-//                    GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-//
-//                    numFaces++;
-//                }
-//            }
-        }
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLES, 0, numVertices);
+            }
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
+        GLES20.glDisableVertexAttribArray(colorAttribute);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         ShaderUtil.checkGLError(TAG, "Draw");
+    }
+
+    int numVertices = 0;
+    void MakeExtrusionVerticesArray(Extrusion e)
+    {
+        Mesh2DCore mesh2DCore = (Mesh2DCore)e;
+
+        MeshSection var1 = mesh2DCore.fullShape;
+
+        numVertices = ( var1.eNS - 2) * var1.eEW * 3;
+
+        vertices = new float[numVertices * 3];
+        colors = new float[numVertices * 3];
+
+        Arrays.fill(colors, 0.5f);
+
+        vertexBuffer = allocateDirectFloatBuffer(numVertices * 3);
+        colorBuffer = allocateDirectFloatBuffer(numVertices * 3);
+
+        int pointCounter = 0;
+
+        for(int var4 = var1.sNS; var4 < var1.eNS - 2; ++var4) {
+
+            for(int var5 = var1.sEW; var5 < var1.eEW; ++var5) {
+                PVector p1 = mesh2DCore.coord[var5][var4];
+                vertices[pointCounter] = p1.x;
+                vertices[pointCounter + 1] = p1.y;
+                vertices[pointCounter + 2] = p1.z;
+                pointCounter += 3;
+
+                PVector p2 = mesh2DCore.coord[var5][var4 + 1];
+                vertices[pointCounter] = p2.x;
+                vertices[pointCounter + 1] = p2.y;
+                vertices[pointCounter + 2] = p2.z;
+                pointCounter += 3;
+
+                PVector p3 = mesh2DCore.coord[var5][var4 + 2];
+                vertices[pointCounter] = p3.x;
+                vertices[pointCounter + 1] = p3.y;
+                vertices[pointCounter + 2] = p3.z;
+                pointCounter += 3;
+            }
+        }
+
+        vertexBuffer.rewind();
+        vertexBuffer.put(vertices);
+        vertexBuffer.rewind();
+
+        colorBuffer.rewind();
+        colorBuffer.put(colors);
+        colorBuffer.rewind();
+    }
+
+    FloatBuffer allocateDirectFloatBuffer(int n) {
+        return ByteBuffer.allocateDirect(n * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
     }
 }
