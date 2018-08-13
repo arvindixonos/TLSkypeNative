@@ -92,7 +92,7 @@ public class PointRenderer{
     private float ambient = 0.3f;
     private float diffuse = 1.0f;
     private float specular = 1.0f;
-    private float specularPower = 6.0f;
+    private float specularPower = 3.0f;
 
     private final int[] textures = new int[1];
 
@@ -288,7 +288,7 @@ public class PointRenderer{
                 1.f);
         GLES20.glUniform4fv(colorCorrectionParameterUniform, 1, colorCorrectionRgba, 0);
 
-        float[] objColor = new float[]{0.0f, 0.9f, 0.0f, 0.95f};
+        float[] objColor = new float[]{0.3f, 0.7f, 0.3f, 0.95f};
 
         // Set the object color property.
         GLES20.glUniform4fv(colorUniform, 1, objColor, 0);
