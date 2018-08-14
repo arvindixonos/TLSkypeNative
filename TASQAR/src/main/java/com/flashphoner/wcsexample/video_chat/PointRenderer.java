@@ -55,15 +55,15 @@ public class PointRenderer{
 
     private int vertexVboId;
     private int normalVboId;
-    private int vboSize;
+    private int texVboId;
 
     private int programName;
     private int positionAttribute;
     private int normalAttribute;
-//    private int texCoordAttribute;
+    private int texCoordAttribute;
 
-    // Shader location: texture sampler.
-//    private int textureUniform;
+//     Shader location: texture sampler.
+    private int textureUniform;
 
     private int modelViewUniform;
     private int modelViewProjectionUniform;
@@ -101,10 +101,11 @@ public class PointRenderer{
     {
         ShaderUtil.checkGLError(TAG, "before create");
 
-        int[] buffers = new int[2];
-        GLES20.glGenBuffers(2, buffers, 0);
+        int[] buffers = new int[3];
+        GLES20.glGenBuffers(3, buffers, 0);
         vertexVboId = buffers[0];
         normalVboId = buffers[1];
+        texVboId = buffers[2];
 
         ShaderUtil.checkGLError(TAG, "buffer alloc");
 
@@ -124,36 +125,33 @@ public class PointRenderer{
 
         positionAttribute = GLES20.glGetAttribLocation(programName, "a_Position");
         normalAttribute = GLES20.glGetAttribLocation(programName, "a_Normal");
-//        texCoordAttribute = GLES20.glGetAttribLocation(programName, "a_TexCoord");
-//
-//        textureUniform = GLES20.glGetUniformLocation(programName, "u_Texture");
+        texCoordAttribute = GLES20.glGetAttribLocation(programName, "a_TexCoord");
+
+        textureUniform = GLES20.glGetUniformLocation(programName, "u_Texture");
 
         lightingParametersUniform = GLES20.glGetUniformLocation(programName, "u_LightingParameters");
         materialParametersUniform = GLES20.glGetUniformLocation(programName, "u_MaterialParameters");
         colorCorrectionParameterUniform = GLES20.glGetUniformLocation(programName, "u_ColorCorrectionParameters");
-        colorUniform = GLES20.glGetUniformLocation(programName, "u_ObjColor");
+//        colorUniform = GLES20.glGetUniformLocation(programName, "u_ObjColor");
 
         ShaderUtil.checkGLError(TAG, "program  params");
 
-//        // Read the texture.
-//        Bitmap textureBitmap = BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
-//
-//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-//        GLES20.glGenTextures(textures.length, textures, 0);
-//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
-//
-//        GLES20.glTexParameteri(
-//                GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
-//        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-//        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
-//        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
-//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-//
-//        textureBitmap.recycle();
+        // Read the texture.
+        Bitmap textureBitmap = BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
+
+        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+        GLES20.glGenTextures(textures.length, textures, 0);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
+        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+
+        textureBitmap.recycle();
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-
-
 
         anchors.add(currentAnchorList);
     }
@@ -247,9 +245,11 @@ public class PointRenderer{
 
     float[] vertices = new float[0];
     float[] normals = new float[0];
+    float[] texCoords = new float[0];
 
     FloatBuffer vertexBuffer = null;
     FloatBuffer normalBuffer = null;
+    FloatBuffer texBuffer = null;
     public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
 
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -259,6 +259,7 @@ public class PointRenderer{
         GLES20.glUseProgram(programName);
         GLES20.glEnableVertexAttribArray(positionAttribute);
         GLES20.glEnableVertexAttribArray(normalAttribute);
+        GLES20.glEnableVertexAttribArray(texCoordAttribute);
 
 
         float[] modelMatrix = new float[16];
@@ -288,10 +289,10 @@ public class PointRenderer{
                 1.f);
         GLES20.glUniform4fv(colorCorrectionParameterUniform, 1, colorCorrectionRgba, 0);
 
-        float[] objColor = new float[]{0.3f, 0.7f, 0.3f, 0.95f};
-
-        // Set the object color property.
-        GLES20.glUniform4fv(colorUniform, 1, objColor, 0);
+//        float[] objColor = new float[]{0.3f, 0.7f, 0.3f, 0.95f};
+//
+//        // Set the object color property.
+//        GLES20.glUniform4fv(colorUniform, 1, objColor, 0);
 
         // Set the object material properties.
         GLES20.glUniform4f(materialParametersUniform, ambient, diffuse, specular, specularPower);
@@ -331,6 +332,11 @@ public class PointRenderer{
             MakeExtrusionVerticesArray(e);
 
             final int vertexStride = 3 * Float.BYTES;
+            final int texStride = 2 * Float.BYTES;
+
+            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+            GLES20.glUniform1i(textureUniform, 0);
 
             { // VERTEX
                 // bind VBO
@@ -341,13 +347,22 @@ public class PointRenderer{
                 GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
             }
 
-            { // COLOR
+            { // NORMALS
                 // bind VBO
                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, normalVboId);
                 // fill VBO with data
                 GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * normals.length, normalBuffer, GLES20.GL_DYNAMIC_DRAW);
                 // associate currently bound VBO with shader attribute
                 GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
+            }
+
+            { // TEXTURE
+                // bind VBO
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, texVboId);
+                // fill VBO with data
+                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * texCoords.length, texBuffer, GLES20.GL_DYNAMIC_DRAW);
+                // associate currently bound VBO with shader attribute
+                GLES20.glVertexAttribPointer(texCoordAttribute, 2, GLES20.GL_FLOAT, false, texStride, 0);
             }
 
 
@@ -359,6 +374,8 @@ public class PointRenderer{
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glDisableVertexAttribArray(normalAttribute);
+        GLES20.glDisableVertexAttribArray(texCoordAttribute);
+
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
         GLES20.glDisable(GLES20.GL_BLEND);
@@ -384,11 +401,13 @@ public class PointRenderer{
 
         vertices = new float[numVertices * 3];
         normals = new float[numVertices * 3];
+        texCoords = new float[numVertices * 2];
 
         vertexBuffer = allocateDirectFloatBuffer(numVertices * 3);
         normalBuffer = allocateDirectFloatBuffer(numVertices * 3);
+        texBuffer = allocateDirectFloatBuffer(numVertices * 2);
 
-        int pointCounter = 0;
+        int pointCounter = 0, texCoordCounter = 0;
 
         for(int var4 = var1.sNS; var4 < var1.eNS - 2; ++var4) {
 
@@ -401,7 +420,10 @@ public class PointRenderer{
                 normals[pointCounter] = n1.x;
                 normals[pointCounter + 1] = n1.y;
                 normals[pointCounter + 2] = n1.z;
+                texCoords[texCoordCounter] = mesh2DCore.u[var5];
+                texCoords[texCoordCounter + 1] = mesh2DCore.v[var4];
                 pointCounter += 3;
+                texCoordCounter += 2;
 
                 PVector p2 = mesh2DCore.coord[var5][var4 + 1];
                 PVector n2 = mesh2DCore.norm[var5][var4 + 1];
@@ -411,7 +433,10 @@ public class PointRenderer{
                 normals[pointCounter] = n2.x;
                 normals[pointCounter + 1] = n2.y;
                 normals[pointCounter + 2] = n2.z;
+                texCoords[texCoordCounter] = mesh2DCore.u[var5];
+                texCoords[texCoordCounter + 1] = mesh2DCore.v[var4 + 1];
                 pointCounter += 3;
+                texCoordCounter += 2;
 
                 PVector p3 = mesh2DCore.coord[var5][var4 + 2];
                 PVector n3 = mesh2DCore.norm[var5][var4 + 2];
@@ -421,7 +446,10 @@ public class PointRenderer{
                 normals[pointCounter] = n3.x;
                 normals[pointCounter + 1] = n3.y;
                 normals[pointCounter + 2] = n3.z;
+                texCoords[texCoordCounter] = mesh2DCore.u[var5];
+                texCoords[texCoordCounter + 1] = mesh2DCore.v[var4 + 2];
                 pointCounter += 3;
+                texCoordCounter += 2;
             }
         }
 
@@ -432,6 +460,10 @@ public class PointRenderer{
         normalBuffer.rewind();
         normalBuffer.put(normals);
         normalBuffer.rewind();
+
+        texBuffer.rewind();
+        texBuffer.put(texCoords);
+        texBuffer.rewind();
     }
 
     FloatBuffer allocateDirectFloatBuffer(int n) {

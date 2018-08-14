@@ -138,7 +138,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom10";
+    String roomName = "TLSkypeRoom-CoolRoom101";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -238,7 +238,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
-            pointRenderer.createOnGlThread(this, "models/andy.png");
+            pointRenderer.createOnGlThread(this, "models/checkers.jpg");
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 

@@ -24,7 +24,7 @@ uniform vec4 u_ColorCorrectionParameters;
 varying vec3 v_ViewPosition;
 varying vec3 v_ViewNormal;
 varying vec2 v_TexCoord;
-uniform vec4 u_ObjColor;
+//uniform vec4 u_ObjColor;
 
 void main() {
     // We support approximate sRGB gamma.
@@ -47,14 +47,8 @@ void main() {
     vec3 viewNormal = normalize(v_ViewNormal);
 
     // Flip the y-texture coordinate to address the texture from top-left.
-    vec4 objectColor = u_ObjColor; //texture2D(u_Texture, vec2(v_TexCoord.x, 1.0 - v_TexCoord.y));
+    vec4 objectColor = vec4(texture2D(u_Texture, vec2(v_TexCoord.x, 1.0 - v_TexCoord.y)).rgb, 1);
 
-    // Apply color to grayscale image only if the alpha of u_ObjColor is
-    // greater and equal to 255.0.
-    if (u_ObjColor.a >= 255.0) {
-      float intensity = objectColor.r;
-      objectColor.rgb = u_ObjColor.rgb * intensity / 255.0;
-    }
 
     // Apply inverse SRGB gamma to the texture before making lighting calculations.
     objectColor.rgb = pow(objectColor.rgb, vec3(kInverseGamma));
@@ -63,8 +57,7 @@ void main() {
     float ambient = materialAmbient;
 
     // Approximate a hemisphere light (not a harsh directional light).
-    float diffuse = materialDiffuse *
-            0.5 * (dot(viewNormal, viewLightDirection) + 1.0);
+    float diffuse = materialDiffuse * 0.5 * (dot(viewNormal, viewLightDirection) + 1.0);
 
     // Compute specular light.
     vec3 reflectedLightDirection = reflect(viewLightDirection, viewNormal);
