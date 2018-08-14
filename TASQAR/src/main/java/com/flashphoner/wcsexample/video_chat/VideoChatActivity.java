@@ -54,6 +54,7 @@ import android.widget.Toast;
 import com.flashphoner.fpwcsapi.Flashphoner;
 import com.flashphoner.fpwcsapi.MediaDeviceList;
 import com.flashphoner.fpwcsapi.bean.Connection;
+import com.flashphoner.fpwcsapi.bean.Data;
 import com.flashphoner.fpwcsapi.layout.PercentFrameLayout;
 import com.flashphoner.fpwcsapi.room.Message;
 import com.flashphoner.fpwcsapi.room.Participant;
@@ -106,11 +107,13 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -138,7 +141,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom101";
+    String roomName = "NEWFTP";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -467,8 +470,35 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onClick(View view)
             {
+//               Collection<Participant> participants =  room.getParticipants();
+//
+//                Iterator<Participant> iterator = participants.iterator();
+//
+//                // while loop
+//                while (iterator.hasNext()) {
+//                    Participant participant = iterator.next();
+//
+//                    if(participant.getName() != roomManager.getUsername())
+//                    {
+//                        Message message = new Message();
+//                        message.setTo(participant.getName());
+//                        message.setText("PODA DAI");
+//                        message.getRoomConfig().put("name", room.getName());
+//
+//                        Data d = new Data();
+//                        String operationId = UUID.randomUUID().toString();
+//                        d.setOperationId(operationId);
+//                        d.setPayload(message);
+//                        roomManager.session.send("FileSend", d);
+//
+//                        break;
+//                    }
+//                }
 
+//                roomManager.session.send("Hawee", new byte[]{16, 12, 46, 60, 10});
+//
                 arrowMode = !arrowMode;
+
 //                final Context ctx = VideoChatActivity.this;
 //                new ChooserDialog(ctx)
 //                        .withStartFile(null)
