@@ -143,9 +143,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkypeRoom-CoolRoom10";
+    String roomName = "NEWFTP";
 //    UI references.
 
+    private Thread ftpThread;
     private ImageButton mConnectButton;
     private Button mPlaneOrPointButton;
     private EditText mJoinRoomView;
@@ -320,7 +321,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         screenSize = GetScreeenSize();
 
         WebRTCMediaProvider.cameraID = 1;
-
+        ShowToast("Audio Muted in build", this);
         SetupCallScreen();
 
         android_id = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -1101,6 +1102,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                  */
 
                 room.on(new RoomEvent() {
+
                     @Override
                     public void onState(final Room room) {
 
@@ -1109,6 +1111,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         if (permissionGiven && stream == null) {
                             stream = room.publish(localRenderer, VideoChatActivity.this);
                             stream.unmuteAudio();
+//                            stream.muteAudio();
                         }
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
@@ -1181,6 +1184,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             participantPublishing = true;
                             Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
                             remoteStream.unmuteAudio();
+//                            remoteStream.muteAudio();
                         }
                     }
 
@@ -1191,6 +1195,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         Connect();
                     }
+
 
                     @Override
                     public void onMessage(final Message message)
@@ -1340,19 +1345,20 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         ftpManager.uploadORdownload = 1;
         ftpManager.applicationContext = getApplicationContext();
         ftpManager.filePath = filePath;
-        if (ftpManager.running)
+        if (ftpManager.running || (ftpThread != null && ftpThread.isAlive()))
         {
             ShowToast("FTP Manager Running Already", this.getApplicationContext());
             return;
         }
-        uiHandler.showNotification(getApplicationContext(), "Upload", filePath, new Intent());
-        new Thread(new Runnable()
+        ftpThread = new Thread(new Runnable()
         {
             @Override
             public void run() {
 
+                Log.d(TAG, "Run FTP");
                 Looper looper = mHandler.getLooper();
                 looper.prepare();
+                uiHandler.showNotification(getApplicationContext(), "Upload", filePath, new Intent());
                 mHandler.post(new Runnable()
                 {
                     @Override
@@ -1361,6 +1367,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         ftpManager.execute();
                         while (!ftpManager.transferSuccess)
                         {
+                            uiHandler.UpdateNotification(ftpManager.progress);
 //                            runOnUiThread(new Runnable() {
 //                                @Override
 //                                public void run() {
@@ -1377,7 +1384,24 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     }
                 });
             }
-        }).start();
+        });
+        ftpThread.start();
+    }
+
+    public void StopFTP ()
+    {
+        if(ftpThread == null)
+            return;
+
+        Log.d(TAG, "Run STOP FTP");
+
+        if(!ftpThread.isAlive())
+        {
+            ShowToast("FTP not running", this);
+            return;
+        }
+
+        ftpThread.stop();
     }
 
     public void DownloadFile(final String fileName)

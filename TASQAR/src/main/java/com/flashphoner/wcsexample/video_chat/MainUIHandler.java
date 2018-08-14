@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
 import android.app.RemoteAction;
 import android.app.TaskStackBuilder;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -104,6 +105,18 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     public Camera      camera;
     public FileButtonHelper    fileButtonHelper;
 
+    //Notification Variables
+    private NotificationManager notificationManager;
+    private NotificationChannel mChannel;
+    private NotificationCompat.Builder mBuilder;
+    private TaskStackBuilder stackBuilder;
+    private PendingIntent resultPendingIntent;
+    private int notificationId = 1;
+    private String channelId = "channel-01";
+    private String channelName = "Channel Name";
+    private int importance = NotificationManager.IMPORTANCE_HIGH;
+    //Notification Variables
+
     DrawerLayout    drawerLayout;
 
     ImageView progessBar;
@@ -127,17 +140,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     RelativeLayout switchLayoutItem;
     RelativeLayout togglePointItem;
-    RelativeLayout toggleFlashItem;
-    RelativeLayout toggleDrawingItem;
-    RelativeLayout toggleRecordingItem;
     RelativeLayout toggleBackcamItem;
     RelativeLayout toggleArrowMode;
 
     Switch  switchLayoutButton;
     Switch  togglePointButton;
-    Switch  toggleFlashButton;
-    Switch  toggleDrawingButton;
-    Switch  toggleRecordingButton;
     Switch  toggleBackcamButton;
     Switch  toggleArrowButton;
 
@@ -589,8 +596,12 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             @Override
             public void onClick(View v)
             {
-                count += 10;
-                SetProgress(count);
+                char[] charray = new char[] {'a', 'd', 'i', 's', 'h'};
+                Log.d(TAG, charray.toString());
+                chatActivity.SendMessage("Something");
+//                count += 10;
+//                SetProgress(count);
+//                showNotification(currentActivity, "Download", "filepath", new Intent());
 //                DisplayNotification();
 //                if(count == 0)
 //                    showNotification(currentActivity, "Title", "This is download", new Intent());
@@ -716,20 +727,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     }
     int count = 0;
     int width;
-    public void DisplayNotification()
-    {
-
-    }
-
-    private NotificationManager notificationManager;
-    private NotificationChannel mChannel;
-    private NotificationCompat.Builder mBuilder;
-    private TaskStackBuilder stackBuilder;
-    private PendingIntent resultPendingIntent;
-    private int notificationId = 1;
-    private String channelId = "channel-01";
-    private String channelName = "Channel Name";
-    private int importance = NotificationManager.IMPORTANCE_HIGH;
 
     public void showNotification(Context context, String title, String body, Intent intent)
     {
@@ -740,28 +737,36 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             notificationManager.createNotificationChannel(mChannel);
         }
 
+        Intent actionIntent = new Intent(currentActivity, ActionReceiver.class);
+        actionIntent.putExtra("Action", "CancelDownload");
+
+        PendingIntent pIntentCancel = PendingIntent.getBroadcast(currentActivity, 1, actionIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
         mBuilder = new NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(body)
-                .setProgress(100, 0, false);
+                .setOnlyAlertOnce(true)
+                .setProgress(100, 0, false)
+                .addAction(R.drawable.arrow_down, "Cancel", pIntentCancel)
+                .setOngoing(true);
 
-        stackBuilder = TaskStackBuilder.create(context);
-        stackBuilder.addNextIntent(intent);
-        resultPendingIntent = stackBuilder.getPendingIntent
-        (
-                0,
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-        mBuilder.setContentIntent(resultPendingIntent);
+//        stackBuilder = TaskStackBuilder.create(context);
+//        stackBuilder.addNextIntent(intent);
+//        resultPendingIntent = stackBuilder.getPendingIntent
+//        (
+//                0,
+//                PendingIntent.FLAG_UPDATE_CURRENT
+//        );
+//        mBuilder.setContentIntent(resultPendingIntent);
         notificationManager.notify(notificationId, mBuilder.build());
     }
 
     public void UpdateNotification (int progress)
     {
+        Log.d(TAG, "Progress : " + progress);
         mBuilder.setProgress(100, progress, false);
-        mBuilder.build();
-//        notificationManager.notify(notificationId, mBuilder.build());
+        notificationManager.notify(notificationId, mBuilder.build());
     }
 
     public void StopNotification ()
@@ -771,9 +776,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     public void SetProgress (float scale)
     {
-        currentActivity.runOnUiThread(new Runnable() {
+        currentActivity.runOnUiThread(new Runnable()
+        {
             @Override
-            public void run() {
+            public void run()
+            {
                 ViewGroup.LayoutParams layoutParams = progessBar.getLayoutParams();
 
                 layoutParams.width = (int) ((scale * width));

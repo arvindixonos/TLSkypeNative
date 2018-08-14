@@ -70,11 +70,11 @@ dependencies {
     //    implementation project(':arcore_client')
     //    implementation project(':google_ar_required')
     //noinspection GradleCompatible
-    implementation project(':Shapes3D')
+    compile 'com.google.android.support:wearable:1.1.+'
     implementation project(':flashphoner')
     implementation project(':libjingle_peerconnection')
-    compile 'com.google.android.support:wearable:1.1.+'
     implementation project(':processing-core')
+    implementation project(':Shapes3D')
 }
 
 play {
