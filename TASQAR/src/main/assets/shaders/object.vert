@@ -13,20 +13,34 @@
  * limitations under the License.
  */
 
-uniform mat4 u_ModelView;
-uniform mat4 u_ModelViewProjection;
 
 attribute vec4 a_Position;
-attribute vec3 a_Normal;
-attribute vec2 a_TexCoord;
+attribute vec4 a_Normal;
 
-varying vec3 v_ViewPosition;
-varying vec3 v_ViewNormal;
-varying vec2 v_TexCoord;
+uniform mat4 u_ModelViewProjection;
+
+uniform float tileCount;
+
+varying vec3  normal;
+varying vec2  tileCoord;
+varying vec2  texCoord;
+varying float ambientOcclusion;
 
 void main() {
-    v_ViewPosition = (u_ModelView * a_Position).xyz;
-    v_ViewNormal = normalize((u_ModelView * vec4(a_Normal, 0.0)).xyz);
-    v_TexCoord = a_TexCoord;
+    //Compute ambient occlusion
+    ambientOcclusion = 0.5;
+
+    //Compute normal
+    normal = a_Normal.xyz;
+
+    //Compute texture coordinate
+    texCoord = vec2(dot(vec3(a_Position), vec3(normal.y-normal.z, 0, normal.x)),
+                      dot(vec3(a_Position), vec3(0, -abs(normal.x+normal.z), normal.y)));
+
+    //Compute tile coordinate
+    float tx    = a_Normal.x / tileCount;
+    tileCoord.x = floor(tx);
+    tileCoord.y = fract(tx) * tileCount;
+
     gl_Position = u_ModelViewProjection * a_Position;
 }

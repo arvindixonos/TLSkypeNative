@@ -13,63 +13,46 @@
  * limitations under the License.
  */
 
-precision mediump float;
+precision highp float;
 
 uniform sampler2D u_Texture;
+uniform float tileSize;
+uniform float tileCount;
 
-uniform vec4 u_LightingParameters;
-uniform vec4 u_MaterialParameters;
-uniform vec4 u_ColorCorrectionParameters;
-
-varying vec3 v_ViewPosition;
-varying vec3 v_ViewNormal;
-varying vec2 v_TexCoord;
-//uniform vec4 u_ObjColor;
+varying vec3  normal;
+varying vec2  tileCoord;
+varying vec2  texCoord;
+varying float ambientOcclusion;
 
 void main() {
-    // We support approximate sRGB gamma.
-    const float kGamma = 0.4545454;
-    const float kInverseGamma = 2.2;
-    const float kMiddleGrayGamma = 0.466;
+      vec2 uv  = texCoord;
 
-    // Unpack lighting and material parameters for better naming.
-    vec3 viewLightDirection = u_LightingParameters.xyz;
-    vec3 colorShift = u_ColorCorrectionParameters.rgb;
-    float averagePixelIntensity = u_ColorCorrectionParameters.a;
+      float weight = 0.0;
 
-    float materialAmbient = u_MaterialParameters.x;
-    float materialDiffuse = u_MaterialParameters.y;
-    float materialSpecular = u_MaterialParameters.z;
-    float materialSpecularPower = u_MaterialParameters.w;
+      vec2 tileOffset = 2.0 * tileSize * tileCoord;
+      float denom     = 2.0 * tileSize * tileCount;
 
-    // Normalize varying parameters, because they are linearly interpolated in the vertex shader.
-    vec3 viewFragmentDirection = normalize(v_ViewPosition);
-    vec3 viewNormal = normalize(v_ViewNormal);
+      vec4 color = vec4(0.0, 0.0, 0.0, 0.0);
 
-    // Flip the y-texture coordinate to address the texture from top-left.
-    vec4 objectColor = vec4(texture2D(u_Texture, vec2(v_TexCoord.x, 1.0 - v_TexCoord.y)).rgb, 1);
+      for(int dx=0; dx<2; ++dx) {
+         for(int dy=0; dy<2; ++dy) {
+           vec2 offset = 2.0 * fract(0.5 * (uv + vec2(dx, dy)));
+           float w = pow(1.0 - max(abs(offset.x-1.0), abs(offset.y-1.0)), 3.0);
 
+           vec2 tc = (tileOffset + tileSize * offset) / denom;
+           color  += w * texture2D(u_Texture, tc);
+           weight += w;
+         }
+       }
 
-    // Apply inverse SRGB gamma to the texture before making lighting calculations.
-    objectColor.rgb = pow(objectColor.rgb, vec3(kInverseGamma));
+       color /= weight;
 
-    // Ambient light is unaffected by the light intensity.
-    float ambient = materialAmbient;
+//
+//       if(color.w < 0.5) {
+//         discard;
+//       }
 
-    // Approximate a hemisphere light (not a harsh directional light).
-    float diffuse = materialDiffuse * 0.5 * (dot(viewNormal, viewLightDirection) + 1.0);
+        float light = ambientOcclusion + max(0.15 * dot(normal, vec3(1,1,1)), 0.0);
 
-    // Compute specular light.
-    vec3 reflectedLightDirection = reflect(viewLightDirection, viewNormal);
-    float specularStrength = max(0.0, dot(viewFragmentDirection, reflectedLightDirection));
-    float specular = materialSpecular *
-            pow(specularStrength, materialSpecularPower);
-
-    vec3 color = objectColor.rgb * (ambient + diffuse) + specular;
-    // Apply SRGB gamma before writing the fragment color.
-    color.rgb = pow(color, vec3(kGamma));
-    // Apply average pixel intensity and color shift
-    color *= colorShift * (averagePixelIntensity / kMiddleGrayGamma);
-    gl_FragColor.rgb = color;
-    gl_FragColor.a = objectColor.a;
+        gl_FragColor = vec4(color.xyz * light, 1.0);
 }
