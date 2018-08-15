@@ -110,11 +110,13 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.sql.Time;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
@@ -243,14 +245,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
-            pointRenderer.createOnGlThread(this, "models/andy.png");
+            pointRenderer.createOnGlThread(this, "models/grass.jpg");
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/arrow_tex.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/andy.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-            virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/arrow_tex.png");
+            virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/andy_shadow.png");
             virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
             virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -321,7 +323,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         screenSize = GetScreeenSize();
 
         WebRTCMediaProvider.cameraID = 1;
-        ShowToast("Audio Muted in build", this);
+
         SetupCallScreen();
 
         android_id = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
@@ -1102,7 +1104,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                  */
 
                 room.on(new RoomEvent() {
-
                     @Override
                     public void onState(final Room room) {
 
@@ -1111,7 +1112,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         if (permissionGiven && stream == null) {
                             stream = room.publish(localRenderer, VideoChatActivity.this);
                             stream.unmuteAudio();
-//                            stream.muteAudio();
                         }
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
@@ -1184,7 +1184,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             participantPublishing = true;
                             Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
                             remoteStream.unmuteAudio();
-//                            remoteStream.muteAudio();
                         }
                     }
 
@@ -1195,7 +1194,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         Connect();
                     }
-
 
                     @Override
                     public void onMessage(final Message message)
@@ -1442,6 +1440,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 });
             }
         }).start();
+
     }
 
     public void OpenFile(String filePath) {

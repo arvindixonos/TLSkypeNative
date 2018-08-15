@@ -1,16 +1,16 @@
 {
   "buildFiles": [
-    "C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\CMakeLists.txt"
+    "D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\CMakeLists.txt"
   ],
   "cleanCommands": [
-    "C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\release\\armeabi-v7a --target clean"
+    "F:\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\release\\armeabi-v7a --target clean"
   ],
   "libraries": {
     "native-lib-Release-armeabi-v7a": {
       "artifactName": "native-lib",
-      "buildCommand": "C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\release\\armeabi-v7a --target native-lib",
+      "buildCommand": "F:\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\release\\armeabi-v7a --target native-lib",
       "abi": "armeabi-v7a",
-      "output": "C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\build\\intermediates\\cmake\\release\\obj\\armeabi-v7a\\libnative-lib.so"
+      "output": "D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\build\\intermediates\\cmake\\release\\obj\\armeabi-v7a\\libnative-lib.so"
     },
     "yuv-Release-armeabi-v7a": {
       "artifactName": "yuv",
