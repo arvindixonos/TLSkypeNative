@@ -105,8 +105,7 @@ public class MainUIHandler
     RelativeLayout.LayoutParams   smallScreenlayoutParams;
     Rational aspectRatio;
 
-    private final PictureInPictureParams.Builder mPictureInPictureParamsBuilder =
-            new PictureInPictureParams.Builder();
+
 
     public enum CameraTorchMode
     {
@@ -573,23 +572,22 @@ public class MainUIHandler
         timerRunning = false;
     }
 
-    public void Minimise ()
-    {
-        if(switched)
-        {
+    public void Minimise () {
+        if (switched) {
             Log.d(TAG, " layout has been switched");
             aspectRatio = new Rational(localRender.getWidth(), localRender.getHeight());
             PreMinimise();
             minimisedSwitched = true;
-        }
-        else
-        {
+        } else {
             aspectRatio = new Rational(remote1Render.getWidth(), remote1Render.getHeight());
         }
-//        SurfaceViewRendererCustom remoteRender = currentActivity.findViewById(R.id.StreamRender);
-//
-        mPictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build();
-        currentActivity.enterPictureInPictureMode(mPictureInPictureParamsBuilder.build());
+
+        if (Build.VERSION.SDK_INT >= 26) {
+
+            PictureInPictureParams.Builder mPictureInPictureParamsBuilder = new PictureInPictureParams.Builder();
+            mPictureInPictureParamsBuilder.setAspectRatio(aspectRatio).build();
+            currentActivity.enterPictureInPictureMode(mPictureInPictureParamsBuilder.build());
+        }
     }
 
     List<RemoteAction> remoteActions;

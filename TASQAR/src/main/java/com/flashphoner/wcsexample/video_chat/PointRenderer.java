@@ -165,7 +165,7 @@ public class PointRenderer{
     {
         if(previousPose != null)
         {
-            float threshold = 0.2f;
+            float threshold = 0.1f;
 
             float px = previousPose.tx();
             float py = previousPose.ty();
@@ -199,7 +199,7 @@ public class PointRenderer{
 
         float scale = 0.0045f;
 
-        int numPoints = 20;
+        int numPoints = 30;
 
         PVector[] points = new PVector[numPoints];
 

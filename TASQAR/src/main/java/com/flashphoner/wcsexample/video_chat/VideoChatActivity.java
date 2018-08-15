@@ -470,34 +470,35 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onClick(View view)
             {
-//               Collection<Participant> participants =  room.getParticipants();
-//
-//                Iterator<Participant> iterator = participants.iterator();
-//
-//                // while loop
-//                while (iterator.hasNext()) {
-//                    Participant participant = iterator.next();
-//
-//                    if(participant.getName() != roomManager.getUsername())
-//                    {
-//                        Message message = new Message();
-//                        message.setTo(participant.getName());
-//                        message.setText("PODA DAI");
-//                        message.getRoomConfig().put("name", room.getName());
-//
-//                        Data d = new Data();
-//                        String operationId = UUID.randomUUID().toString();
-//                        d.setOperationId(operationId);
-//                        d.setPayload(message);
-//                        roomManager.session.send("FileSend", d);
-//
-//                        break;
-//                    }
-//                }
+               Collection<Participant> participants =  room.getParticipants();
 
-//                roomManager.session.send("Hawee", new byte[]{16, 12, 46, 60, 10});
-//
-                arrowMode = !arrowMode;
+                Iterator<Participant> iterator = participants.iterator();
+
+                // while loop
+                while (iterator.hasNext()) {
+                    Participant participant = iterator.next();
+
+                    if(participant.getName() != roomManager.getUsername())
+                    {
+                        Message message = new Message();
+                        message.setTo(participant.getName());
+                        message.setText("PODA DAI");
+                        message.getRoomConfig().put("name", room.getName());
+
+                        Data d = new Data();
+                        String operationId = UUID.randomUUID().toString();
+                        d.setOperationId(operationId);
+                        d.setPayload(message);
+                        roomManager.session.send("sendMessage", d);
+
+                        break;
+                    }
+                }
+
+                roomManager.session.send("Hawee", new byte[]{16, 12, 46, 60, 10});
+
+
+//                arrowMode = !arrowMode;
 
 //                final Context ctx = VideoChatActivity.this;
 //                new ChooserDialog(ctx)
