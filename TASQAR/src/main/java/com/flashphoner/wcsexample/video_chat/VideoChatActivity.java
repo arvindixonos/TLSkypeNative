@@ -16,6 +16,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.AudioManager;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -59,6 +60,7 @@ import com.flashphoner.fpwcsapi.layout.PercentFrameLayout;
 import com.flashphoner.fpwcsapi.room.Message;
 import com.flashphoner.fpwcsapi.room.Participant;
 import com.flashphoner.fpwcsapi.room.Room;
+import com.flashphoner.fpwcsapi.room.RoomCommand;
 import com.flashphoner.fpwcsapi.room.RoomEvent;
 import com.flashphoner.fpwcsapi.room.RoomManager;
 import com.flashphoner.fpwcsapi.room.RoomManagerEvent;
@@ -69,6 +71,9 @@ import com.flashphoner.fpwcsapi.session.Stream;
 import com.flashphoner.fpwcsapi.webrtc.MediaDevice;
 import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
 
+import com.flashphoner.fpwcsapi.ws.CallArguments;
+import com.flashphoner.fpwcsapi.ws.WSMessage;
+import com.flashphoner.fpwcsapi.ws.WebSocketChannelEvents;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
@@ -85,6 +90,8 @@ import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.obsez.android.lib.filechooser.tool.DirAdapter;
 
@@ -103,6 +110,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.sql.Time;
@@ -141,7 +149,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTP";
+    String roomName = "NEWFTPA";
 //    UI references.
 
     private ImageButton mConnectButton;
@@ -470,35 +478,35 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onClick(View view)
             {
-               Collection<Participant> participants =  room.getParticipants();
+//               Collection<Participant> participants =  room.getParticipants();
+//
+//                Iterator<Participant> iterator = participants.iterator();
+//
+//                // while loop
+//                while (iterator.hasNext()) {
+//                    Participant participant = iterator.next();
+//
+//                    if(participant.getName() != roomManager.getUsername())
+//                    {
+//                        String smes = com.flashphoner.fpwcsapi.session.Session.class.getSimpleName();
+//
+//                        Message message = new Message();
+//                        message.setTo(participant.getName());
+//                        message.setText("HELLO WORLD");
+//                        message.getRoomConfig().put("name", room.getName());
+////                        room.sendAppCommand("sendMessage", message, (RestAppCommunicator.Handler)null);
+//
+//                        RoomCommand roomCommand = new RoomCommand("sendMessage", message);
+//                        roomManager.session.getRestAppCommunicator().sendData(roomCommand, (RestAppCommunicator.Handler)null);
+//
+//                        break;
+//                    }
+//                }
+//
+////                roomManager.session.send("Hawee", new byte[]{16, 12, 46, 60, 10});
 
-                Iterator<Participant> iterator = participants.iterator();
 
-                // while loop
-                while (iterator.hasNext()) {
-                    Participant participant = iterator.next();
-
-                    if(participant.getName() != roomManager.getUsername())
-                    {
-                        Message message = new Message();
-                        message.setTo(participant.getName());
-                        message.setText("PODA DAI");
-                        message.getRoomConfig().put("name", room.getName());
-
-                        Data d = new Data();
-                        String operationId = UUID.randomUUID().toString();
-                        d.setOperationId(operationId);
-                        d.setPayload(message);
-                        roomManager.session.send("sendMessage", d);
-
-                        break;
-                    }
-                }
-
-                roomManager.session.send("Hawee", new byte[]{16, 12, 46, 60, 10});
-
-
-//                arrowMode = !arrowMode;
+                arrowMode = !arrowMode;
 
 //                final Context ctx = VideoChatActivity.this;
 //                new ChooserDialog(ctx)
@@ -568,6 +576,29 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
 
         SetLocalRendererMirror();
+    }
+
+    void  MuteAudio()
+    {
+        //mute audio
+        AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_MUTE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
+    }
+
+    void  UnmuteAudio()
+    {
+        AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_RAISE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_RAISE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_RAISE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_RAISE, 0);
+        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_RAISE, 0);
     }
 
     @Override
@@ -750,6 +781,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     @Override
     public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
+
+        MuteAudio();
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
@@ -1093,6 +1126,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
          */
         roomManager = Flashphoner.createRoomManager(roomManagerOptions);
 
+
+
         /**
          * Callback functions for connection status events are added to make appropriate changes in controls of the interface when connection is established and closed.
          */
@@ -1123,6 +1158,57 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             PUBLISH_REQUEST_CODE);
                 }
 
+//                roomManager.session.webSocketChannelClient.events = new WebSocketChannelEvents() {
+//                    public void onWebSocketOpen() {
+//                        roomManager.session.webSocketChannelClient.execute("connection", connection);
+//                    }
+//
+//                    public void onWebSocketMessage(WSMessage wsMessage) {
+//                        Gson gson = new Gson();
+//                        CallArguments callArguments = new CallArguments(wsMessage.getData());
+//
+//                        try {
+//                            Method[] var4 =  roomManager.session.requestCallback.getClass().getMethods();
+//                            int var5 = var4.length;
+//
+//                            for(int var6 = 0; var6 < var5; ++var6) {
+//                                Method method = var4[var6];
+//                                if(wsMessage.getMessage().equals(method.getName())) {
+//                                    Class[] parameterTypes = method.getParameterTypes();
+//                                    Object[] args = new Object[parameterTypes.length];
+//
+//                                    for(int i = 0; i < parameterTypes.length; ++i) {
+//                                        JsonElement jsonElement = gson.toJsonTree(callArguments.getArgument(Integer.valueOf(i)));
+//                                        args[i] = gson.fromJson(jsonElement, parameterTypes[i]);
+//                                    }
+//
+//                                    Log.i("Session", "Invoker class method: " + method.getName());
+//                                    method.invoke( roomManager.session.requestCallback, args);
+//                                    return;
+//                                }
+//                            }
+//
+//                            Log.w("Session", "No such method " + wsMessage);
+//                        } catch (Throwable var12) {
+//                            Log.e("Session", var12.getMessage(), var12);
+//                        }
+//
+//                    }
+//
+//                    public void onWebSocketClose(int code) {
+//                        if(code != 1 && code != 3) {
+//                            roomManager.session.disconnect("FAILED");
+//                        } else {
+//                            roomManager.session.disconnect();
+//                        }
+//
+//                    }
+//
+//                    public void onWebSocketError(String description) {
+//                        roomManager.session.disconnect("FAILED");
+//                    }
+//                };
+
                 /**
                  * Callback functions for events occurring in video chat room are added.
                  * If the event is related to actions performed by one of the other participants, Participant object with data of that participant is passed to the corresponding function.
@@ -1136,7 +1222,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         if (permissionGiven && stream == null) {
                             stream = room.publish(localRenderer, VideoChatActivity.this);
-                            stream.unmuteAudio();
+                            stream.muteAudio();
                         }
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
@@ -1167,7 +1253,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                  */
 
                                 participantPublishing = true;
-                                participant.play(participantView.surfaceViewRenderer);
+                                Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
+                                remoteStream.muteAudio();
                             }
                         }
                     }
@@ -1202,7 +1289,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         if (participantView != null) {
                             participantPublishing = true;
                             Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
-                            remoteStream.unmuteAudio();
+                            remoteStream.muteAudio();
                         }
                     }
 
@@ -1455,7 +1542,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     if (stream == null && room != null)
                     {
                         stream = room.publish(localRenderer, VideoChatActivity.this);
-                        stream.unmuteAudio();
+                        stream.muteAudio();
                     }
 
                     /**
