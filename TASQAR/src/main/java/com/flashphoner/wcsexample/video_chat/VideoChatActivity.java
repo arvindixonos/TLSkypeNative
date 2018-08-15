@@ -73,6 +73,7 @@ import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
 
 import com.flashphoner.fpwcsapi.ws.CallArguments;
 import com.flashphoner.fpwcsapi.ws.WSMessage;
+import com.flashphoner.fpwcsapi.ws.WebSocketChannelClient;
 import com.flashphoner.fpwcsapi.ws.WebSocketChannelEvents;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
@@ -478,33 +479,38 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onClick(View view)
             {
-//               Collection<Participant> participants =  room.getParticipants();
-//
-//                Iterator<Participant> iterator = participants.iterator();
-//
-//                // while loop
-//                while (iterator.hasNext()) {
-//                    Participant participant = iterator.next();
-//
-//                    if(participant.getName() != roomManager.getUsername())
-//                    {
-//                        String smes = com.flashphoner.fpwcsapi.session.Session.class.getSimpleName();
-//
-//                        Message message = new Message();
-//                        message.setTo(participant.getName());
-//                        message.setText("HELLO WORLD");
-//                        message.getRoomConfig().put("name", room.getName());
-////                        room.sendAppCommand("sendMessage", message, (RestAppCommunicator.Handler)null);
-//
-//                        RoomCommand roomCommand = new RoomCommand("sendMessage", message);
-//                        roomManager.session.getRestAppCommunicator().sendData(roomCommand, (RestAppCommunicator.Handler)null);
-//
-//                        break;
-//                    }
-//                }
-//
-////                roomManager.session.send("Hawee", new byte[]{16, 12, 46, 60, 10});
+               Collection<Participant> participants =  room.getParticipants();
 
+                Iterator<Participant> iterator = participants.iterator();
+
+                // while loop
+                while (iterator.hasNext()) {
+                    Participant participant = iterator.next();
+
+                    if(participant.getName() != roomManager.getUsername())
+                    {
+                        Message message = new Message();
+                        message.setTo(participant.getName());
+                        message.setText("HELLO WORLD");
+                        message.getRoomConfig().put("name", room.getName());
+
+                        RoomCommand roomCommand = new RoomCommand("sendMessage", message);
+//                        roomManager.session.getRestAppCommunicator().sendData(roomCommand, (RestAppCommunicator.Handler)null);
+
+                        Data d = new Data();
+                        String operationId = UUID.randomUUID().toString();
+                        d.setOperationId(operationId);
+                        d.setPayload(roomCommand);
+
+                        WSMessage wsMessage = new WSMessage("sendData", d);
+                        Gson gson = new Gson();
+//                        roomManager.session.webSocketChannelClient.ws.sendTextMessage(gson.toJson(wsMessage));
+
+                        roomManager.session.webSocketChannelClient.ws.sendBinaryMessage(new byte[]{1, 2, 3, 4, 5, 6});
+                        break;
+                    }
+                }
+//
 
                 arrowMode = !arrowMode;
 
