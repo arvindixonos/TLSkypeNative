@@ -159,13 +159,25 @@ public class PointRenderer{
 //        RemoveAllZeroAnchors();
         currentAnchorList = new ArrayList<Anchor>();
         anchors.add(currentAnchorList);
+
+        prevPointAddTime = 0;
     }
 
+    long prevPointAddTime = 0;
     public void AddPoint(Anchor anchor, Pose hitPose)
     {
+        long currentTime = System.currentTimeMillis();
+        if(currentTime - prevPointAddTime < 2)
+        {
+            anchor.detach();
+            return;
+        }
+
+        Log.d(TAG, "" + (currentTime - prevPointAddTime));
+
         if(previousPose != null)
         {
-            float threshold = 0.1f;
+            float threshold = 0.02f;
 
             float px = previousPose.tx();
             float py = previousPose.ty();
@@ -179,6 +191,8 @@ public class PointRenderer{
             float cy = Math.abs(hy - py) > threshold ? (py + Math.signum(hy - py) * threshold) : hy;
             float cz = Math.abs(hz - pz) > threshold ? (pz + Math.signum(hz - pz) * threshold) : hz;
 
+            Log.d(TAG, "NEW POINT " + cx + " " + cy + " " + cz + " " + hx + " " + hy + " " + hz);
+
             hitPose = new Pose(new float[]{cx, cy, cz}, new float[]{hitPose.qx(), hitPose.qy(), hitPose.qz(), hitPose.qw()});
         }
 
@@ -186,6 +200,7 @@ public class PointRenderer{
         currentAnchorList.add(anchor);
 
         previousPose = hitPose;
+        prevPointAddTime =  currentTime;
     }
 
     public class Building extends Contour {
@@ -258,7 +273,14 @@ public class PointRenderer{
                 listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
             }
 
+            if(listOfPoints.size() < 3)
+                continue;
+
             PVector[] pointVectors = listOfPoints.toArray(new PVector[listOfPoints.size()]);
+
+            if(pointVectors.length < 3)
+                continue;
+
             Path path = new P_BezierSpline(pointVectors);
 
             Contour contour = getBuildingContour();
