@@ -135,7 +135,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     FloatingActionButton mStartRecordingButton;
     FloatingActionButton mPointToPlaneButton;
     FloatingActionButton mHistoryButton;
-    FloatingActionButton mHistoryBackButton;
     FloatingActionButton mFlashButton;
 
     RelativeLayout switchLayoutItem;
@@ -157,6 +156,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     LinearLayout historyScreen;
 
     Button mButton;
+    Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
     RelativeLayout currentRenderLayout;
@@ -289,38 +289,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                     }
                 });
 
-//                toggleFlashItem = currentActivity.findViewById(R.id.flash_toggle);
-//                toggleFlashButton = (Switch) toggleFlashItem.getChildAt(0);
-//                toggleFlashButton.setOnClickListener(new View.OnClickListener()
-//                {
-//                    @Override
-//                    public void onClick(View v)
-//                    {
-//                        mFlashButton.callOnClick();
-//                    }
-//                });
-
-//                toggleDrawingItem = currentActivity.findViewById(R.id.drawing_mode_toggle);
-//                toggleDrawingButton = (Switch) toggleDrawingItem.getChildAt(0);
-//                toggleDrawingButton.setOnClickListener(new View.OnClickListener()
-//                {
-//                    @Override
-//                    public void onClick(View v)
-//                    {
-//                        mToggleDrawingMode.callOnClick();
-//                    }
-//                });
-
-//                toggleRecordingItem = currentActivity.findViewById(R.id.record_toggle);
-//                toggleRecordingButton = (Switch) toggleRecordingItem.getChildAt(0);
-//                toggleRecordingButton.setOnClickListener(new View.OnClickListener()
-//                {
-//                    @Override
-//                    public void onClick(View v)
-//                    {
-//                        mStartRecordingButton.callOnClick();
-//                    }
-//                });
                 toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
                 toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
                 toggleBackcamButton.setOnClickListener(new View.OnClickListener()
@@ -368,15 +336,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
             Log.d(TAG, "Current Version is 7 or below");
         }
-
-//        switchLayoutButton.setOnClickListener(new View.OnClickListener()
-//        {
-//            @Override
-//            public void onClick(View v)
-//            {
-//                VideoChatActivity.ShowToast("On Toggle", currentActivity);
-//            }
-//        });
 
         mFlashButton.setOnClickListener(new View.OnClickListener()
         {

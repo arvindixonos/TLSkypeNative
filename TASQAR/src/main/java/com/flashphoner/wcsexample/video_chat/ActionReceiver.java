@@ -27,6 +27,6 @@ public class ActionReceiver extends BroadcastReceiver
     void PerformAction ()
     {
         Log.d("UI_TEST", "Perform Action");
-        VideoChatActivity.getInstance().StopFTP();
+//        VideoChatActivity.getInstance().StopFTP();
     }
 }

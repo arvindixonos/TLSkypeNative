@@ -9,7 +9,6 @@
             android:id="@+id/nav_upload"
             android:icon="@drawable/baseline_cloud_upload_white_24dp"
             android:title="Upload File" />
-        <item android:title="Toggles">
         <item
             android:id="@+id/nav_history"
             android:icon="@drawable/history_icon"
@@ -27,18 +26,6 @@
                     android:title="Switch Camera"
                     app:actionLayout="@layout/switch_item"
                     app:showAsAction="always" />
-                <!--<item-->
-                    <!--android:id="@+id/record_toggle"-->
-                    <!--android:icon="@drawable/button_record"-->
-                    <!--android:title="Record Mode"-->
-                    <!--app:actionLayout="@layout/switch_item"-->
-                    <!--app:showAsAction="always" />-->
-                <!--<item-->
-                    <!--android:id="@+id/drawing_mode_toggle"-->
-                    <!--android:icon="@drawable/baseline_gesture_white_18dp"-->
-                    <!--android:title="Drawing Mode"-->
-                    <!--app:actionLayout="@layout/switch_item"-->
-                    <!--app:showAsAction="always" />-->
                 <item
                     android:id="@+id/point2plane"
                     android:icon="@drawable/button_blur"
@@ -51,13 +38,6 @@
                     android:title="Arrow Mode"
                     app:actionLayout="@layout/switch_item"
                     app:showAsAction="always" />
-                <!--<item-->
-                    <!--android:id="@+id/flash_toggle"-->
-                    <!--android:icon="@drawable/flash_on"-->
-                    <!--android:title="Toggle Flash"-->
-                    <!--app:actionLayout="@layout/switch_item"-->
-                    <!--app:showAsAction="always" />-->
             </menu>
-        </item>
     </group>
 </menu>

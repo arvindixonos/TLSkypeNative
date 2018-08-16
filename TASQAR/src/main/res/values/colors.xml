@@ -5,4 +5,15 @@
     <color name="blueGlow">#29f2ef</color>
     <color name="blueBG">#07274b</color>
     <color name="FlashColor">#33494949</color>
+
+    <!--EXTENSION COLORS-->
+
+    <color name="MP4">#a10000</color>
+    <color name="PDF">#18a100</color>
+    <color name="JPEG">#0008a1</color>
+    <color name="WORD">#8100a1</color>
+    <color name="TXT">#a19400</color>
+    <color name="EXCEL">#00c8ff</color>
+    <color name="PPT">#ff9f9c</color>
+    <color name="DEFAULT">#7279ff</color>
 </resources>
