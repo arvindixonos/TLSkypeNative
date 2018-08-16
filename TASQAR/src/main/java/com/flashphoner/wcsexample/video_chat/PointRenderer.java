@@ -60,20 +60,17 @@ public class PointRenderer{
     private int positionAttribute;
     private int normalAttribute;
 
-    private int textureUniform;
-
-    private int tileCountUniform;
-
-    private int tileSizeUniform;
-
     private int modelViewProjectionUniform;
 
     private ArrayList<ArrayList<Anchor>> anchors = new ArrayList<ArrayList<Anchor>>();
     private ArrayList<Anchor> currentAnchorList = new ArrayList<Anchor>();
+    private ArrayList<float[]> verticesList = new ArrayList<float[]>();
+    private ArrayList<float[]> normalsList = new ArrayList<float[]>();
 
     private Pose previousPose = null;
 
-    private final int[] textures = new int[1];
+    private float[] firstTranslation = new float[3];
+    private boolean firstTranslationSet = false;
 
 
     public void createOnGlThread(Context context, String diffuseTextureAssetName) throws IOException
@@ -101,24 +98,24 @@ public class PointRenderer{
         modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "u_ModelViewProjection");
         positionAttribute = GLES20.glGetAttribLocation(programName, "a_Position");
         normalAttribute = GLES20.glGetAttribLocation(programName, "a_Normal");
-        textureUniform = GLES20.glGetUniformLocation(programName, "u_Texture");
-        tileCountUniform = GLES20.glGetUniformLocation(programName, "tileCount");
-        tileSizeUniform = GLES20.glGetUniformLocation(programName, "tileSize");
+//        textureUniform = GLES20.glGetUniformLocation(programName, "u_Texture");
+//        tileCountUniform = GLES20.glGetUniformLocation(programName, "tileCount");
+//        tileSizeUniform = GLES20.glGetUniformLocation(programName, "tileSize");
 
         ShaderUtil.checkGLError(TAG, "program  params");
 
         // Read the texture.
         Bitmap textureBitmap = BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
 
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glGenTextures(textures.length, textures, 0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
-
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
-        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+//        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
+//        GLES20.glGenTextures(textures.length, textures, 0);
+//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+//
+//        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
+//        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+//        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
+//        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
+//        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 
         textureBitmap.recycle();
 
@@ -133,7 +130,7 @@ public class PointRenderer{
 
         for(int i = 0; i < numAnchorsList; i++)
         {
-            if(anchors.get(i).size() < 5)
+            if(anchors.get(i).size() < 2)
             {
                 ArrayList<Anchor> removedAnchors = anchors.remove(i);
                 int numRemovedAnchors = removedAnchors.size();
@@ -152,28 +149,32 @@ public class PointRenderer{
 
     public void AddBreak()
     {
-        Log.d(VideoChatActivity.TAG, "Adding Break");
+//        Log.d(VideoChatActivity.TAG, "Adding Break " + pointerCounter / 3);
 
         previousPose = null;
 
-//        RemoveAllZeroAnchors();
+        RemoveAllZeroAnchors();
         currentAnchorList = new ArrayList<Anchor>();
         anchors.add(currentAnchorList);
 
-        prevPointAddTime = 0;
+//        prevPointAddTime = 0;
+
+        pointerCounter = 0;
+
+        MakeExtrusionVerticesArrays();
     }
 
-    long prevPointAddTime = 0;
+    int pointerCounter = 0;
     public void AddPoint(Anchor anchor, Pose hitPose)
     {
-        long currentTime = System.currentTimeMillis();
-        if(currentTime - prevPointAddTime < 2)
-        {
-            anchor.detach();
-            return;
+        if(pointerCounter != 0) {
+            if (pointerCounter % 3 != 0) {
+                anchor.detach();
+//                Log.d(TAG, "Skipping Point " + pointerCounter);
+                pointerCounter += 1;
+                return;
+            }
         }
-
-        Log.d(TAG, "" + (currentTime - prevPointAddTime));
 
         if(previousPose != null)
         {
@@ -194,13 +195,22 @@ public class PointRenderer{
             Log.d(TAG, "NEW POINT " + cx + " " + cy + " " + cz + " " + hx + " " + hy + " " + hz);
 
             hitPose = new Pose(new float[]{cx, cy, cz}, new float[]{hitPose.qx(), hitPose.qy(), hitPose.qz(), hitPose.qw()});
+
+            if(!firstTranslationSet)
+            {
+                firstTranslationSet = true;
+                firstTranslation[0] = cx;
+                firstTranslation[1] = cy;
+                firstTranslation[2] = cz;
+            }
         }
 
         anchor.getPose().compose(hitPose);
         currentAnchorList.add(anchor);
 
         previousPose = hitPose;
-        prevPointAddTime =  currentTime;
+
+        pointerCounter += 1;
     }
 
     public class Building extends Contour {
@@ -214,7 +224,7 @@ public class PointRenderer{
 
         float scale = 0.0045f;
 
-        int numPoints = 30;
+        int numPoints = 10;
 
         PVector[] points = new PVector[numPoints];
 
@@ -229,12 +239,132 @@ public class PointRenderer{
         return new Building(points);
     }
 
-    float[] vertices = new float[0];
-    float[] normals = new float[0];
+//    FloatBuffer vertexBuffer = null;
+//    FloatBuffer normalBuffer = null;
 
-    FloatBuffer vertexBuffer = null;
-    FloatBuffer normalBuffer = null;
+    boolean isWorldReferenceChanged()
+    {
+        if(anchors.size() > 0)
+        {
+            ArrayList<Anchor> anchorsList = anchors.get(0);
+
+            if(anchorsList.size() > 0)
+            {
+                Anchor anchor = anchorsList.get(0);
+
+                float[] translationFirst = anchor.getPose().getTranslation();
+
+                if( Math.abs(translationFirst[0] - firstTranslation[0]) > 0.2f ||
+                    Math.abs(translationFirst[1] - firstTranslation[1]) > 0.2f ||
+                    Math.abs(translationFirst[2] - firstTranslation[2]) > 0.2f )
+                {
+                    return  true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    void MakeExtrusionVerticesArrays()
+    {
+        verticesList.clear();
+        normalsList.clear();
+
+        int numAnchorsList = anchors.size();
+        for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++) {
+            ArrayList<Anchor> anchorsList = anchors.get(anchorsListCount);
+
+            if (anchorsList.size() == 0)
+                continue;
+
+            int numAnchors = anchorsList.size();
+
+            ArrayList<PVector> listOfPoints = new ArrayList<>();
+
+            for (int i = 0; i < numAnchors; i++) {
+                Pose pose = anchorsList.get(i).getPose();
+                float[] originPoint = pose.getTranslation();
+                listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
+            }
+
+            if (listOfPoints.size() < 3)
+                continue;
+
+            PVector[] pointVectors = listOfPoints.toArray(new PVector[listOfPoints.size()]);
+
+            if (pointVectors.length < 3)
+                continue;
+
+            Path path = new P_BezierSpline(pointVectors);
+
+            Contour contour = getBuildingContour();
+            ContourScale conScale = new CS_ConstantScale();
+            conScale.scale(1f);
+            contour.make_u_Coordinates();
+
+            Extrusion e = new Extrusion(null, path, 30, contour, conScale);
+            e.drawMode(S3D.TEXTURE);
+
+            Mesh2DCore mesh2DCore = (Mesh2DCore)e;
+
+            MeshSection var1 = mesh2DCore.fullShape;
+
+            int numVertices = (var1.eNS - 2) * var1.eEW * 3;
+
+            float[] vertices = new float[numVertices * 3];
+            float[] normals = new float[numVertices * 3];
+
+            int pointCounter = 0;
+
+            for(int var4 = var1.sNS; var4 < var1.eNS - 2; var4++) {
+
+                for(int var5 = var1.sEW; var5 < var1.eEW; var5++) {
+                    PVector p1 = mesh2DCore.coord[var5][var4];
+                    PVector n1 = mesh2DCore.norm[var5][var4];
+                    vertices[pointCounter] = p1.x;
+                    vertices[pointCounter + 1] = p1.y;
+                    vertices[pointCounter + 2] = p1.z;
+                    normals[pointCounter] = n1.x;
+                    normals[pointCounter + 1] = n1.y;
+                    normals[pointCounter + 2] = n1.z;
+                    pointCounter += 3;
+
+                    PVector p2 = mesh2DCore.coord[var5][var4 + 1];
+                    PVector n2 = mesh2DCore.norm[var5][var4 + 1];
+                    vertices[pointCounter] = p2.x;
+                    vertices[pointCounter + 1] = p2.y;
+                    vertices[pointCounter + 2] = p2.z;
+                    normals[pointCounter] = n2.x;
+                    normals[pointCounter + 1] = n2.y;
+                    normals[pointCounter + 2] = n2.z;
+                    pointCounter += 3;
+
+                    PVector p3 = mesh2DCore.coord[var5][var4 + 2];
+                    PVector n3 = mesh2DCore.norm[var5][var4 + 2];
+                    vertices[pointCounter] = p3.x;
+                    vertices[pointCounter + 1] = p3.y;
+                    vertices[pointCounter + 2] = p3.z;
+                    normals[pointCounter] = n3.x;
+                    normals[pointCounter + 1] = n3.y;
+                    normals[pointCounter + 2] = n3.z;
+                    pointCounter += 3;
+                }
+            }
+
+            verticesList.add(vertices);
+            normalsList.add(normals);
+        }
+    }
+
     public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
+
+        if(isWorldReferenceChanged())
+        {
+            Log.d(TAG, "WORLD REFERENCE CHANGED");
+
+            MakeExtrusionVerticesArrays();
+        }
 
         GLES20.glEnable(GLES20.GL_BLEND);
 
@@ -254,53 +384,28 @@ public class PointRenderer{
 
         GLES20.glLineWidth(1.0f);
 
-        int numAnchorsList = anchors.size();
+        int numVerticesList = verticesList.size();
 
-        for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++)
+        for(int verticesListCount = 0; verticesListCount < numVerticesList; verticesListCount++)
         {
-            ArrayList<Anchor> anchorsList = anchors.get(anchorsListCount);
+            float[] vertices = verticesList.get(verticesListCount);
+            float[] normals = normalsList.get(verticesListCount);
 
-            if(anchorsList.size() == 0)
-                continue;
-
-            int numAnchors = anchorsList.size();
-
-            ArrayList<PVector> listOfPoints = new ArrayList<>();
-
-            for (int i = 0; i < numAnchors; i++) {
-                Pose pose = anchorsList.get(i).getPose();
-                float[] originPoint = pose.getTranslation();
-                listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
-            }
-
-            if(listOfPoints.size() < 3)
-                continue;
-
-            PVector[] pointVectors = listOfPoints.toArray(new PVector[listOfPoints.size()]);
-
-            if(pointVectors.length < 3)
-                continue;
-
-            Path path = new P_BezierSpline(pointVectors);
-
-            Contour contour = getBuildingContour();
-            ContourScale conScale = new CS_ConstantScale();
-            conScale.scale(1f);
-            contour.make_u_Coordinates();
-
-            Extrusion e = new Extrusion(null, path, 40, contour, conScale);
-            e.drawMode(S3D.TEXTURE );
-
-            MakeExtrusionVerticesArray(e);
+            FloatBuffer vertexBuffer = FloatBuffer.wrap(vertices);
+            FloatBuffer normalBuffer = FloatBuffer.wrap(vertices);
+//            normalBuffer = allocateDirectFloatBuffer(normals.length * 3);
+//
+//            vertexBuffer.rewind();
+//            vertexBuffer.put(vertices);
+//            vertexBuffer.rewind();
+//
+//            normalBuffer.rewind();
+//            normalBuffer.put(normals);
+//            normalBuffer.rewind();
 
             final int vertexStride = 3 * Float.BYTES;
 
-            GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
-            GLES20.glUniform1i(textureUniform, 0);
-
-            GLES20.glUniform1f(tileCountUniform, 16.0f);
-            GLES20.glUniform1f(tileSizeUniform, 16.0f);
+            int numVertices = vertices.length / 3;
 
             { // VERTEX
                 // bind VBO
@@ -320,7 +425,6 @@ public class PointRenderer{
                 GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
             }
 
-
                 GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
                 GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -335,74 +439,6 @@ public class PointRenderer{
         GLES20.glDisable(GLES20.GL_BLEND);
 
         ShaderUtil.checkGLError(TAG, "Draw");
-    }
-
-    private static void normalizeVec3(float[] v) {
-        float reciprocalLength = 1.0f / (float) Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-        v[0] *= reciprocalLength;
-        v[1] *= reciprocalLength;
-        v[2] *= reciprocalLength;
-    }
-
-    int numVertices = 0;
-    void MakeExtrusionVerticesArray(Extrusion e)
-    {
-        Mesh2DCore mesh2DCore = (Mesh2DCore)e;
-
-        MeshSection var1 = mesh2DCore.fullShape;
-
-        numVertices = (var1.eNS - 2) * var1.eEW * 3;
-
-        vertices = new float[numVertices * 3];
-        normals = new float[numVertices * 3];
-
-        vertexBuffer = allocateDirectFloatBuffer(numVertices * 3);
-        normalBuffer = allocateDirectFloatBuffer(numVertices * 3);
-
-        int pointCounter = 0;
-
-        for(int var4 = var1.sNS; var4 < var1.eNS - 2; ++var4) {
-
-            for(int var5 = var1.sEW; var5 < var1.eEW; ++var5) {
-                PVector p1 = mesh2DCore.coord[var5][var4];
-                PVector n1 = mesh2DCore.norm[var5][var4];
-                vertices[pointCounter] = p1.x;
-                vertices[pointCounter + 1] = p1.y;
-                vertices[pointCounter + 2] = p1.z;
-                normals[pointCounter] = n1.x;
-                normals[pointCounter + 1] = n1.y;
-                normals[pointCounter + 2] = n1.z;
-                pointCounter += 3;
-
-                PVector p2 = mesh2DCore.coord[var5][var4 + 1];
-                PVector n2 = mesh2DCore.norm[var5][var4 + 1];
-                vertices[pointCounter] = p2.x;
-                vertices[pointCounter + 1] = p2.y;
-                vertices[pointCounter + 2] = p2.z;
-                normals[pointCounter] = n2.x;
-                normals[pointCounter + 1] = n2.y;
-                normals[pointCounter + 2] = n2.z;
-                pointCounter += 3;
-
-                PVector p3 = mesh2DCore.coord[var5][var4 + 2];
-                PVector n3 = mesh2DCore.norm[var5][var4 + 2];
-                vertices[pointCounter] = p3.x;
-                vertices[pointCounter + 1] = p3.y;
-                vertices[pointCounter + 2] = p3.z;
-                normals[pointCounter] = n3.x;
-                normals[pointCounter + 1] = n3.y;
-                normals[pointCounter + 2] = n3.z;
-                pointCounter += 3;
-            }
-        }
-
-        vertexBuffer.rewind();
-        vertexBuffer.put(vertices);
-        vertexBuffer.rewind();
-
-        normalBuffer.rewind();
-        normalBuffer.put(normals);
-        normalBuffer.rewind();
     }
 
     FloatBuffer allocateDirectFloatBuffer(int n) {
