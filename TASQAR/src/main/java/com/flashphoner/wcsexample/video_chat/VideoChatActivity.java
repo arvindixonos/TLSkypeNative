@@ -64,7 +64,6 @@ import com.flashphoner.fpwcsapi.layout.PercentFrameLayout;
 import com.flashphoner.fpwcsapi.room.Message;
 import com.flashphoner.fpwcsapi.room.Participant;
 import com.flashphoner.fpwcsapi.room.Room;
-import com.flashphoner.fpwcsapi.room.RoomCommand;
 import com.flashphoner.fpwcsapi.room.RoomEvent;
 import com.flashphoner.fpwcsapi.room.RoomManager;
 import com.flashphoner.fpwcsapi.room.RoomManagerEvent;
@@ -160,7 +159,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTPA";
+    String roomName = "TLSkype";
 //    UI references.
 
     private Thread ftpThread;
@@ -267,7 +266,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         Log.d(TAG, "SURFACE ASD PARAMS " + glsurfaceView.getWidth() + " " + glsurfaceView.getHeight());
 
-        try {
+        try
+        {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
             pointRenderer.createOnGlThread(this, "models/grass.jpg");
@@ -281,7 +281,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
             virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             Log.e(TAG, "Failed to read an asset file", e);
         }
     }
@@ -547,29 +549,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
 
         SetLocalRendererMirror();
-    }
-
-    void  MuteAudio()
-    {
-        //mute audio
-        AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
-    }
-
-    void  UnmuteAudio()
-    {
-        AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_RAISE, 0);
     }
 
     @Override
@@ -1244,7 +1223,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 return;
                             }
 
-                            try {
+                            try
+                            {
                                 Charset charset = Charset.forName("ISO-8859-1");
 
                                 byte[] data = new byte[currentDataSize];
@@ -1258,13 +1238,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                     fileDownloading = false;
                                     fileDownloadingFinishing = false;
                                 }
-
-                            } catch (UnsupportedEncodingException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
+                            }
+                            catch (UnsupportedEncodingException e)
+                            {
                                 e.printStackTrace();
                             }
-
+                            catch (IOException e)
+                            {
+                                e.printStackTrace();
+                            }
                         }
                         else if (messageReceived.contains(":FU"))
                         {
@@ -1401,6 +1383,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public  static  int uploadBlockSize = 10000;
     public void UploadFile(final String filePath)
     {
+
         friendName = "";
 
         if(fileUploading)
@@ -1419,127 +1402,126 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         fileUploading = true;
 
-        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
+        int fileLengthInBytes = 0;
+        try {
+            fileLengthInBytes = fileReadStream.available();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-            Thread fileUploadThread = new Thread(new Runnable() {
+        final int lengthInBytes = fileLengthInBytes;
 
-            Charset charset = Charset.forName("ISO-8859-1");
+        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath) + "@@" + fileLengthInBytes);
 
-            boolean acceptedMessage = true;
-
-            @Override
-            public void run()
+            Thread fileUploadThread = new Thread(new Runnable()
             {
-                boolean sendingEndMark = false;
-                boolean sentEndMark = false;
-                while (true)
+
+                Charset charset = Charset.forName("ISO-8859-1");
+
+                boolean acceptedMessage = true;
+                int up;
+                int tar;
+                @Override
+                public void run()
                 {
-                    try {
-                        if(acceptedMessage)
+
+                    int targetCount;
+
+                    targetCount = lengthInBytes % uploadBlockSize;
+
+                    targetCount = (lengthInBytes == (targetCount * uploadBlockSize)) ? targetCount : targetCount + 1;
+                    tar = targetCount;
+
+                    boolean sendingEndMark = false;
+                    boolean sentEndMark = false;
+                    while (true)
+                    {
+                        try
                         {
-                            int available = fileReadStream.available();
-                            int uploadSize = uploadBlockSize;
-
-                            Message message = new Message();
-                            message.setTo(friendName);
-                            message.getRoomConfig().put("name", room.getName());
-
-                            if (available < uploadSize || available == 0) {
-                                uploadSize = available;
-
-                                if (!sentEndMark) {
-                                    message.setText(":FUF" + uploadSize);
-                                    sentEndMark = true;
-                                    sendingEndMark = true;
-                                }
-                            }
-
-                            if(uploadSize > 0 && !sendingEndMark)
+                            if(acceptedMessage)
                             {
-                                byte[] data = new byte[uploadSize];
+                                int available = fileReadStream.available();
+                                int uploadSize = uploadBlockSize;
 
-                                fileReadStream.read(data);
+                                Message message = new Message();
+                                message.setTo(friendName);
+                                message.getRoomConfig().put("name", room.getName());
 
-                                ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-
-                                String stringData = charset.decode(byteBuffer).toString();
-
-                                message.setText(stringData);
-
-                                if(sentEndMark)
+                                if (available < uploadSize || available == 0)
                                 {
-                                    fileUploading = false;
-                                 }
-                            }
+                                    uploadSize = available;
 
-                            acceptedMessage = false;
-                            room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler() {
-                                @Override
-                                public void onAccepted(Data data) {
-                                    acceptedMessage = true;
-
-                                    Log.d(TAG, "ACCEPTED MESSAGE");
+                                    if (!sentEndMark)
+                                    {
+                                        message.setText(":FUF" + uploadSize);
+                                        sentEndMark = true;
+                                        sendingEndMark = true;
+                                    }
                                 }
 
-                                @Override
-                                public void onRejected(Data data) {
+                                if(uploadSize > 0 && !sendingEndMark)
+                                {
+                                    byte[] data = new byte[uploadSize];
 
+                                    fileReadStream.read(data);
+
+                                    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
+                                    String stringData = charset.decode(byteBuffer).toString();
+
+                                    message.setText(stringData);
+
+                                    if(sentEndMark)
+                                    {
+                                        fileUploading = false;
+                                    }
                                 }
-                            });
 
-                            sendingEndMark = false;
+                                acceptedMessage = false;
+                                room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler()
+                                {
+                                    @Override
+                                    public void onAccepted(Data data)
+                                    {
+                                        if(up == tar)
+                                        {
+                                            Log.d(TAG, "Upload " + up + " Target " + tar);
+                                        }
+                                        acceptedMessage = true;
+                                        Log.d(TAG, "ACCEPTED MESSAGE");
+                                    }
 
-                            if(!fileUploading) {
-                                fileReadStream.close();
-                                break;
+                                    @Override
+                                    public void onRejected(Data data)
+                                    {
+
+                                    }
+                                });
+                                sendingEndMark = false;
+
+                                if(!fileUploading)
+                                {
+                                    fileReadStream.close();
+                                    break;
+                                }
                             }
+                            Thread.sleep(10);
                         }
-
-                        Thread.sleep(10);
-
-                        } catch (IOException e) {
+                        catch (IOException e)
+                        {
                             e.printStackTrace();
                         }
-                        catch (InterruptedException e) {
+                        catch (InterruptedException e)
+                        {
                             e.printStackTrace();
                         }catch (ArrayIndexOutOfBoundsException e)
                         {
                             e.printStackTrace();
                         }
                     }
-            }
+                }
         });
-
         fileUploadThread.start();
-
-//        final FTPManager ftpManager = new FTPManager();
-//
-//        ftpManager.fileInputStream = inputStream;
-//        ftpManager.uploadORdownload = 1;
-//        ftpManager.applicationContext = getApplicationContext();
-//        ftpManager.filePath = filePath;
-//        if (ftpManager.running)
-//        {
-//            ShowToast("FTP Manager Running Already", this.getApplicationContext());
-//            return;
-//        }
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                Looper looper = mHandler.getLooper();
-//                looper.prepare();
-//                mHandler.post(new Runnable()
-//                {
-//                    @Override
-//                    public void run()
-//                    {
-//                        ftpManager.execute();
-//                    }
-//                });
-//            }
-//        }).start();
     }
 
     public void DownloadFile(String fileName) {
