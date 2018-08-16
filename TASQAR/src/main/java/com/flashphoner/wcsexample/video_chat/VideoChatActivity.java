@@ -416,6 +416,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void AddBreak()
     {
+//        Log.d(TAG, "ADD BREAK");
+
         motionEvents.clear();
         pointRenderer.AddBreak();
     }
@@ -796,6 +798,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void TapSend(int x, int y, int width, int height)
     {
+//        Log.d(TAG, "TAP SEND " + motionEvents.size());
+
         SendMessage("TAP: " + x + " " + y + " " + width + " " + height);
 
         DecodeTapMessage("TAP: " + x + " " + y + " " + width + " " + height);

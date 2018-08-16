@@ -19,11 +19,11 @@ attribute vec4 a_Normal;
 
 uniform mat4 u_ModelViewProjection;
 
-uniform float tileCount;
+//uniform float tileCount;
 
 varying vec3  normal;
-varying vec2  tileCoord;
-varying vec2  texCoord;
+//varying vec2  tileCoord;
+//varying vec2  texCoord;
 varying float ambientOcclusion;
 
 void main() {
@@ -34,13 +34,13 @@ void main() {
     normal = a_Normal.xyz;
 
     //Compute texture coordinate
-    texCoord = vec2(dot(vec3(a_Position), vec3(normal.y-normal.z, 0, normal.x)),
-                      dot(vec3(a_Position), vec3(0, -abs(normal.x+normal.z), normal.y)));
+//    texCoord = vec2(dot(vec3(a_Position), vec3(normal.y-normal.z, 0, normal.x)),
+//                      dot(vec3(a_Position), vec3(0, -abs(normal.x+normal.z), normal.y)));
 
     //Compute tile coordinate
-    float tx    = a_Normal.x / tileCount;
-    tileCoord.x = floor(tx);
-    tileCoord.y = fract(tx) * tileCount;
+//    float tx    = a_Normal.x / tileCount;
+//    tileCoord.x = floor(tx);
+//    tileCoord.y = fract(tx) * tileCount;
 
     gl_Position = u_ModelViewProjection * a_Position;
 }
