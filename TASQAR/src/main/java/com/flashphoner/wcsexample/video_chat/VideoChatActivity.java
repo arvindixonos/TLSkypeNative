@@ -77,6 +77,7 @@ import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
 
 import com.flashphoner.fpwcsapi.ws.CallArguments;
 import com.flashphoner.fpwcsapi.ws.WSMessage;
+import com.flashphoner.fpwcsapi.ws.WebSocketChannelClient;
 import com.flashphoner.fpwcsapi.ws.WebSocketChannelEvents;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.ArCoreApk;
@@ -100,6 +101,7 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.obsez.android.lib.filechooser.tool.DirAdapter;
 
 import org.android.opensource.libraryyuv.Libyuv;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math3.complex.Quaternion;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
@@ -114,9 +116,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.sql.Time;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -154,7 +160,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTP";
+    String roomName = "NEWFTPA";
 //    UI references.
 
     private Thread ftpThread;
@@ -227,6 +233,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private final float[] anchorMatrix = new float[16];
 
     public      boolean arrowMode = false;
+
+    public      boolean fileDownloading = false;
+    public      boolean fileDownloadingFinishing = false;
+    private     int     lastByteSize = 0;
+    private     int     currentDataSize = uploadBlockSize;
+
+    public      boolean fileUploading = false;
+
+    private FileInputStream  fileReadStream = null;
+    private FileOutputStream fileWriteStream = null;
 
     // Anchors created from taps used for object placing with a given color.
     private static class ColoredAnchor {
@@ -482,8 +498,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onClick(View view)
             {
-
-//                arrowMode = !arrowMode;
                 final Context ctx = VideoChatActivity.this;
                 new ChooserDialog(ctx)
                         .withStartFile(null)
@@ -499,10 +513,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             @Override
                             public void onChoosePath(String path, File pathFile) {
                                 Toast.makeText(ctx, "FILE: " + path, Toast.LENGTH_SHORT).show();
-                                InputStream fileInputStream = null;
                                 try {
-                                    fileInputStream = new FileInputStream(pathFile);
-                                    UploadFile(path, fileInputStream);
+                                    fileReadStream = new FileInputStream(pathFile);
+                                    UploadFile(path);
 
                                 } catch (FileNotFoundException e) {
                                     e.printStackTrace();
@@ -515,24 +528,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         })
                         .build()
                         .show();
-//
-////                nHandler.post(new Runnable()
-////                {
-////                    @Override
-////                    public void run()
-////                    {
-////                        Intent fileintent = new Intent(Intent.ACTION_GET_CONTENT);
-////                        fileintent.setType("gagt/sdf");
-////                        try
-////                        {
-////                            startActivityForResult(fileintent, PICKFILE_RESULT_CODE);
-////                        }
-////                        catch (ActivityNotFoundException e)
-////                        {
-////                            Log.e("tag", "No activity can handle picking a file. Showing alternatives.");
-////                        }
-////                    }
-////                });
             }
         });
 
@@ -1237,7 +1232,41 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         String messageReceived = message.getText();
 
-                        if (messageReceived.contains(":FU"))
+                        if(fileDownloading)
+                        {
+                            if(messageReceived.contains(":FUF"))
+                            {
+                                fileDownloadingFinishing = true;
+                                messageReceived = messageReceived.replace(":FUF", "");
+                                lastByteSize = Integer.parseInt(messageReceived);
+                                currentDataSize = lastByteSize;
+
+                                return;
+                            }
+
+                            try {
+                                Charset charset = Charset.forName("ISO-8859-1");
+
+                                byte[] data = new byte[currentDataSize];
+                                ByteBuffer byteBuffer = charset.encode(messageReceived);
+                                byteBuffer.get(data);
+
+                                fileWriteStream.write(data);
+
+                                if(fileDownloadingFinishing)
+                                {
+                                    fileDownloading = false;
+                                    fileDownloadingFinishing = false;
+                                }
+
+                            } catch (UnsupportedEncodingException e) {
+                                e.printStackTrace();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+
+                        }
+                        else if (messageReceived.contains(":FU"))
                         {
                             String messageAndroidID = messageReceived.substring(messageReceived.indexOf(":FU") + 3, messageReceived.indexOf("-/"));
 
@@ -1297,12 +1326,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 ContentResolver contentResolver = getApplicationContext().getContentResolver();
                 try
                 {
-                    InputStream fileInputStream = contentResolver.openInputStream(data.getData());
+                    fileReadStream = (FileInputStream) contentResolver.openInputStream(data.getData());
                     String FilePath = data.getData().getPath();
                     Log.d(TAG, " The File Path is " + FilePath);
                      try
                      {
-                         UploadFile(FilePath, fileInputStream);
+                         UploadFile(FilePath);
                      }
                      catch (RuntimeException e)
                      {
@@ -1342,9 +1371,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         try
         {
             String filePath = "/sdcard/scr.png";
-            InputStream inputStream = new FileInputStream(filePath);
+            fileReadStream = new FileInputStream(filePath);
 
-            UploadFile(filePath, inputStream);
+            UploadFile(filePath);
 
         }
         catch (FileNotFoundException e)
@@ -1368,111 +1397,213 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //        });
     }
 
-    public void UploadFile(final String filePath, final InputStream inputStream) {
+    private String friendName = "";
+    public  static  int uploadBlockSize = 10000;
+    public void UploadFile(final String filePath)
+    {
+        friendName = "";
 
-        final FTPManager ftpManager = new FTPManager();
-        ftpManager.fileInputStream = inputStream;
-        ftpManager.uploadORdownload = 1;
-        ftpManager.applicationContext = getApplicationContext();
-        ftpManager.filePath = filePath;
-        if (ftpManager.running || (ftpThread != null && ftpThread.isAlive()))
-        {
-            ShowToast("FTP Manager Running Already", this.getApplicationContext());
+        if(fileUploading)
             return;
-        }
-        ftpThread = new Thread(new Runnable()
-        {
-            @Override
-            public void run() {
 
-                Log.d(TAG, "Run FTP");
-                Looper looper = mHandler.getLooper();
-                looper.prepare();
-                uiHandler.showNotification(getApplicationContext(), "Upload", filePath, new Intent());
-                mHandler.post(new Runnable()
+        for (Participant participant : room.getParticipants()) {
+            if(participant.getName() != roomManager.getUsername())
+            {
+                friendName = participant.getName();
+                break;
+            }
+        }
+
+        if(friendName.length() == 0)
+            return;
+
+        fileUploading = true;
+
+        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
+
+            Thread fileUploadThread = new Thread(new Runnable() {
+
+            Charset charset = Charset.forName("ISO-8859-1");
+
+            boolean acceptedMessage = true;
+
+            @Override
+            public void run()
+            {
+                boolean sendingEndMark = false;
+                boolean sentEndMark = false;
+                while (true)
                 {
-                    @Override
-                    public void run()
-                    {
-                        ftpManager.execute();
-                        while (!ftpManager.transferSuccess)
+                    try {
+                        if(acceptedMessage)
                         {
-                            uiHandler.UpdateNotification(ftpManager.progress);
-//                            runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//
-//                                    uiHandler.SetProgress(ftpManager.percent);
-//
-//                                }
-//                            });
+                            int available = fileReadStream.available();
+                            int uploadSize = uploadBlockSize;
+
+                            Message message = new Message();
+                            message.setTo(friendName);
+                            message.getRoomConfig().put("name", room.getName());
+
+                            if (available < uploadSize || available == 0) {
+                                uploadSize = available;
+
+                                if (!sentEndMark) {
+                                    message.setText(":FUF" + uploadSize);
+                                    sentEndMark = true;
+                                    sendingEndMark = true;
+                                }
+                            }
+
+                            if(uploadSize > 0 && !sendingEndMark)
+                            {
+                                byte[] data = new byte[uploadSize];
+
+                                fileReadStream.read(data);
+
+                                ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
+                                String stringData = charset.decode(byteBuffer).toString();
+
+                                message.setText(stringData);
+
+                                if(sentEndMark)
+                                {
+                                    fileUploading = false;
+                                 }
+                            }
+
+                            acceptedMessage = false;
+                            room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler() {
+                                @Override
+                                public void onAccepted(Data data) {
+                                    acceptedMessage = true;
+
+                                    Log.d(TAG, "ACCEPTED MESSAGE");
+                                }
+
+                                @Override
+                                public void onRejected(Data data) {
+
+                                }
+                            });
+
+                            sendingEndMark = false;
+
+                            if(!fileUploading) {
+                                fileReadStream.close();
+                                break;
+                            }
                         }
 
-                        uiHandler.StopNotification();
-                        String[] fileNames = filePath.split("/");
-                        uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
+                        Thread.sleep(10);
+
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }catch (ArrayIndexOutOfBoundsException e)
+                        {
+                            e.printStackTrace();
+                        }
                     }
-                });
             }
         });
-        ftpThread.start();
+
+        fileUploadThread.start();
+
+//        final FTPManager ftpManager = new FTPManager();
+//
+//        ftpManager.fileInputStream = inputStream;
+//        ftpManager.uploadORdownload = 1;
+//        ftpManager.applicationContext = getApplicationContext();
+//        ftpManager.filePath = filePath;
+//        if (ftpManager.running)
+//        {
+//            ShowToast("FTP Manager Running Already", this.getApplicationContext());
+//            return;
+//        }
+//
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//
+//                Looper looper = mHandler.getLooper();
+//                looper.prepare();
+//                mHandler.post(new Runnable()
+//                {
+//                    @Override
+//                    public void run()
+//                    {
+//                        ftpManager.execute();
+//                    }
+//                });
+//            }
+//        }).start();
     }
 
-    public void StopFTP ()
-    {
-        if(ftpThread == null)
+    public void DownloadFile(String fileName) {
+
+        if(fileDownloading)
             return;
 
-        Log.d(TAG, "Run STOP FTP");
+        fileDownloading = true;
 
-        if(!ftpThread.isAlive())
-        {
-            ShowToast("FTP not running", this);
-            return;
-        }
+        currentDataSize = uploadBlockSize;
 
-        ftpThread.stop();
-    }
-
-    public void DownloadFile(final String fileName)
-    {
-        final String fileDate = uiHandler.GetDate();
-
-        final String filePath = "/sdcard/ReceivedFiles/" + fileName;//uiHandler.AddTimeStampToName(fileName, fileDate);
-        final FTPManager ftpManager = new FTPManager();
-
-        if (ftpManager.running) {
-            ShowToast("FTP Manager Running Already", this.getApplicationContext());
-            return;
-        }
-
-        ftpManager.uploadORdownload = 2;
-        ftpManager.applicationContext = getApplicationContext();
-        ftpManager.fileDate = fileDate;
-        ftpManager.filePath = filePath;
-        new Thread(new Runnable() {
+        Thread downloadThread = new Thread(new Runnable() {
             @Override
             public void run() {
+                try {
+                String filePath = "/sdcard/ReceivedFiles/" + fileName;
 
-                mHandler.getLooper().prepare();
-                mHandler.post(new Runnable()
+                File downloadDir = new File("/sdcard/ReceivedFiles");
+                if (!downloadDir.exists())
                 {
-                    @Override
-                    public void run()
-                    {
-                        ftpManager.execute();
-                        while (!ftpManager.transferSuccess)
-                        {
+                    downloadDir.mkdirs();
+                }
 
-                        }
-                        uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" +
-                                uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
-                    }
+                File downloadedFile = new File(filePath);
+                if (!downloadedFile.exists())
+                {
+                    downloadedFile.createNewFile();
+                }
 
-                });
+                fileWriteStream = new FileOutputStream(filePath);
+                while (fileDownloading)
+                {
+                    Thread.sleep(100);
+                }
+
+                File thisFile = new File(filePath);
+                String pathName = "";
+                if (thisFile.exists())
+                {
+                    pathName = "/sdcard/ReceivedFiles/" + GetFileName(filePath);
+                    thisFile.renameTo(new File(pathName));
+                }
+
+                fileWriteStream.close();
+
+                VideoChatActivity.getInstance().OpenFile(pathName);
+                } catch (FileNotFoundException e1) {
+                    e1.printStackTrace();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
-        }).start();
+        });
 
+        downloadThread.start();
+    }
+
+    public  String GetFileName(String filePath)
+    {
+        filePath = filePath.replace("primary:", "");
+
+        return filePath.substring(filePath.lastIndexOf("/"));
     }
 
     public void OpenFile(String filePath) {

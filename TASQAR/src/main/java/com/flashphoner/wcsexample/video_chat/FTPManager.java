@@ -100,7 +100,6 @@ public class FTPManager extends AsyncTask {
 
             if(uploadORdownload == 1)
             {
-
                 Log.d(TAG, fileInputStream.available() + " ");
 
                 success = ftpClient.storeFile(GetFileName(filePath), buffIn);
@@ -109,6 +108,7 @@ public class FTPManager extends AsyncTask {
                 {
                     ToastFunction("Successfully Uploaded File " + GetFileName(filePath));
                     transferSuccess = true;
+
                     VideoChatActivity.getInstance().SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
                 }
                 else
