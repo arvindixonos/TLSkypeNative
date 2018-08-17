@@ -408,13 +408,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             screenRecorder.ResumeRecording();
     }
 
-    public void AddBreak()
-    {
-//        Log.d(TAG, "ADD BREAK");
 
-        motionEvents.clear();
-        pointRenderer.AddBreak();
-    }
 
     void SetupCallScreen ()
     {
@@ -800,6 +794,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    public void DecodeBreakMessage()
+    {
+        motionEvents.clear();
+        pointRenderer.AddBreak();
+    }
+
     public void DecodeTapMessage(String tapMessage)
     {
         tapMessage = tapMessage.replace("TAP: ", "");
@@ -812,6 +812,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         MotionEvent motionEvent = MotionEvent.obtain(1, 1, MotionEvent.ACTION_DOWN, xVal, yVal, 0);
         TapHandle(motionEvent, width, height);
+    }
+
+    public void BreakSend()
+    {
+        SendMessage("BREAK: ");
+
+        DecodeBreakMessage();
     }
 
     public void TapSend(int x, int y, int width, int height)
@@ -1337,6 +1344,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         else if (messageReceived.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
                         {
                             DecodeTapMessage(messageReceived);
+                        }
+                        else if (messageReceived.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
+                        {
+                            DecodeBreakMessage();
                         }
                     }
                 });
