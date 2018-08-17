@@ -10,16 +10,13 @@ import android.graphics.Path;
 import android.graphics.Picture;
 import android.graphics.Rect;
 import android.graphics.RectF;
-import android.provider.MediaStore;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewDebug;
 
 import org.webrtc.SurfaceViewRenderer;
-import org.webrtc.VideoCapturerAndroid;
 import org.webrtc.VideoRenderer;
 
 import java.io.FileNotFoundException;
@@ -270,7 +267,7 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
             case MotionEvent.ACTION_UP:
 
                 if(!VideoChatActivity.getInstance().arrowMode)
-                    VideoChatActivity.getInstance().AddBreak();
+                    VideoChatActivity.getInstance().BreakSend();
 
                 drawTouch_up(event.getX(), event.getY());
                 invalidate();

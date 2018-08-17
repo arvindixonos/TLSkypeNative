@@ -9,7 +9,10 @@ import android.opengl.Matrix;
 import android.util.Log;
 
 import com.google.ar.core.Anchor;
+import com.google.ar.core.HitResult;
 import com.google.ar.core.Pose;
+
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -165,20 +168,23 @@ public class PointRenderer{
     }
 
     int pointerCounter = 0;
-    public void AddPoint(Anchor anchor, Pose hitPose)
+    public void AddPoint(HitResult hitResult)
     {
-        if(pointerCounter != 0) {
-            if (pointerCounter % 3 != 0) {
-                anchor.detach();
-//                Log.d(TAG, "Skipping Point " + pointerCounter);
-                pointerCounter += 1;
-                return;
-            }
-        }
+//        if(pointerCounter != 0)
+//        {
+//            if (pointerCounter % 3 != 0)
+//            {
+//                anchor.detach();
+//                pointerCounter += 1;
+//                return;
+//            }
+//        }
+
+        Pose hitPose = hitResult.getHitPose();
 
         if(previousPose != null)
         {
-            float threshold = 0.02f;
+            float threshold = 0.01f;
 
             float px = previousPose.tx();
             float py = previousPose.ty();
@@ -188,29 +194,64 @@ public class PointRenderer{
             float hy = hitPose.ty();
             float hz = hitPose.tz();
 
-            float cx = Math.abs(hx - px) > threshold ? (px + Math.signum(hx - px) * threshold) : hx;
-            float cy = Math.abs(hy - py) > threshold ? (py + Math.signum(hy - py) * threshold) : hy;
-            float cz = Math.abs(hz - pz) > threshold ? (pz + Math.signum(hz - pz) * threshold) : hz;
+            Vector3D currentPoint = new Vector3D(hx, hy, hz);
+            Vector3D previousPoint = new Vector3D(px, py, pz);
+            float distance = (float) Vector3D.distance(currentPoint, previousPoint);
 
-            Log.d(TAG, "NEW POINT " + cx + " " + cy + " " + cz + " " + hx + " " + hy + " " + hz);
+            if(distance > threshold)
+            {
+                double controlPointHeight = 0.001;
+                Vector3D controlPoint = previousPoint.add(currentPoint).scalarMultiply(0.5);
+                controlPoint = new Vector3D(controlPoint.getX(), controlPoint.getY() + controlPointHeight, controlPoint.getZ());
 
-            hitPose = new Pose(new float[]{cx, cy, cz}, new float[]{hitPose.qx(), hitPose.qy(), hitPose.qz(), hitPose.qw()});
+                int numPointsToAdd = (int) (distance / threshold);
+                int totalPoints = numPointsToAdd + 2;
+                float inc = 1.0f / totalPoints;
 
+                for (float t = 0.0f; t <= 1; t += inc)
+                {
+                    double newX = (1.0f - t) * (1.0f - t) * previousPoint.getX() + 2.0f * (1.0f - t) * t * controlPoint.getX() + t * t * currentPoint.getX();
+                    double newY = (1.0f - t) * (1.0f - t) * previousPoint.getY() + 2.0f * (1.0f - t) * t * controlPoint.getY() + t * t * currentPoint.getY();
+                    double newZ = (1.0f - t) * (1.0f - t) * previousPoint.getZ() + 2.0f * (1.0f - t) * t * controlPoint.getZ() + t * t * currentPoint.getZ();
+
+                    Pose newPose = new Pose(new float[]{(float) newX, (float) newY, (float) newZ}, new float[]{0, 0, 0, 0});
+                    AddAnchor(hitResult, newPose);
+                }
+            }
+            else
+            {
+                AddAnchor(hitResult, hitPose);
+            }
+
+//            Log.d(TAG, "NEW POINT " + px + " " + py + " " + pz + " " + hx + " " + hy + " " + hz + " " + currentPoint.getX() + " " + currentPoint.getY() + " " + currentPoint.getZ() + " " + distance);
+        }
+        else
+        {
             if(!firstTranslationSet)
             {
                 firstTranslationSet = true;
-                firstTranslation[0] = cx;
-                firstTranslation[1] = cy;
-                firstTranslation[2] = cz;
+                firstTranslation[0] = hitPose.tx();
+                firstTranslation[1] = hitPose.ty();
+                firstTranslation[2] = hitPose.tz();
             }
-        }
 
-        anchor.getPose().compose(hitPose);
-        currentAnchorList.add(anchor);
+            AddAnchor(hitResult, hitPose);
+        }
 
         previousPose = hitPose;
 
+//        Log.d(TAG, "NEW POSE " + anchor.getPose().tx() + " " + anchor.getPose().ty() + " " + anchor.getPose().tz());
+    }
+
+    public void AddAnchor(HitResult hitResult, Pose hitPose)
+    {
+        Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
+        currentAnchorList.add(anchor);
         pointerCounter += 1;
+    }
+
+    public static float clamp(float val, float min, float max) {
+        return Math.max(min, Math.min(max, val));
     }
 
     public class Building extends Contour {
@@ -222,13 +263,13 @@ public class PointRenderer{
 
     public Contour getBuildingContour() {
 
-        float scale = 0.0045f;
+        float scale = 0.0023f;
 
-        int numPoints = 10;
+        int numPoints = 30;
 
         PVector[] points = new PVector[numPoints];
 
-        float angleInc = 2 * 3.14f / numPoints;
+        float angleInc = (float) (2 * Math.PI / numPoints);
 
         for(int i = 0; i < numPoints; i++)
         {
@@ -288,13 +329,13 @@ public class PointRenderer{
                 listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
             }
 
-            if (listOfPoints.size() < 3)
+            if (listOfPoints.size() < 2)
                 continue;
 
             PVector[] pointVectors = listOfPoints.toArray(new PVector[listOfPoints.size()]);
 
-            if (pointVectors.length < 3)
-                continue;
+//            if (pointVectors.length < 2)
+//                continue;
 
             Path path = new P_BezierSpline(pointVectors);
 
@@ -303,7 +344,7 @@ public class PointRenderer{
             conScale.scale(1f);
             contour.make_u_Coordinates();
 
-            Extrusion e = new Extrusion(null, path, 30, contour, conScale);
+            Extrusion e = new Extrusion(null, path, 50, contour, conScale);
             e.drawMode(S3D.TEXTURE);
 
             Mesh2DCore mesh2DCore = (Mesh2DCore)e;
@@ -392,7 +433,7 @@ public class PointRenderer{
             float[] normals = normalsList.get(verticesListCount);
 
             FloatBuffer vertexBuffer = FloatBuffer.wrap(vertices);
-            FloatBuffer normalBuffer = FloatBuffer.wrap(vertices);
+            FloatBuffer normalBuffer = FloatBuffer.wrap(normals);
 //            normalBuffer = allocateDirectFloatBuffer(normals.length * 3);
 //
 //            vertexBuffer.rewind();
