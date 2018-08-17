@@ -1215,6 +1215,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         String messageReceived = message.getText();
 
+                        int lengthInBytes = 0;
+                        int targetDownloadCount = 0;
+                        int downloadCount;
                         if(fileDownloading)
                         {
                             if(messageReceived.contains(":FUF"))
@@ -1254,6 +1257,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         }
                         else if (messageReceived.contains(":FU"))
                         {
+                            String[] messageWithSize = messageReceived.split("@@");
+                            messageReceived = messageWithSize[0];
+                            lengthInBytes = Integer.parseInt(messageWithSize[1]);
+
+                            targetDownloadCount = lengthInBytes / uploadBlockSize;
+                            targetDownloadCount = (0 == (targetDownloadCount % uploadBlockSize)) ? targetDownloadCount : targetDownloadCount + 1;
+
                             String messageAndroidID = messageReceived.substring(messageReceived.indexOf(":FU") + 3, messageReceived.indexOf("-/"));
 
                             if(messageAndroidID == android_id)
@@ -1415,7 +1425,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         final int lengthInBytes = fileLengthInBytes;
 
-        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath) + "@@" + fileLengthInBytes);
+        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath)/* + "@@" + fileLengthInBytes*/);
 
             Thread fileUploadThread = new Thread(new Runnable()
             {
@@ -1423,18 +1433,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 Charset charset = Charset.forName("ISO-8859-1");
 
                 boolean acceptedMessage = true;
-                int up;
-                int tar;
+                int uploadCount;
+                int targetUploadCount;
                 @Override
                 public void run()
                 {
-
-                    int targetCount;
-
-                    targetCount = lengthInBytes % uploadBlockSize;
-
-                    targetCount = (lengthInBytes == (targetCount * uploadBlockSize)) ? targetCount : targetCount + 1;
-                    tar = targetCount;
+                    targetUploadCount = lengthInBytes / uploadBlockSize;
+                    targetUploadCount = (0 == (targetUploadCount % uploadBlockSize)) ? targetUploadCount : targetUploadCount + 1;
 
                     boolean sendingEndMark = false;
                     boolean sentEndMark = false;
@@ -1487,12 +1492,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                     @Override
                                     public void onAccepted(Data data)
                                     {
-                                        if(up == tar)
-                                        {
-                                            Log.d(TAG, "Upload " + up + " Target " + tar);
-                                        }
+                                        Log.d(TAG, "Upload " + uploadCount + " Target " + targetUploadCount);
+                                        float percentage = ((float) uploadCount/(float) targetUploadCount);
+                                        uiHandler.SetProgress(percentage);
                                         acceptedMessage = true;
-                                        Log.d(TAG, "ACCEPTED MESSAGE");
+                                        up++;
                                     }
 
                                     @Override

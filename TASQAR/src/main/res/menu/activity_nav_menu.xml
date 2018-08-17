@@ -13,6 +13,7 @@
             android:id="@+id/nav_history"
             android:icon="@drawable/history_icon"
             android:title="View History" />
+        <item android:title="Toggles">
             <menu>
                 <item
                     android:id="@+id/app_bar_switch"
@@ -39,5 +40,6 @@
                     app:actionLayout="@layout/switch_item"
                     app:showAsAction="always" />
             </menu>
+        </item>
     </group>
 </menu>

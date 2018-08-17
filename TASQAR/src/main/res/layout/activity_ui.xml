@@ -509,11 +509,11 @@
         <ImageView
             android:id="@+id/ProgressBar"
             android:layout_width="0dp"
-            android:layout_height="9dp"
+            android:layout_height="1dp"
             android:elevation="0dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@android:color/holo_red_dark" />
+            app:srcCompat="@android:color/holo_orange_light" />
     </RelativeLayout>
 
 </android.support.constraint.ConstraintLayout>
