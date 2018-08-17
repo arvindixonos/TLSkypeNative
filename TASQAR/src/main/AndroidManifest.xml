@@ -28,6 +28,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <receiver android:name=".ActionReceiver" />
+
         <meta-data android:name="com.google.ar.core" android:value="required" />
 
         <provider

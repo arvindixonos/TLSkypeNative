@@ -1,0 +1,241 @@
+Microsoft Windows [Version 10.0.17134.165]
+(c) 2018 Microsoft Corporation. All rights reserved.
+
+C:\Users\Adish>D:
+
+D:\>cd D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Changes to be committed:
+  (use "git reset HEAD <file>..." to unstage)
+
+        new file:   TASQAR/release/TASQAR-release.apk
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git checkout -- <file>..." to discard changes in working directory)
+
+        modified:   Shapes3D/Shapes3D.jar
+        modified:   Shapes3D/build.gradle
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/.ninja_deps
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/.ninja_log
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeCache.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeCCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeCXXCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_C.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_CXX.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeSystem.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/CMakeOutput.log
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/TargetDirectories.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/feature_tests.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/android_gradle_build.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/android_gradle_build_mini.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/build.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/cmake_build_command.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/cmake_build_output.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/cmake_install.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/rules.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/.ninja_deps
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/.ninja_log
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeCache.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeCCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeCXXCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_C.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_CXX.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeSystem.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/CMakeOutput.log
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/TargetDirectories.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/feature_tests.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/android_gradle_build.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/android_gradle_build_mini.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/build.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/cmake_build_command.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/cmake_build_output.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/cmake_install.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/rules.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/.ninja_deps
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/.ninja_log
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeCache.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeCCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeCXXCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_C.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_CXX.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/3.6.0-rc2/CMakeSystem.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/CMakeOutput.log
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/TargetDirectories.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/feature_tests.bin
+        deleted:    libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/android_gradle_build.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/android_gradle_build_mini.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/build.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/cmake_build_command.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/cmake_build_output.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/cmake_install.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/rules.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/.ninja_deps
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/.ninja_log
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeCache.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeCCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeCXXCompiler.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_C.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeDetermineCompilerABI_CXX.bin
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/3.6.0-rc2/CMakeSystem.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/CMakeOutput.log
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/TargetDirectories.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/feature_tests.bin
+        deleted:    libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/CMakeFiles/native-lib.dir/src/main/cpp/native-lib.cpp.o
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/android_gradle_build.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/android_gradle_build_mini.json
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/build.ninja
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/cmake_build_command.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/cmake_build_output.txt
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/cmake_install.cmake
+        modified:   libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/rules.ninja
+        modified:   settings.gradle
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+        Backup/VIdChat.txt
+
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git stash
+warning: LF will be replaced by CRLF in Shapes3D/build.gradle.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/.ninja_log.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/android_gradle_build_mini.json.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/debug/arm64-v8a/cmake_build_command.txt.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/.ninja_log.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/android_gradle_build_mini.json.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/debug/armeabi-v7a/cmake_build_command.txt.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/.ninja_log.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/android_gradle_build_mini.json.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/cmake_build_command.txt.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/.ninja_log.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/android_gradle_build_mini.json.
+The file will have its original line endings in your working directory.
+warning: LF will be replaced by CRLF in libraryyuv/.externalNativeBuild/cmake/release/armeabi-v7a/cmake_build_command.txt.
+The file will have its original line endings in your working directory.
+Saved working directory and index state WIP on master: 2c13575 Minor Changes
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git status
+On branch master
+Your branch is ahead of 'origin/master' by 1 commit.
+  (use "git push" to publish your local commits)
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+        Backup/VIdChat.txt
+
+nothing added to commit but untracked files present (use "git add" to track)
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git remote -v
+origin  https://github.com/arvindixonos/TLSkypeNative.git (fetch)
+origin  https://github.com/arvindixonos/TLSkypeNative.git (push)
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git branch
+* master
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git pull origin master
+remote: Counting objects: 72, done.
+remote: Compressing objects: 100% (23/23), done.
+remote: Total 72 (delta 36), reused 67 (delta 31), pack-reused 0
+Unpacking objects: 100% (72/72), done.
+From https://github.com/arvindixonos/TLSkypeNative
+ * branch            master     -> FETCH_HEAD
+   4b51bb5..d90c3b3  master     -> origin/master
+Removing TASQAR/src/main/java/shape3d/BezTube.java
+Auto-merging TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/VideoChatActivity.java
+CONFLICT (content): Merge conflict in TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/VideoChatActivity.java
+Auto-merging TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/PointRenderer.java
+CONFLICT (content): Merge conflict in TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/PointRenderer.java
+Auto-merging TASQAR/build.gradle
+CONFLICT (content): Merge conflict in TASQAR/build.gradle
+Automatic merge failed; fix conflicts and then commit the result.
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git status
+On branch master
+Your branch and 'origin/master' have diverged,
+and have 1 and 5 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+
+        new file:   TASQAR/src/main/assets/shaders/frag.glsl
+        modified:   TASQAR/src/main/assets/shaders/object.frag
+        new file:   TASQAR/src/main/assets/shaders/vert.glsl
+        modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/ObjectRenderer.java
+        modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/ShaderUtil.java
+        deleted:    TASQAR/src/main/java/shape3d/BezTube.java
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+
+        both modified:   TASQAR/build.gradle
+        both modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/PointRenderer.java
+        both modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/VideoChatActivity.java
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+        Backup/VIdChat.txt
+
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git add TASQAR/build.gradle
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git add TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/PointRenderer.java
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git add TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/VideoChatActivity.java
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git status
+On branch master
+Your branch and 'origin/master' have diverged,
+and have 1 and 5 different commits each, respectively.
+  (use "git pull" to merge the remote branch into yours)
+
+All conflicts fixed but you are still merging.
+  (use "git commit" to conclude merge)
+
+Changes to be committed:
+
+        modified:   TASQAR/build.gradle
+        new file:   TASQAR/src/main/assets/shaders/frag.glsl
+        modified:   TASQAR/src/main/assets/shaders/object.frag
+        new file:   TASQAR/src/main/assets/shaders/vert.glsl
+        modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/ObjectRenderer.java
+        modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/PointRenderer.java
+        modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/ShaderUtil.java
+        modified:   TASQAR/src/main/java/com/flashphoner/wcsexample/video_chat/VideoChatActivity.java
+        deleted:    TASQAR/src/main/java/shape3d/BezTube.java
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+
+        Backup/VIdChat.txt
+
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>git commit -m "Merged with Maxi"
+[master 5e41601] Merged with Maxi
+
+D:\Projects\Android\Refrences\Maxi_v7\TLSkypeNative>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_upload"
+            android:icon="@drawable/baseline_cloud_upload_white_24dp"
+            android:title="Upload File" />
+        <item
+            android:id="@+id/nav_history"
+            android:icon="@drawable/history_icon"
+            android:title="View History" />
+        <item android:title="Toggles">
+            <menu>
+                <item
+                    android:id="@+id/app_bar_switch"
+                    android:icon="@drawable/baseline_cached_white_18dp"
+                    android:title="Switch Layout"
+                    app:actionLayout="@layout/switch_item"
+                    app:showAsAction="always" />
+                <item
+                    android:id="@+id/back_cam_switch"
+                    android:icon="@drawable/flip_cam_rear"
+                    android:title="Switch Camera"
+                    app:actionLayout="@layout/switch_item"
+                    app:showAsAction="always" />
+                <item
+                    android:id="@+id/point2plane"
+                    android:icon="@drawable/button_blur"
+                    android:title="Point Mode"
+                    app:actionLayout="@layout/switch_item"
+                    app:showAsAction="always" />
+                <item
+                    android:id="@+id/arrow_mode"
+                    android:icon="@drawable/arrow_down"
+                    android:title="Arrow Mode"
+                    app:actionLayout="@layout/switch_item"
+                    app:showAsAction="always" />
+            </menu>
+        </item>
+    </group>
+</menu>

@@ -129,6 +129,11 @@ class FileButton  extends AppCompatImageButton implements View.OnClickListener
         text.setText(fileName);
         TextView dateText = (TextView) viewGroup.getChildAt(3);
         dateText.setText(buttonDate);
+        TextView fileType = (TextView) viewGroup.getChildAt(4);
+        String[] file = fileName.split("\\.");
+        String type = file[file.length - 1].toUpperCase();
+        fileType.setText(type);
+        fileType.setBackgroundTintList(currentActivity.getResources().getColorStateList(GetColor(type)));
 
         ImageView fileState = (ImageView) viewGroup.getChildAt(1);
 
@@ -142,6 +147,68 @@ class FileButton  extends AppCompatImageButton implements View.OnClickListener
             fileState.setImageResource(R.drawable.recieved);
             fileState.setColorFilter(Color.BLUE);
         }
+    }
+
+    int GetColor (String text)
+    {
+        int id = 0;
+        switch(text)
+        {
+            case "MP4":
+                id = R.color.MP4;
+                break;
+            case "PDF":
+                id = R.color.PDF;
+                break;
+            case "JPEG":
+                id = R.color.JPEG;
+                break;
+            case "JPG":
+                id = R.color.JPEG;
+                break;
+            case "DOCX":
+            case "DOC":
+            case "DOT":
+            case "WBK":
+            case "DOCM":
+            case "DOTX":
+            case "DOTM":
+            case "DOCB":
+                id = R.color.WORD;
+                break;
+            case "XLSX":
+            case "XLSM":
+            case "XLTX":
+            case "XLTM":
+            case "XLSB":
+            case "XLA":
+            case "XLAM":
+            case "XLL":
+            case "XLW":
+                id = R.color.EXCEL;
+                break;
+            case "PPT":
+            case "POT":
+            case "PPS":
+            case "PPTX":
+            case "PPTM":
+            case "POTX":
+            case "POTM":
+            case "PPAM":
+            case "PPSX":
+            case "PPSM":
+            case "SLDX":
+            case "SLDM":
+                id = R.color.PPT;
+                break;
+            case "TXT":
+                id = R.color.TXT;
+                break;
+            default:
+                id = R.color.DEFAULT;
+                break;
+        }
+        return id;
     }
 
     void ClickFunction ()

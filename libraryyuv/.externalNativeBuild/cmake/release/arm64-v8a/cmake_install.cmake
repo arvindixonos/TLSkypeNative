@@ -1,4 +1,4 @@
-# Install script for directory: C:/Users/TakeLeap05/Desktop/Aadharsh/TLSkypeNative/libraryyuv
+# Install script for directory: D:/Projects/Android/Refrences/Maxi_v7/TLSkypeNative/libraryyuv
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -40,5 +40,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "C:/Users/TakeLeap05/Desktop/Aadharsh/TLSkypeNative/libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "D:/Projects/Android/Refrences/Maxi_v7/TLSkypeNative/libraryyuv/.externalNativeBuild/cmake/release/arm64-v8a/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

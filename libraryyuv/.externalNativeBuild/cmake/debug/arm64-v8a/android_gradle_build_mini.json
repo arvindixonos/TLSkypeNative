@@ -1,9 +1,9 @@
 {
   "buildFiles": [
-    "C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\CMakeLists.txt"
+    "D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\CMakeLists.txt"
   ],
   "cleanCommands": [
-    "C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target clean"
+    "F:\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target clean"
   ],
   "libraries": {
     "yuv-Debug-arm64-v8a": {
@@ -13,9 +13,9 @@
     },
     "native-lib-Debug-arm64-v8a": {
       "artifactName": "native-lib",
-      "buildCommand": "C:\\Users\\TakeLeap05\\AppData\\Local\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target native-lib",
+      "buildCommand": "F:\\Android\\Sdk\\cmake\\3.6.4111459\\bin\\cmake.exe --build D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\.externalNativeBuild\\cmake\\debug\\arm64-v8a --target native-lib",
       "abi": "arm64-v8a",
-      "output": "C:\\Users\\TakeLeap05\\Desktop\\Aadharsh\\TLSkypeNative\\libraryyuv\\build\\intermediates\\cmake\\debug\\obj\\arm64-v8a\\libnative-lib.so"
+      "output": "D:\\Projects\\Android\\Refrences\\Maxi_v7\\TLSkypeNative\\libraryyuv\\build\\intermediates\\cmake\\debug\\obj\\arm64-v8a\\libnative-lib.so"
     }
   }
 }

@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import java.awt.font.TextAttribute;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,6 +21,7 @@ import java.io.InputStream;
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
+import org.apache.commons.net.io.CopyStreamAdapter;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
@@ -32,11 +34,12 @@ public class FTPManager extends AsyncTask {
     String user = "maxi";
     String pass = "asdfghjk";
 
+    int progress;
     int uploadORdownload = 1;
     String filePath = "";
     String fileDate = "";
     Context applicationContext;
-
+    private CopyStreamAdapter streamListener;
     boolean transferSuccess = false;
 
     InputStream fileInputStream = null;
@@ -71,13 +74,35 @@ public class FTPManager extends AsyncTask {
             }
 
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+
+            BufferedInputStream buffIn = null;
+            final File file = new File(filePath);
+
+            buffIn = new BufferedInputStream(fileInputStream, (int)file.length());
             ftpClient.enterLocalPassiveMode();
+
+            streamListener = new CopyStreamAdapter()
+            {
+
+                @Override
+                public void bytesTransferred(long totalBytesTransferred,
+                                             int bytesTransferred, long streamSize)
+                {
+                    progress = (int) (totalBytesTransferred * 100 / file.length());
+                    if (totalBytesTransferred == file.length())
+                    {
+                        removeCopyStreamListener(streamListener);
+                    }
+                }
+
+            };
+            ftpClient.setCopyStreamListener(streamListener);
 
             if(uploadORdownload == 1)
             {
                 Log.d(TAG, fileInputStream.available() + " ");
 
-                success = ftpClient.storeFile(GetFileName(filePath), fileInputStream);
+                success = ftpClient.storeFile(GetFileName(filePath), buffIn);
 
                 if(success)
                 {

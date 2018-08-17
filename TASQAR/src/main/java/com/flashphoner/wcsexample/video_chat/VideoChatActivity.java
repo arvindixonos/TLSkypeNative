@@ -16,6 +16,7 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.media.Image;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.opengl.GLES20;
@@ -39,14 +40,17 @@ import android.util.Rational;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -60,7 +64,6 @@ import com.flashphoner.fpwcsapi.layout.PercentFrameLayout;
 import com.flashphoner.fpwcsapi.room.Message;
 import com.flashphoner.fpwcsapi.room.Participant;
 import com.flashphoner.fpwcsapi.room.Room;
-import com.flashphoner.fpwcsapi.room.RoomCommand;
 import com.flashphoner.fpwcsapi.room.RoomEvent;
 import com.flashphoner.fpwcsapi.room.RoomManager;
 import com.flashphoner.fpwcsapi.room.RoomManagerEvent;
@@ -153,13 +156,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public static Context applicationContext;
     private static VideoChatActivity Instance;
     public boolean connected = false;
+    public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTPA";
+    String roomName = "TLSkype";
 //    UI references.
 
+    private Thread ftpThread;
     private ImageButton mConnectButton;
-    private ImageButton mFileUploadButton;
     private Button mPlaneOrPointButton;
     private EditText mJoinRoomView;
     private TextView mJoinStatus;
@@ -262,7 +266,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         Log.d(TAG, "SURFACE ASD PARAMS " + glsurfaceView.getWidth() + " " + glsurfaceView.getHeight());
 
-        try {
+        try
+        {
             // Create the texture and pass it to ARCore session to be filled during update().
             backgroundRenderer.createOnGlThread(/*context=*/ this);
             pointRenderer.createOnGlThread(this, "models/grass.jpg");
@@ -276,7 +281,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
             virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             Log.e(TAG, "Failed to read an asset file", e);
         }
     }
@@ -335,9 +342,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         super.onCreate(savedInstanceState);
         Instance = this;
-
-//        PFragment fragment = new PFragment(pointRenderer);
-//        fragment.setView(uiHandler.localRender, this);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         currentActivityIntent = getIntent();
         String Message = currentActivityIntent.getStringExtra("MIN");
@@ -404,15 +410,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             displayRotationHelper.onResume();
         }
 
-        if(screenRecorder != null)
-            screenRecorder.ResumeRecording();
+//        if(screenRecorder != null)
+//            screenRecorder.ResumeRecording();
     }
 
 
 
     void SetupCallScreen ()
     {
-        setContentView(R.layout.activity_ui);
+        setContentView(R.layout.activity_drawer);
         localRenderer = findViewById(R.id.CurrentRender);
         remoteRenderer = findViewById(R.id.StreamRender);
         participantView = new ParticipantView(remoteRenderer, mParticipantName);
@@ -523,6 +529,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
         });
 
+//        uiHandler.ToggleVideoView();
         Connect();
 
         mConnectButton.setOnClickListener(new OnClickListener()
@@ -538,29 +545,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
 
         SetLocalRendererMirror();
-    }
-
-    void  MuteAudio()
-    {
-        //mute audio
-        AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0);
-    }
-
-    void  UnmuteAudio()
-    {
-        AudioManager amanager=(AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_ALARM, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_RING, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_RAISE, 0);
-        amanager.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_RAISE, 0);
     }
 
     @Override
@@ -743,8 +727,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     @Override
     public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
-
-        MuteAudio();
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
@@ -1103,8 +1085,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
          */
         roomManager = Flashphoner.createRoomManager(roomManagerOptions);
 
-
-
         /**
          * Callback functions for connection status events are added to make appropriate changes in controls of the interface when connection is established and closed.
          */
@@ -1135,57 +1115,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             PUBLISH_REQUEST_CODE);
                 }
 
-//                roomManager.session.webSocketChannelClient.events = new WebSocketChannelEvents() {
-//                    public void onWebSocketOpen() {
-//                        roomManager.session.webSocketChannelClient.execute("connection", connection);
-//                    }
-//
-//                    public void onWebSocketMessage(WSMessage wsMessage) {
-//                        Gson gson = new Gson();
-//                        CallArguments callArguments = new CallArguments(wsMessage.getData());
-//
-//                        try {
-//                            Method[] var4 =  roomManager.session.requestCallback.getClass().getMethods();
-//                            int var5 = var4.length;
-//
-//                            for(int var6 = 0; var6 < var5; ++var6) {
-//                                Method method = var4[var6];
-//                                if(wsMessage.getMessage().equals(method.getName())) {
-//                                    Class[] parameterTypes = method.getParameterTypes();
-//                                    Object[] args = new Object[parameterTypes.length];
-//
-//                                    for(int i = 0; i < parameterTypes.length; ++i) {
-//                                        JsonElement jsonElement = gson.toJsonTree(callArguments.getArgument(Integer.valueOf(i)));
-//                                        args[i] = gson.fromJson(jsonElement, parameterTypes[i]);
-//                                    }
-//
-//                                    Log.i("Session", "Invoker class method: " + method.getName());
-//                                    method.invoke( roomManager.session.requestCallback, args);
-//                                    return;
-//                                }
-//                            }
-//
-//                            Log.w("Session", "No such method " + wsMessage);
-//                        } catch (Throwable var12) {
-//                            Log.e("Session", var12.getMessage(), var12);
-//                        }
-//
-//                    }
-//
-//                    public void onWebSocketClose(int code) {
-//                        if(code != 1 && code != 3) {
-//                            roomManager.session.disconnect("FAILED");
-//                        } else {
-//                            roomManager.session.disconnect();
-//                        }
-//
-//                    }
-//
-//                    public void onWebSocketError(String description) {
-//                        roomManager.session.disconnect("FAILED");
-//                    }
-//                };
-
                 /**
                  * Callback functions for events occurring in video chat room are added.
                  * If the event is related to actions performed by one of the other participants, Participant object with data of that participant is passed to the corresponding function.
@@ -1199,7 +1128,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         if (permissionGiven && stream == null) {
                             stream = room.publish(localRenderer, VideoChatActivity.this);
-                            stream.muteAudio();
+                            stream.unmuteAudio();
                         }
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
@@ -1230,8 +1159,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                  */
 
                                 participantPublishing = true;
-                                Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
-                                remoteStream.muteAudio();
+                                participant.play(participantView.surfaceViewRenderer);
+                            }
+
+                            if(participantPublishing)
+                            {
+                                uiHandler.StartTimer();
                             }
                         }
                     }
@@ -1240,6 +1173,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     public void onJoined(final Participant participant) {
 
                         Log.d(TAG, "ON JOINED " + participant.getName());
+                        uiHandler.StartTimer();
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
@@ -1266,7 +1200,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         if (participantView != null) {
                             participantPublishing = true;
                             Stream remoteStream = participant.play(participantView.surfaceViewRenderer);
-                            remoteStream.muteAudio();
+                            remoteStream.unmuteAudio();
                         }
                     }
 
@@ -1288,6 +1222,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         String messageReceived = message.getText();
 
+                        int lengthInBytes = 0;
+                        int targetDownloadCount = 0;
+                        int downloadCount;
                         if(fileDownloading)
                         {
                             if(messageReceived.contains(":FUF"))
@@ -1300,7 +1237,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 return;
                             }
 
-                            try {
+                            try
+                            {
                                 Charset charset = Charset.forName("ISO-8859-1");
 
                                 byte[] data = new byte[currentDataSize];
@@ -1314,16 +1252,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                     fileDownloading = false;
                                     fileDownloadingFinishing = false;
                                 }
-
-                            } catch (UnsupportedEncodingException e) {
-                                e.printStackTrace();
-                            } catch (IOException e) {
+                            }
+                            catch (UnsupportedEncodingException e)
+                            {
                                 e.printStackTrace();
                             }
-
+                            catch (IOException e)
+                            {
+                                e.printStackTrace();
+                            }
                         }
                         else if (messageReceived.contains(":FU"))
                         {
+                            String[] messageWithSize = messageReceived.split("@@");
+                            messageReceived = messageWithSize[0];
+                            lengthInBytes = Integer.parseInt(messageWithSize[1]);
+
+                            targetDownloadCount = lengthInBytes / uploadBlockSize;
+                            targetDownloadCount = (0 == (targetDownloadCount % uploadBlockSize)) ? targetDownloadCount : targetDownloadCount + 1;
+
                             String messageAndroidID = messageReceived.substring(messageReceived.indexOf(":FU") + 3, messageReceived.indexOf("-/"));
 
                             if(messageAndroidID == android_id)
@@ -1357,7 +1304,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             public void onDisconnection(final Connection connection) {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
-
+                uiHandler.StopTimer();
                 stream = null;
             }
         });
@@ -1411,7 +1358,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 {
                     final Intent localDataCopy = data;
                     Handler handler = new Handler();
-                    Runnable runnable = new Runnable() {
+                    Runnable runnable = new Runnable()
+                    {
                         @Override
                         public void run()
                         {
@@ -1460,6 +1408,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public  static  int uploadBlockSize = 10000;
     public void UploadFile(final String filePath)
     {
+
         friendName = "";
 
         if(fileUploading)
@@ -1478,127 +1427,120 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         fileUploading = true;
 
-        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
+        int fileLengthInBytes = 0;
+        try {
+            fileLengthInBytes = fileReadStream.available();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-            Thread fileUploadThread = new Thread(new Runnable() {
+        final int lengthInBytes = fileLengthInBytes;
 
-            Charset charset = Charset.forName("ISO-8859-1");
+        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath)/* + "@@" + fileLengthInBytes*/);
 
-            boolean acceptedMessage = true;
-
-            @Override
-            public void run()
+            Thread fileUploadThread = new Thread(new Runnable()
             {
-                boolean sendingEndMark = false;
-                boolean sentEndMark = false;
-                while (true)
+
+                Charset charset = Charset.forName("ISO-8859-1");
+
+                boolean acceptedMessage = true;
+                int uploadCount;
+                int targetUploadCount;
+                @Override
+                public void run()
                 {
-                    try {
-                        if(acceptedMessage)
+                    targetUploadCount = lengthInBytes / uploadBlockSize;
+                    targetUploadCount = (0 == (targetUploadCount % uploadBlockSize)) ? targetUploadCount : targetUploadCount + 1;
+
+                    boolean sendingEndMark = false;
+                    boolean sentEndMark = false;
+                    while (true)
+                    {
+                        try
                         {
-                            int available = fileReadStream.available();
-                            int uploadSize = uploadBlockSize;
-
-                            Message message = new Message();
-                            message.setTo(friendName);
-                            message.getRoomConfig().put("name", room.getName());
-
-                            if (available < uploadSize || available == 0) {
-                                uploadSize = available;
-
-                                if (!sentEndMark) {
-                                    message.setText(":FUF" + uploadSize);
-                                    sentEndMark = true;
-                                    sendingEndMark = true;
-                                }
-                            }
-
-                            if(uploadSize > 0 && !sendingEndMark)
+                            if(acceptedMessage)
                             {
-                                byte[] data = new byte[uploadSize];
+                                int available = fileReadStream.available();
+                                int uploadSize = uploadBlockSize;
 
-                                fileReadStream.read(data);
+                                Message message = new Message();
+                                message.setTo(friendName);
+                                message.getRoomConfig().put("name", room.getName());
 
-                                ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-
-                                String stringData = charset.decode(byteBuffer).toString();
-
-                                message.setText(stringData);
-
-                                if(sentEndMark)
+                                if (available < uploadSize || available == 0)
                                 {
-                                    fileUploading = false;
-                                 }
-                            }
+                                    uploadSize = available;
 
-                            acceptedMessage = false;
-                            room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler() {
-                                @Override
-                                public void onAccepted(Data data) {
-                                    acceptedMessage = true;
-
-                                    Log.d(TAG, "ACCEPTED MESSAGE");
+                                    if (!sentEndMark)
+                                    {
+                                        message.setText(":FUF" + uploadSize);
+                                        sentEndMark = true;
+                                        sendingEndMark = true;
+                                    }
                                 }
 
-                                @Override
-                                public void onRejected(Data data) {
+                                if(uploadSize > 0 && !sendingEndMark)
+                                {
+                                    byte[] data = new byte[uploadSize];
 
+                                    fileReadStream.read(data);
+
+                                    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
+                                    String stringData = charset.decode(byteBuffer).toString();
+
+                                    message.setText(stringData);
+
+                                    if(sentEndMark)
+                                    {
+                                        fileUploading = false;
+                                    }
                                 }
-                            });
 
-                            sendingEndMark = false;
+                                acceptedMessage = false;
+                                room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler()
+                                {
+                                    @Override
+                                    public void onAccepted(Data data)
+                                    {
+                                        Log.d(TAG, "Upload " + uploadCount + " Target " + targetUploadCount);
+                                        float percentage = ((float) uploadCount/(float) targetUploadCount);
+                                        uiHandler.SetProgress(percentage);
+                                        acceptedMessage = true;
+                                        up++;
+                                    }
 
-                            if(!fileUploading) {
-                                fileReadStream.close();
-                                break;
+                                    @Override
+                                    public void onRejected(Data data)
+                                    {
+
+                                    }
+                                });
+                                sendingEndMark = false;
+
+                                if(!fileUploading)
+                                {
+                                    fileReadStream.close();
+                                    break;
+                                }
                             }
+                            Thread.sleep(10);
                         }
-
-                        Thread.sleep(10);
-
-                        } catch (IOException e) {
+                        catch (IOException e)
+                        {
                             e.printStackTrace();
                         }
-                        catch (InterruptedException e) {
+                        catch (InterruptedException e)
+                        {
                             e.printStackTrace();
                         }catch (ArrayIndexOutOfBoundsException e)
                         {
                             e.printStackTrace();
                         }
                     }
-            }
+                }
         });
-
         fileUploadThread.start();
-
-//        final FTPManager ftpManager = new FTPManager();
-//
-//        ftpManager.fileInputStream = inputStream;
-//        ftpManager.uploadORdownload = 1;
-//        ftpManager.applicationContext = getApplicationContext();
-//        ftpManager.filePath = filePath;
-//        if (ftpManager.running)
-//        {
-//            ShowToast("FTP Manager Running Already", this.getApplicationContext());
-//            return;
-//        }
-//
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//
-//                Looper looper = mHandler.getLooper();
-//                looper.prepare();
-//                mHandler.post(new Runnable()
-//                {
-//                    @Override
-//                    public void run()
-//                    {
-//                        ftpManager.execute();
-//                    }
-//                });
-//            }
-//        }).start();
     }
 
     public void DownloadFile(String fileName) {
@@ -1703,7 +1645,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     if (stream == null && room != null)
                     {
                         stream = room.publish(localRenderer, VideoChatActivity.this);
-                        stream.muteAudio();
+                        stream.unmuteAudio();
                     }
 
                     /**
@@ -1728,8 +1670,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             session.pause();
         }
 
-        if(screenRecorder != null)
-            screenRecorder.PauseRecording();;
+//        if(screenRecorder != null)
+//            screenRecorder.PauseRecording();;
     }
 
     @Override

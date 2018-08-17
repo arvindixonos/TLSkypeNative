@@ -1,1 +1,1 @@
-include ':TASQAR', ':commons-net-3.6', ':autobahn.0.5.2', ':flashphoner', ':libjingle_peerconnection', ':libraryyuv'
+include ':TASQAR', ':commons-net-3.6', ':autobahn.0.5.2', ':flashphoner', ':libjingle_peerconnection', ':libraryyuv', ':Shapes3D', ':processing-core'
