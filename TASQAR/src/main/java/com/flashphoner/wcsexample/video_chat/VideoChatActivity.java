@@ -896,7 +896,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     private void SpawnPoint(HitResult hit)
     {
-        pointRenderer.AddPoint(hit.createAnchor(), hit.getHitPose());
+        pointRenderer.AddPoint(hit);
     }
 
     public void SetLocalRendererMirror()
@@ -1218,7 +1218,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         /**
                          * When one of the participants sends a text message, the received message is added to the messages log.
                          */
-                        Log.d(TAG, "ON MESSAGE " + message.getText());
+//                        Log.d(TAG, "ON MESSAGE " + message.getText());
 
                         String messageReceived = message.getText();
 
@@ -1507,7 +1507,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                         float percentage = ((float) uploadCount/(float) targetUploadCount);
                                         uiHandler.SetProgress(percentage);
                                         acceptedMessage = true;
-                                        up++;
+                                        uploadCount++;
                                     }
 
                                     @Override
