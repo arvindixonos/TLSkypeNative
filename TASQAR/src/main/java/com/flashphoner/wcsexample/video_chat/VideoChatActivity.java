@@ -159,7 +159,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "TLSkype";
+    String roomName = "NEWFTP";
 //    UI references.
 
     private Thread ftpThread;
@@ -180,7 +180,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private Handler mHandler = new Handler();
     private Handler nHandler = new Handler();
     public  Intent  currentActivityIntent;
-
+    private boolean cancelled;
     public MainUIHandler uiHandler;
     public ScreenRecorder  screenRecorder;
 
@@ -237,6 +237,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public      boolean fileDownloadingFinishing = false;
     private     int     lastByteSize = 0;
     private     int     currentDataSize = uploadBlockSize;
+    private     String  fileName;
+    private int         lengthInBytes = 0;
+    private int         targetDownloadCount = 0;
+    private int         downloadCount = 0;
+    private Thread      fileUploadThread;
+    private Thread      downloadThread;
 
     public      boolean fileUploading = false;
 
@@ -1214,10 +1220,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         Log.d(TAG, "ON MESSAGE " + message.getText());
 
                         String messageReceived = message.getText();
-
-                        int lengthInBytes = 0;
-                        int targetDownloadCount = 0;
-                        int downloadCount;
+                        if(messageReceived.contains(":FUC-"))
+                        {
+                            StopFTP();
+                            Log.d(TAG, "Cancelled");
+                            File partialFile = new File(fileName);
+                            if(partialFile.exists())
+                                partialFile.delete();
+                            return;
+                        }
                         if(fileDownloading)
                         {
                             if(messageReceived.contains(":FUF"))
@@ -1240,6 +1251,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                                 fileWriteStream.write(data);
 
+                                float percentage = ((float) downloadCount/(float) targetDownloadCount);
+
+                                if(downloadCount == 0)
+                                {
+                                    uiHandler.showNotification(getApplicationContext(), "Downloading", fileName, new Intent ());
+                                }
+                                else
+                                {
+                                    uiHandler.UpdateNotification((int) (percentage * 100));
+                                }
+
+                                uiHandler.SetProgress(percentage, fileName);
+
+                                if(downloadCount == targetDownloadCount)
+                                {
+                                    uiHandler.SetProgress(0, "");
+                                    uiHandler.StopNotification();
+                                }
+                                downloadCount++;
                                 if(fileDownloadingFinishing)
                                 {
                                     fileDownloading = false;
@@ -1274,6 +1304,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             messageReceived = messageReceived.replace(":FU", "");
                             messageReceived = messageReceived.replace(messageAndroidID, "");
                             messageReceived = messageReceived.replace("-/", "");
+                            fileName = messageReceived;
                             DownloadFile(messageReceived);
                         }
                         else if(messageReceived.contains("Disconnect"))
@@ -1290,7 +1321,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
             @Override
-            public void onDisconnection(final Connection connection) {
+            public void onDisconnection(final Connection connection)
+            {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
                 uiHandler.StopTimer();
@@ -1299,7 +1331,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
     }
 
-    public void SendMessage(String message) {
+    public void SendMessage(String message)
+    {
         if (room == null)
             return;
 
@@ -1313,7 +1346,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         // TODO Fix no activity available
         if (data == null)
             return;
-//        Log.d(TAG, "Data is" + data.getData().getPath());
+
         switch (requestCode)
         {
             case PICKFILE_RESULT_CODE:
@@ -1376,21 +1409,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         {
             e.printStackTrace();
         }
-
-//        runOnUiThread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    String filePath = "/sdcard/scr.png";
-//                    InputStream inputStream = new FileInputStream(filePath);
-//
-//                    UploadFile(filePath, inputStream);
-//
-//                } catch (FileNotFoundException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        });
     }
 
     private String friendName = "";
@@ -1403,7 +1421,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         if(fileUploading)
             return;
 
-        for (Participant participant : room.getParticipants()) {
+        for (Participant participant : room.getParticipants())
+        {
             if(participant.getName() != roomManager.getUsername())
             {
                 friendName = participant.getName();
@@ -1412,7 +1431,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
 
         if(friendName.length() == 0)
+        {
+            ShowToast("No participants present", this);
             return;
+        }
 
         fileUploading = true;
 
@@ -1425,11 +1447,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         final int lengthInBytes = fileLengthInBytes;
 
-        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath)/* + "@@" + fileLengthInBytes*/);
+        SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath) + "@@" + fileLengthInBytes);
 
-            Thread fileUploadThread = new Thread(new Runnable()
+            fileUploadThread = new Thread(new Runnable()
             {
-
                 Charset charset = Charset.forName("ISO-8859-1");
 
                 boolean acceptedMessage = true;
@@ -1438,6 +1459,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 @Override
                 public void run()
                 {
+                    Log.d(TAG, "Thread Running");
                     targetUploadCount = lengthInBytes / uploadBlockSize;
                     targetUploadCount = (0 == (targetUploadCount % uploadBlockSize)) ? targetUploadCount : targetUploadCount + 1;
 
@@ -1492,11 +1514,32 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                     @Override
                                     public void onAccepted(Data data)
                                     {
-                                        Log.d(TAG, "Upload " + uploadCount + " Target " + targetUploadCount);
+                                        if(cancelled)
+                                            return;
+
                                         float percentage = ((float) uploadCount/(float) targetUploadCount);
-                                        uiHandler.SetProgress(percentage);
+
+                                        if(uploadCount == 0)
+                                        {
+                                            uiHandler.showNotification(getApplicationContext(), "Uploading", filePath, new Intent ());
+                                        }
+                                        else
+                                        {
+                                            uiHandler.UpdateNotification((int)(percentage * 100));
+                                        }
+
+                                        uiHandler.SetProgress(percentage, filePath);
+
+                                        Log.d(TAG, "Percentage " + percentage);
+
+                                        if(uploadCount == targetUploadCount)
+                                        {
+                                            uiHandler.SetProgress(0, "");
+                                            uiHandler.StopNotification();
+                                        }
+
                                         acceptedMessage = true;
-                                        up++;
+                                        uploadCount++;
                                     }
 
                                     @Override
@@ -1509,6 +1552,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                                 if(!fileUploading)
                                 {
+                                    String[] fileNames = filePath.split("/");
+                                    uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
+
                                     fileReadStream.close();
                                     break;
                                 }
@@ -1532,7 +1578,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         fileUploadThread.start();
     }
 
-    public void DownloadFile(String fileName) {
+    public void DownloadFile(String fileName)
+    {
 
         if(fileDownloading)
             return;
@@ -1541,10 +1588,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         currentDataSize = uploadBlockSize;
 
-        Thread downloadThread = new Thread(new Runnable() {
+        downloadThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
+                final String fileDate = uiHandler.GetDate();
                 String filePath = "/sdcard/ReceivedFiles/" + fileName;
 
                 File downloadDir = new File("/sdcard/ReceivedFiles");
@@ -1569,13 +1617,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 String pathName = "";
                 if (thisFile.exists())
                 {
-                    pathName = "/sdcard/ReceivedFiles/" + GetFileName(filePath);
+                    pathName = "/sdcard/ReceivedFiles/" + uiHandler.AddTimeStampToName(GetFileName(filePath), fileDate);
+
                     thisFile.renameTo(new File(pathName));
                 }
 
-                fileWriteStream.close();
+                uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" + uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
 
-                VideoChatActivity.getInstance().OpenFile(pathName);
+                fileWriteStream.close();
+                uiHandler.SetProgress(0, "");
+                OpenFile(pathName);
                 } catch (FileNotFoundException e1) {
                     e1.printStackTrace();
                 } catch (IOException e1) {
@@ -1589,6 +1640,45 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         downloadThread.start();
     }
 
+    public void StopFTP()
+    {
+        fileDownloading = false;
+        fileDownloadingFinishing = false;
+        fileUploading = false;
+        cancelled = true;
+        downloadCount = 0;
+        targetDownloadCount = 0;
+
+        if(fileUploadThread != null)
+        {
+            fileUploadThread.interrupt();
+            fileUploadThread = null;
+        }
+
+        if(downloadThread != null)
+        {
+            downloadThread.interrupt();
+            downloadThread = null;
+        }
+
+        uiHandler.SetProgress(0, "");
+        uiHandler.StopNotification();
+
+        Log.d(TAG, "STOP FTP CALLED");
+
+        try
+        {
+            if(fileReadStream != null)
+                fileReadStream.close();
+            if(fileWriteStream != null)
+                fileWriteStream.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
     public  String GetFileName(String filePath)
     {
         filePath = filePath.replace("primary:", "");
@@ -1596,7 +1686,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         return filePath.substring(filePath.lastIndexOf("/"));
     }
 
-    public void OpenFile(String filePath) {
+    public void OpenFile(String filePath)
+    {
         Log.d(TAG, filePath);
         uiHandler.Minimise();
         MimeTypeMap myMime = MimeTypeMap.getSingleton();
@@ -1616,7 +1707,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults)
+    {
         switch (requestCode) {
             case PUBLISH_REQUEST_CODE: {
                 if (grantResults.length == 0 ||
@@ -1652,15 +1744,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
         super.onPause();
 
-        if (session != null) {
+        if (session != null)
+        {
 
             displayRotationHelper.onPause();
             glsurfaceView.onPause();
             session.pause();
         }
-
-//        if(screenRecorder != null)
-//            screenRecorder.PauseRecording();;
     }
 
     @Override
@@ -1671,6 +1761,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         {
             roomManager.disconnect();
         }
+        uiHandler.StopNotification();
     }
 
     public void Disconnect()

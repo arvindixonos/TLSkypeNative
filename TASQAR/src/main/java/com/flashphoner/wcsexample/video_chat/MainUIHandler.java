@@ -709,14 +709,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                 .addAction(R.drawable.arrow_down, "Cancel", pIntentCancel)
                 .setOngoing(true);
 
-//        stackBuilder = TaskStackBuilder.create(context);
-//        stackBuilder.addNextIntent(intent);
-//        resultPendingIntent = stackBuilder.getPendingIntent
-//        (
-//                0,
-//                PendingIntent.FLAG_UPDATE_CURRENT
-//        );
-//        mBuilder.setContentIntent(resultPendingIntent);
+        stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addNextIntent(intent);
+        resultPendingIntent = stackBuilder.getPendingIntent
+        (
+                0,
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+        mBuilder.setContentIntent(resultPendingIntent);
         notificationManager.notify(notificationId, mBuilder.build());
     }
 
@@ -732,7 +732,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         notificationManager.cancel(notificationId);
     }
 
-    public void SetProgress (float scale)
+    public void SetProgress (float scale, String filePath)
     {
         currentActivity.runOnUiThread(new Runnable()
         {
