@@ -159,7 +159,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTP";
+    String roomName = "NEWFTP!";
 //    UI references.
 
     private Thread ftpThread;
@@ -782,10 +782,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    Object syncObject = new Object();
+
     public void DecodeBreakMessage()
     {
-        motionEvents.clear();
-        pointRenderer.AddBreak();
+        synchronized (syncObject)
+        {
+            motionEvents.clear();
+            pointRenderer.AddBreak();
+        }
     }
 
     public void DecodeTapMessage(String tapMessage)
@@ -840,48 +845,51 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     private void handleTap(Frame frame, Camera camera)
     {
-        while (motionEvents.size() > 0)
+        synchronized (syncObject)
         {
-            MotionEvent tap = motionEvents.get(0);
-            motionEvents.remove(0);
-
-            if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+            while (motionEvents.size() > 0)
             {
+                MotionEvent tap = motionEvents.get(0);
+                motionEvents.remove(0);
+
+                if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+                {
 //                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
-                for (HitResult hit : frame.hitTest(tap)) {
+                    for (HitResult hit : frame.hitTest(tap)) {
 //                if (anchors.size() >= 20) {
 //                    anchors.get(0).anchor.detach();
 //                    anchors.remove(0);
 //                }
 //
-                currentTrackable = hit.getTrackable();
-                hitPose = hit.getHitPose();
+                        currentTrackable = hit.getTrackable();
+                        hitPose = hit.getHitPose();
 
-                if(!arrowMode)
-                {
-                    SpawnPoint(hit);
-                }
-                else
-                {
-                    if(pointsOrPlaneSpawn)
-                    {
+                        if(!arrowMode)
+                        {
+                            SpawnPoint(hit);
+                        }
+                        else
+                        {
+                            if(pointsOrPlaneSpawn)
+                            {
 //                        if(currentTrackable instanceof com.google.ar.core.Point)
-                        {
-                            SpawnArrow(hit, camera);
-                        }
-                    }
-                    else
-                    {
+                                {
+                                    SpawnArrow(hit, camera);
+                                }
+                            }
+                            else
+                            {
 //                        if(currentTrackable instanceof com.google.ar.core.Plane)
-                        {
-                            SpawnArrow(hit, camera);
+                                {
+                                    SpawnArrow(hit, camera);
+                                }
+                            }
                         }
+
+                        break;
+
                     }
-                }
-
-                break;
-
                 }
             }
         }

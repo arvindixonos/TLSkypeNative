@@ -729,7 +729,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     public void StopNotification ()
     {
-        notificationManager.cancel(notificationId);
+        if(notificationManager != null)
+            notificationManager.cancel(notificationId);
     }
 
     public void SetProgress (float scale, String filePath)

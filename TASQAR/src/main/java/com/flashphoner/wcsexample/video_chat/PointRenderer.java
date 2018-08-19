@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
 
@@ -12,23 +11,14 @@ import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Pose;
 
-import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Random;
 
-import processing.core.PApplet;
 import processing.core.PVector;
-import processing.opengl.PGL;
-import processing.opengl.PGraphics3D;
-import processing.opengl.PGraphicsOpenGL;
-import processing.opengl.PShader;
+import shapes3d.EndCapContour;
 import shapes3d.Extrusion;
 import shapes3d.Mesh2DCore;
 import shapes3d.S3D;
@@ -36,8 +26,7 @@ import shapes3d.utils.CS_ConstantScale;
 import shapes3d.utils.Contour;
 import shapes3d.utils.ContourScale;
 import shapes3d.utils.MeshSection;
-import shapes3d.utils.P_BezierSpline;
-import shapes3d.utils.Path;
+import shapes3d.utils.P_Bezier3D;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
@@ -65,12 +54,21 @@ public class PointRenderer{
 
     private int modelViewProjectionUniform;
 
+    private int colorUniform;
+
     private ArrayList<ArrayList<Anchor>> anchors = new ArrayList<ArrayList<Anchor>>();
     private ArrayList<Anchor> currentAnchorList = new ArrayList<Anchor>();
     private ArrayList<float[]> verticesList = new ArrayList<float[]>();
     private ArrayList<float[]> normalsList = new ArrayList<float[]>();
 
-    private Pose previousPose = null;
+    private ArrayList<float[]> verticesListStartCap = new ArrayList<float[]>();
+    private ArrayList<float[]> normalsListStartCap = new ArrayList<float[]>();
+
+    private ArrayList<float[]> verticesListEndCap = new ArrayList<float[]>();
+    private ArrayList<float[]> normalsListEndCap = new ArrayList<float[]>();
+
+    private PVector firstPoint = new PVector();
+    private PVector secondPoint = new PVector();
 
     private float[] firstTranslation = new float[3];
     private boolean firstTranslationSet = false;
@@ -101,6 +99,7 @@ public class PointRenderer{
         modelViewProjectionUniform = GLES20.glGetUniformLocation(programName, "u_ModelViewProjection");
         positionAttribute = GLES20.glGetAttribLocation(programName, "a_Position");
         normalAttribute = GLES20.glGetAttribLocation(programName, "a_Normal");
+        colorUniform = GLES20.glGetUniformLocation(programName, "color");
 //        textureUniform = GLES20.glGetUniformLocation(programName, "u_Texture");
 //        tileCountUniform = GLES20.glGetUniformLocation(programName, "tileCount");
 //        tileSizeUniform = GLES20.glGetUniformLocation(programName, "tileSize");
@@ -150,27 +149,84 @@ public class PointRenderer{
         }
     }
 
-    public void AddBreak()
-    {
-//        Log.d(VideoChatActivity.TAG, "Adding Break " + pointerCounter / 3);
+    Object  syncObject = new Object();
 
-        previousPose = null;
-
-        RemoveAllZeroAnchors();
-        currentAnchorList = new ArrayList<Anchor>();
-        anchors.add(currentAnchorList);
-
-//        prevPointAddTime = 0;
-
-        pointerCounter = 0;
-
-        MakeExtrusionVerticesArrays();
+    public void AddBreak() {
+        synchronized (syncObject) {
+            RemoveAllZeroAnchors();
+            currentAnchorList = new ArrayList<Anchor>();
+            anchors.add(currentAnchorList);
+            MakeExtrusionVerticesArrays();
+            pointerCounter = 0;
+            firstPoint = new PVector();
+            secondPoint = new PVector();
+        }
     }
+
+    PVector SlerpVector(PVector aVec, PVector bVec, float t)
+    {
+        PVector slerpVector = new PVector();
+
+        float angle = PVector.angleBetween(aVec, bVec);
+        slerpVector = aVec.mult((float) (Math.sin(angle * (1f - t)) / Math.sin(angle))).add(bVec.mult((float) (Math.sin(angle * t) / Math.sin(angle))));
+
+        return slerpVector;
+    }
+
+    public static float maxAngleDeviation = 10f;
+    PVector FixPoint(PVector point2)
+    {
+        PVector previousVector = PVector.sub(secondPoint, firstPoint);
+        previousVector = previousVector.normalize();
+
+        PVector currentVector = PVector.sub(point2, secondPoint);
+        float currentVectorMagnitude = PVector.dist(currentVector, new PVector());
+        currentVector = currentVector.normalize();
+
+        float angle = (float) Math.toDegrees(PVector.angleBetween(previousVector, currentVector));
+
+        Log.d(TAG, "POINTS " + firstPoint + " " + secondPoint + " " + point2);
+
+        float angleDeviation = (maxAngleDeviation / angle);
+
+        Log.d(TAG, "OLD ANGLE IS: " + angle + " " + angleDeviation + " " + currentVectorMagnitude);
+
+        if (angle < maxAngleDeviation)
+            angleDeviation = 1f;
+
+//        angleDeviation = 0.3f;
+
+        PVector newVector = SlerpVector(previousVector, currentVector, angleDeviation);
+//        Log.d(TAG, "NEW VEC LENGTH: " + PVector.dist(newVector, new PVector()) + " " + PVector.dist(currentVector, new PVector())  + " " + PVector.dist(previousVector, new PVector()));
+        newVector = newVector.normalize();
+        newVector.mult(currentVectorMagnitude);
+        newVector = PVector.add(secondPoint, newVector);
+
+        // Check code
+
+        PVector aVec = PVector.sub(secondPoint, firstPoint);
+        aVec = aVec.normalize();
+
+        PVector bVec = PVector.sub(newVector, secondPoint);
+        bVec = bVec.normalize();
+
+        angle = (float) Math.toDegrees(PVector.angleBetween(aVec, bVec));
+
+        Log.d(TAG, "NEW ANGLE IS " + newVector + " " + angle);
+
+        firstPoint = secondPoint;
+        secondPoint = newVector;
+
+        return newVector;
+    }
+
 
     int pointerCounter = 0;
     public void AddPoint(HitResult hitResult)
     {
-//        if(pointerCounter != 0)
+        synchronized (syncObject)
+        {
+            //        if(pointerCounter != 0)
 //        {
 //            if (pointerCounter % 3 != 0)
 //            {
@@ -179,68 +235,48 @@ public class PointRenderer{
 //                return;
 //            }
 //        }
+            Pose hitPose = hitResult.getHitPose();
 
-        Pose hitPose = hitResult.getHitPose();
-
-        if(previousPose != null)
-        {
-            float threshold = 0.01f;
-
-            float px = previousPose.tx();
-            float py = previousPose.ty();
-            float pz = previousPose.tz();
-
-            float hx = hitPose.tx();
-            float hy = hitPose.ty();
-            float hz = hitPose.tz();
-
-            Vector3D currentPoint = new Vector3D(hx, hy, hz);
-            Vector3D previousPoint = new Vector3D(px, py, pz);
-            float distance = (float) Vector3D.distance(currentPoint, previousPoint);
-
-            if(distance > threshold)
+            if(pointerCounter > 1)//PVector.dist(firstPoint, new PVector()) > Float.MIN_VALUE)
             {
-                double controlPointHeight = 0.001;
-                Vector3D controlPoint = previousPoint.add(currentPoint).scalarMultiply(0.5);
-                controlPoint = new Vector3D(controlPoint.getX(), controlPoint.getY() + controlPointHeight, controlPoint.getZ());
+                float hx = hitPose.tx();
+                float hy = hitPose.ty();
+                float hz = hitPose.tz();
 
-                int numPointsToAdd = (int) (distance / threshold);
-                int totalPoints = numPointsToAdd + 2;
-                float inc = 1.0f / totalPoints;
+                PVector currentPoint = new PVector(hx, hy, hz);
 
-                for (float t = 0.0f; t <= 1; t += inc)
-                {
-                    double newX = (1.0f - t) * (1.0f - t) * previousPoint.getX() + 2.0f * (1.0f - t) * t * controlPoint.getX() + t * t * currentPoint.getX();
-                    double newY = (1.0f - t) * (1.0f - t) * previousPoint.getY() + 2.0f * (1.0f - t) * t * controlPoint.getY() + t * t * currentPoint.getY();
-                    double newZ = (1.0f - t) * (1.0f - t) * previousPoint.getZ() + 2.0f * (1.0f - t) * t * controlPoint.getZ() + t * t * currentPoint.getZ();
+//                if(PVector.dist(secondPoint, new PVector()) < Float.MIN_VALUE)
+//                {
+//                    secondPoint = currentPoint;
+//                }
+//                else
+//                {
+//                    currentPoint = FixPoint(currentPoint);
+//                }
 
-                    Pose newPose = new Pose(new float[]{(float) newX, (float) newY, (float) newZ}, new float[]{0, 0, 0, 0});
-                    AddAnchor(hitResult, newPose);
-                }
+                hitPose = new Pose(new float[]{currentPoint.x,  currentPoint.y, currentPoint.z}, new float[]{0, 0, 0, 0});
+                AddAnchor(hitResult, hitPose);
             }
             else
             {
+                if(!firstTranslationSet)
+                {
+                    firstTranslationSet = true;
+                    firstTranslation[0] = hitPose.tx();
+                    firstTranslation[1] = hitPose.ty();
+                    firstTranslation[2] = hitPose.tz();
+                }
+
+                Log.d(TAG, "FIRST POINT");
+
+                firstPoint = new PVector(hitPose.tx(), hitPose.ty(), hitPose.tz());
                 AddAnchor(hitResult, hitPose);
             }
 
-//            Log.d(TAG, "NEW POINT " + px + " " + py + " " + pz + " " + hx + " " + hy + " " + hz + " " + currentPoint.getX() + " " + currentPoint.getY() + " " + currentPoint.getZ() + " " + distance);
-        }
-        else
-        {
-            if(!firstTranslationSet)
-            {
-                firstTranslationSet = true;
-                firstTranslation[0] = hitPose.tx();
-                firstTranslation[1] = hitPose.ty();
-                firstTranslation[2] = hitPose.tz();
-            }
-
-            AddAnchor(hitResult, hitPose);
-        }
-
-        previousPose = hitPose;
 
 //        Log.d(TAG, "NEW POSE " + anchor.getPose().tx() + " " + anchor.getPose().ty() + " " + anchor.getPose().tz());
+        }
+
     }
 
     public void AddAnchor(HitResult hitResult, Pose hitPose)
@@ -261,9 +297,9 @@ public class PointRenderer{
         }
     }
 
-    public Contour getBuildingContour() {
+    public Contour getSphericalContour() {
 
-        float scale = 0.0023f;
+        float scale = 0.005f;
 
         int numPoints = 30;
 
@@ -311,6 +347,10 @@ public class PointRenderer{
     {
         verticesList.clear();
         normalsList.clear();
+        verticesListStartCap.clear();
+        normalsListStartCap.clear();
+        verticesListEndCap.clear();
+        normalsListEndCap.clear();
 
         int numAnchorsList = anchors.size();
         for(int anchorsListCount = 0; anchorsListCount < numAnchorsList; anchorsListCount++) {
@@ -334,17 +374,14 @@ public class PointRenderer{
 
             PVector[] pointVectors = listOfPoints.toArray(new PVector[listOfPoints.size()]);
 
-//            if (pointVectors.length < 2)
-//                continue;
+            P_Bezier3D bezierCurve = new P_Bezier3D(pointVectors, pointVectors.length);
 
-            Path path = new P_BezierSpline(pointVectors);
-
-            Contour contour = getBuildingContour();
+            Contour contour = getSphericalContour();
             ContourScale conScale = new CS_ConstantScale();
-            conScale.scale(1f);
+            conScale.scale(0.1f);
             contour.make_u_Coordinates();
 
-            Extrusion e = new Extrusion(null, path, 50, contour, conScale);
+            Extrusion e = new Extrusion(null, bezierCurve, 50, contour, conScale);
             e.drawMode(S3D.TEXTURE);
 
             Mesh2DCore mesh2DCore = (Mesh2DCore)e;
@@ -395,6 +432,74 @@ public class PointRenderer{
 
             verticesList.add(vertices);
             normalsList.add(normals);
+
+            EndCapContour capContour = (EndCapContour)e.startEC;
+
+            vertices = new float[capContour.triangles.length * 9];
+            normals = new float[capContour.triangles.length * 9];
+
+            for(int i = 0, j = 0; i < capContour.triangles.length; i += 3, j += 9) {
+                int v1 = capContour.triangles[i];
+                int var2 = capContour.triangles[i + 1];
+                int var3 = capContour.triangles[i + 2];
+
+                normals[j] = capContour.n.x;
+                normals[j + 1] = capContour.n.y;
+                normals[j + 2] = capContour.n.z;
+                normals[j + 3] = capContour.n.x;
+                normals[j + 4] = capContour.n.y;
+                normals[j + 5] = capContour.n.z;
+                normals[j + 6] = capContour.n.x;
+                normals[j + 7] = capContour.n.y;
+                normals[j + 8] = capContour.n.z;
+
+                vertices[j] = capContour.edge[v1].x;
+                vertices[j + 1] = capContour.edge[v1].y;
+                vertices[j + 2] = capContour.edge[v1].z;
+                vertices[j + 3] = capContour.edge[var2].x;
+                vertices[j + 4] = capContour.edge[var2].y;
+                vertices[j + 5] = capContour.edge[var2].z;
+                vertices[j + 6] = capContour.edge[var3].x;
+                vertices[j + 7] = capContour.edge[var3].y;
+                vertices[j + 8] = capContour.edge[var3].z;
+            }
+
+            verticesListStartCap.add(vertices);
+            normalsListStartCap.add(normals);
+
+            capContour = (EndCapContour)e.endEC;
+
+            vertices = new float[capContour.triangles.length * 9];
+            normals = new float[capContour.triangles.length * 9];
+
+            for(int i = 0, j = 0; i < capContour.triangles.length; i += 3, j += 9) {
+                int v1 = capContour.triangles[i];
+                int var2 = capContour.triangles[i + 1];
+                int var3 = capContour.triangles[i + 2];
+
+                normals[j] = capContour.n.x;
+                normals[j + 1] = capContour.n.y;
+                normals[j + 2] = capContour.n.z;
+                normals[j + 3] = capContour.n.x;
+                normals[j + 4] = capContour.n.y;
+                normals[j + 5] = capContour.n.z;
+                normals[j + 6] = capContour.n.x;
+                normals[j + 7] = capContour.n.y;
+                normals[j + 8] = capContour.n.z;
+
+                vertices[j] = capContour.edge[v1].x;
+                vertices[j + 1] = capContour.edge[v1].y;
+                vertices[j + 2] = capContour.edge[v1].z;
+                vertices[j + 3] = capContour.edge[var2].x;
+                vertices[j + 4] = capContour.edge[var2].y;
+                vertices[j + 5] = capContour.edge[var2].z;
+                vertices[j + 6] = capContour.edge[var3].x;
+                vertices[j + 7] = capContour.edge[var3].y;
+                vertices[j + 8] = capContour.edge[var3].z;
+            }
+
+            verticesListEndCap.add(vertices);
+            normalsListEndCap.add(normals);
         }
     }
 
@@ -423,7 +528,7 @@ public class PointRenderer{
         Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
         GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
 
-        GLES20.glLineWidth(1.0f);
+        GLES20.glLineWidth(5.0f);
 
         int numVerticesList = verticesList.size();
 
@@ -431,46 +536,19 @@ public class PointRenderer{
         {
             float[] vertices = verticesList.get(verticesListCount);
             float[] normals = normalsList.get(verticesListCount);
+            GLES20.glUniform3f(colorUniform, 0.2f, 0.9f, 0.3f);
+            DrawVertices(vertices, normals, GLES20.GL_TRIANGLE_STRIP);
 
-            FloatBuffer vertexBuffer = FloatBuffer.wrap(vertices);
-            FloatBuffer normalBuffer = FloatBuffer.wrap(normals);
-//            normalBuffer = allocateDirectFloatBuffer(normals.length * 3);
-//
-//            vertexBuffer.rewind();
-//            vertexBuffer.put(vertices);
-//            vertexBuffer.rewind();
-//
-//            normalBuffer.rewind();
-//            normalBuffer.put(normals);
-//            normalBuffer.rewind();
+            vertices = verticesListStartCap.get(verticesListCount);
+            normals = normalsListStartCap.get(verticesListCount);
+            GLES20.glUniform3f(colorUniform, 0.9f, 0.2f, 0.3f);
+            DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
 
-            final int vertexStride = 3 * Float.BYTES;
-
-            int numVertices = vertices.length / 3;
-
-            { // VERTEX
-                // bind VBO
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId);
-                // fill VBO with data
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * vertices.length, vertexBuffer, GLES20.GL_DYNAMIC_DRAW);
-                // associate currently bound VBO with shader attribute
-                GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
-            }
-
-            { // NORMALS
-                // bind VBO
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, normalVboId);
-                // fill VBO with data
-                GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * normals.length, normalBuffer, GLES20.GL_DYNAMIC_DRAW);
-                // associate currently bound VBO with shader attribute
-                GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
-            }
-
-                GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
-
-                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
-                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, numVertices);
-            }
+            vertices = verticesListEndCap.get(verticesListCount);
+            normals = normalsListEndCap.get(verticesListCount);
+            GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
+            DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+        }
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glDisableVertexAttribArray(normalAttribute);
@@ -484,5 +562,38 @@ public class PointRenderer{
 
     FloatBuffer allocateDirectFloatBuffer(int n) {
         return ByteBuffer.allocateDirect(n * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+    }
+
+    void DrawVertices(float[] vertices, float[] normals, int shape)
+    {
+        FloatBuffer vertexBuffer = FloatBuffer.wrap(vertices);
+        FloatBuffer normalBuffer = FloatBuffer.wrap(normals);
+
+        final int vertexStride = 3 * Float.BYTES;
+
+        int numVertices = vertices.length / 3;
+
+        { // VERTEX
+            // bind VBO
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexVboId);
+            // fill VBO with data
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * vertices.length, vertexBuffer, GLES20.GL_DYNAMIC_DRAW);
+            // associate currently bound VBO with shader attribute
+            GLES20.glVertexAttribPointer(positionAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
+        }
+
+        { // NORMALS
+            // bind VBO
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, normalVboId);
+            // fill VBO with data
+            GLES20.glBufferData(GLES20.GL_ARRAY_BUFFER, Float.BYTES * normals.length, normalBuffer, GLES20.GL_DYNAMIC_DRAW);
+            // associate currently bound VBO with shader attribute
+            GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, vertexStride, 0);
+        }
+
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+        GLES20.glDrawArrays(shape, 0, numVertices);
     }
 }
