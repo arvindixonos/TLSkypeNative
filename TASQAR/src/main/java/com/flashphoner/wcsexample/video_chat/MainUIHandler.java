@@ -1,5 +1,6 @@
 package com.flashphoner.wcsexample.video_chat;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AutomaticZenRule;
 import android.app.Notification;
@@ -96,6 +97,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private static  String TAG = "UI_TEST";
     private VideoChatActivity chatActivity;
     private Handler     timerHandler;
+    private Handler     buttonActivateHandler;
     private Runnable    timerRunnable;
     private long        startTime;
     public CameraTorchMode cameraTorchMode;
@@ -208,7 +210,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         currentActivity = activity;
 
-        width = GetScreeenWidth();
+        width = GetScreenWidth();
 
         chatActivity = VideoChatActivity.getInstance();
 
@@ -253,6 +255,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+
+        TempButton temp = currentActivity.findViewById(R.id.tempButton);
+        temp.layoutHolder = currentActivity.findViewById(R.id.ConLayout);
+        temp.mArrowModeButton = currentActivity.findViewById(R.id.ArrowModeButton);
+        temp.mDrawModeButton = currentActivity.findViewById(R.id.DrawModeButton);
+        temp.mPointOrPlaneButton = currentActivity.findViewById(R.id.PointOrPlaneButton);
+        temp.InitialiseButtons();
+
         android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
                 (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
         {
@@ -266,49 +276,36 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             {
                 super.onDrawerOpened(drawerView);
                 drawerOpen = true;
-
-                switchLayoutItem = currentActivity.findViewById(R.id.app_bar_switch);
-                switchLayoutButton = (Switch) switchLayoutItem.getChildAt(0);
-                switchLayoutButton.setOnClickListener(new View.OnClickListener()
-                {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        mSwitchLayoutButton.callOnClick();
-                    }
-                });
-
+//                switchLayoutItem = currentActivity.findViewById(R.id.app_bar_switch);
+//                switchLayoutButton = (Switch) switchLayoutItem.getChildAt(0);
+//                switchLayoutButton.setOnClickListener(v ->
+//                {
+//                    TurnOffOnDelay(switchLayoutItem, switchLayoutButton);
+//                    mSwitchLayoutButton.callOnClick();
+//                });
                 togglePointItem = currentActivity.findViewById(R.id.point2plane);
                 togglePointButton = (Switch) togglePointItem.getChildAt(0);
-                togglePointButton.setOnClickListener(new View.OnClickListener()
+                togglePointButton.setOnClickListener(v ->
                 {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        mPointToPlaneButton.callOnClick();
-                    }
+                    TurnOffOnDelay(togglePointItem, togglePointButton, 2000);
+                    mPointToPlaneButton.callOnClick();
                 });
 
                 toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
                 toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
-                toggleBackcamButton.setOnClickListener(new View.OnClickListener()
+                toggleBackcamButton.setOnClickListener(v ->
                 {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        mSwitchCamera.callOnClick();
-                    }
+                    TurnOffOnDelay(toggleBackcamItem, toggleBackcamButton, 3000);
+                    mSwitchLayoutButton.callOnClick();
+                    mSwitchCamera.callOnClick();
                 });
 
                 toggleArrowMode = currentActivity.findViewById(R.id.arrow_mode);
                 toggleArrowButton = (Switch) toggleArrowMode.getChildAt(0);
-                toggleArrowButton.setOnClickListener(new View.OnClickListener()
+                toggleArrowButton.setOnClickListener(v ->
                 {
-                    @Override
-                    public void onClick(View v)
-                    {
-                        chatActivity.arrowMode = !chatActivity.arrowMode;
-                    }
+                    TurnOffOnDelay(toggleArrowMode, toggleArrowButton, 2000);
+                    chatActivity.arrowMode = !chatActivity.arrowMode;
                 });
             }
         };
@@ -318,8 +315,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         NavigationView navigationView = currentActivity.findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-//        switchLayoutButton = (Switch) switchLayout.getChildAt(0);
 
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.N)
         {
@@ -415,148 +410,114 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             }
         });
 
-        mSwitchCamera.setOnClickListener(new View.OnClickListener()
+        mSwitchCamera.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
+            VideoChatActivity.getInstance().ToggleCamera();
+
+            if(backCam)
             {
-                VideoChatActivity.getInstance().ToggleCamera();
-
-                if(backCam)
-                {
-                    mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
-                    backCam = false;
-                    if(flashOn)
-                    {
-                        cameraTorchMode = CameraTorchMode.TO_TURN_ON;
-                        flashOn = false;
-                    }
-                }
-                else
-                {
-                    mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
-                    backCam = true;
-                    if(flashOn)
-                    {
-                        cameraTorchMode = CameraTorchMode.TO_TURN_ON;
-                        flashOn = false;
-                    }
-                }
-            }
-        });
-
-        mHistoryBackButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                backKey();
-            }
-        });
-
-        mHistoryButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-
-                mHistoryScreen.setVisibility(View.VISIBLE);
-                mFlashButton.setVisibility(View.GONE);
-                mStartRecordingButton.setVisibility(View.GONE);
-                mFloatingButtonsLayout.setVisibility(View.GONE);
-                mEndCallButton.setVisibility(View.GONE);
-                mRenderHolder.setVisibility(View.GONE);
-
-                fileButtonHelper.GetData();
-            }
-        });
-
-        mPlusButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                if(mSpawnButtonLayout.getVisibility() == View.VISIBLE)
-                {
-                    mSpawnButtonLayout.setVisibility(View.GONE);
-                }
-                else
-                {
-                    mSpawnButtonLayout.setVisibility(View.VISIBLE);
-                }
-            }
-        });
-
-        mPointToPlaneButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                if(pointMode)
-                {
-                    chatActivity.TogglePointPlaneSpawn();
-                    mPointToPlaneButton.setImageResource(R.drawable.botton_plane);
-                    pointModeText.setText("Switch to Point");
-                    pointMode = false;
-                }
-                else
-                {
-                    chatActivity.TogglePointPlaneSpawn();
-                    mPointToPlaneButton.setImageResource(R.drawable.button_blur);
-                    pointModeText.setText("Switch to Plane");
-                    pointMode = true;
-                }
-            }
-        });
-
-        mStartRecordingButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                if (!recording)
-                {
-                    chatActivity.screenRecorder.GetPermission();
-                    mStartRecordingButton.setImageResource(R.drawable.button_stop);
-                    recordingText.setText("Stop Recording");
-//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
-                    recording = true;
-                }
-                else
-                {
-                    chatActivity.screenRecorder.StopRecording();
-                    mStartRecordingButton.setImageResource(R.drawable.button_record);
-                    recordingText.setText("Start Recording");
-//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
-                    recording = false;
-                }
-            }
-        });
-
-        mEndCallButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                ToggleVideoView();
-                chatActivity.SendMessage("Disconnect");
-                chatActivity.Disconnect();
-                ChangeActivity();
+                mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
+                backCam = false;
                 if(flashOn)
                 {
-                    mFlashButton.callOnClick();
+                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
+                    flashOn = false;
+                }
+            }
+            else
+            {
+                mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
+                backCam = true;
+                if(flashOn)
+                {
+                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
+                    flashOn = false;
                 }
             }
         });
 
-        mButton.setOnClickListener(new View.OnClickListener()
+        mHistoryBackButton.setOnClickListener(v -> backKey());
+
+        mHistoryButton.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
+
+            mHistoryScreen.setVisibility(View.VISIBLE);
+            mFlashButton.setVisibility(View.GONE);
+            mStartRecordingButton.setVisibility(View.GONE);
+            mFloatingButtonsLayout.setVisibility(View.GONE);
+            mEndCallButton.setVisibility(View.GONE);
+            mRenderHolder.setVisibility(View.GONE);
+
+            fileButtonHelper.GetData();
+        });
+
+        mPlusButton.setOnClickListener(v ->
+        {
+            if(mSpawnButtonLayout.getVisibility() == View.VISIBLE)
             {
-                char[] charray = new char[] {'a', 'd', 'i', 's', 'h'};
-                Log.d(TAG, charray.toString());
-                chatActivity.SendMessage("Something");
+                mSpawnButtonLayout.setVisibility(View.GONE);
+            }
+            else
+            {
+                mSpawnButtonLayout.setVisibility(View.VISIBLE);
+            }
+        });
+
+        mPointToPlaneButton.setOnClickListener(v ->
+        {
+            if(pointMode)
+            {
+                chatActivity.TogglePointPlaneSpawn();
+                mPointToPlaneButton.setImageResource(R.drawable.botton_plane);
+                pointModeText.setText("Switch to Point");
+                pointMode = false;
+            }
+            else
+            {
+                chatActivity.TogglePointPlaneSpawn();
+                mPointToPlaneButton.setImageResource(R.drawable.button_blur);
+                pointModeText.setText("Switch to Plane");
+                pointMode = true;
+            }
+        });
+
+        mStartRecordingButton.setOnClickListener(v ->
+        {
+            if (!recording)
+            {
+                chatActivity.screenRecorder.GetPermission();
+                mStartRecordingButton.setImageResource(R.drawable.button_stop);
+                recordingText.setText("Stop Recording");
+//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
+                recording = true;
+            }
+            else
+            {
+                chatActivity.screenRecorder.StopRecording();
+                mStartRecordingButton.setImageResource(R.drawable.button_record);
+                recordingText.setText("Start Recording");
+//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+                recording = false;
+            }
+        });
+
+        mEndCallButton.setOnClickListener(v ->
+        {
+            ToggleVideoView();
+            chatActivity.SendMessage("Disconnect");
+            chatActivity.Disconnect();
+            ChangeActivity();
+            if(flashOn)
+            {
+                mFlashButton.callOnClick();
+            }
+        });
+
+        mButton.setOnClickListener(v ->
+        {
+            char[] charray = new char[] {'a', 'd', 'i', 's', 'h'};
+            Log.d(TAG, charray.toString());
+            chatActivity.SendMessage("Something");
 //                count += 10;
 //                SetProgress(count);
 //                showNotification(currentActivity, "Download", "filepath", new Intent());
@@ -567,84 +528,75 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 //                    UpdateNotification(count);
 //
 //                count += 10;
-            }
         });
 
-        mToggleDrawingMode.setOnClickListener(new View.OnClickListener()
+        mToggleDrawingMode.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
+            if(!drawMode)
             {
-                if(!drawMode)
-                {
-                    Log.d(TAG, "clicking");
-                    drawMode = true;
+                Log.d(TAG, "clicking");
+                drawMode = true;
 //                    remote1Render.touchEnabled = true;
-                    remote1Render.drawEnabled = true;
-                    mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_black_18dp);
-                    mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
-                }
-                else
-                {
-                    Log.d(TAG, "clickingAlso");
-                    drawMode = false;
+                remote1Render.drawEnabled = true;
+                mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_black_18dp);
+                mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
+            }
+            else
+            {
+                Log.d(TAG, "clickingAlso");
+                drawMode = false;
 //                    remote1Render.touchEnabled = false;
-                    remote1Render.drawEnabled = false;
-                    mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_white_18dp);
-                    mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
-                }
+                remote1Render.drawEnabled = false;
+                mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_white_18dp);
+                mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
             }
         });
 
-        mSwitchLayoutButton.setOnClickListener(new View.OnClickListener()
+        mSwitchLayoutButton.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
-            {
-                VideoChatActivity.ShowToast("Switching", chatActivity.getApplicationContext());
-                currentActivity.runOnUiThread (new Thread(new Runnable() {
-                    public void run()
+            VideoChatActivity.ShowToast("Switching", chatActivity.getApplicationContext());
+            currentActivity.runOnUiThread (new Thread(new Runnable() {
+                public void run()
+                {
+                    mRenderHolder.removeView(streamRenderLayout);
+                    mRenderHolder.removeView(currentRenderLayout);
+                    if(!switched)
                     {
-                        mRenderHolder.removeView(streamRenderLayout);
-                        mRenderHolder.removeView(currentRenderLayout);
-                        if(!switched)
-                        {
-                            streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
-                            currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
+                        streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
+                        currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
 
-                            if(!isAboveEight)
-                            {
-                                mRenderHolder.addView(streamRenderLayout, 0);
-                                mRenderHolder.addView(currentRenderLayout, 1);
-                            }
-                            else
-                            {
-                                mRenderHolder.addView(currentRenderLayout, 0);
-                                mRenderHolder.addView(streamRenderLayout, 1);
-                            }
-                            switched = true;
+                        if(!isAboveEight)
+                        {
+                            mRenderHolder.addView(streamRenderLayout, 0);
+                            mRenderHolder.addView(currentRenderLayout, 1);
                         }
                         else
                         {
-                            streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
-                            currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
-
-                            if(!isAboveEight)
-                            {
-                                mRenderHolder.addView(currentRenderLayout, 0);
-                                mRenderHolder.addView(streamRenderLayout, 1);
-                            }
-                            else
-                            {
-                                mRenderHolder.addView(streamRenderLayout, 0);
-                                mRenderHolder.addView(currentRenderLayout, 1);
-                            }
-                            switched = false;
+                            mRenderHolder.addView(currentRenderLayout, 0);
+                            mRenderHolder.addView(streamRenderLayout, 1);
                         }
-                        mRenderHolder.invalidate();
+                        switched = true;
                     }
-                }));
-            }
+                    else
+                    {
+                        streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
+                        currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
+
+                        if(!isAboveEight)
+                        {
+                            mRenderHolder.addView(currentRenderLayout, 0);
+                            mRenderHolder.addView(streamRenderLayout, 1);
+                        }
+                        else
+                        {
+                            mRenderHolder.addView(streamRenderLayout, 0);
+                            mRenderHolder.addView(currentRenderLayout, 1);
+                        }
+                        switched = false;
+                    }
+                    mRenderHolder.invalidate();
+                }
+            }));
         });
         timerHandler = new Handler();
         timerRunnable = new Runnable()
@@ -750,6 +702,20 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         });
     }
 
+    @SuppressLint("HandlerLeak")
+    private void TurnOffOnDelay (final RelativeLayout parentView, final Switch selectedToggle, final int delayTime)
+    {
+        parentView.setEnabled(false);
+        selectedToggle.setEnabled(false);
+
+        buttonActivateHandler = new Handler();
+        buttonActivateHandler.postDelayed(() ->
+        {
+            parentView.setEnabled(true);
+            selectedToggle.setEnabled(true);
+        }, delayTime);
+    }
+
     void backKey ()
     {
         if(drawerOpen)
@@ -803,7 +769,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         timerRunning = false;
     }
 
-    public void Minimise () {
+    public void Minimise ()
+    {
         if (switched) {
             Log.d(TAG, " layout has been switched");
             aspectRatio = new Rational(localRender.getWidth(), localRender.getHeight());
@@ -944,7 +911,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         camera.startPreview();
     }
 
-    public int GetScreeenWidth()
+    public int GetScreenWidth()
     {
         Display display = currentActivity.getWindowManager().getDefaultDisplay();
         Point size = new Point ();

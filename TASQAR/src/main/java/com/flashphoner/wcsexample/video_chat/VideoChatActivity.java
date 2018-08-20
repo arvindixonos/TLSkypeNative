@@ -159,7 +159,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTP";
+    String roomName = "NEWFTP_1";
 //    UI references.
 
     private Thread ftpThread;
@@ -345,7 +345,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState)
+    {
 
         super.onCreate(savedInstanceState);
         Instance = this;

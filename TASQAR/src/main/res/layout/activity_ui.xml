@@ -501,6 +501,13 @@
         app:rippleColor="@android:color/holo_purple"
         app:srcCompat="@drawable/button_record" />
 
+    <include
+        android:id="@+id/AddedButtons"
+        layout="@layout/extra_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="visible" />
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"

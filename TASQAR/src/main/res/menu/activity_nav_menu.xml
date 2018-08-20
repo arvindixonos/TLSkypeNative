@@ -13,14 +13,15 @@
             android:id="@+id/nav_history"
             android:icon="@drawable/history_icon"
             android:title="View History" />
+
         <item android:title="Toggles">
             <menu>
-                <item
-                    android:id="@+id/app_bar_switch"
-                    android:icon="@drawable/baseline_cached_white_18dp"
-                    android:title="Switch Layout"
-                    app:actionLayout="@layout/switch_item"
-                    app:showAsAction="always" />
+                <!--<item-->
+                    <!--android:id="@+id/app_bar_switch"-->
+                    <!--android:icon="@drawable/baseline_cached_white_18dp"-->
+                    <!--android:title="Switch Layout"-->
+                    <!--app:actionLayout="@layout/switch_item"-->
+                    <!--app:showAsAction="always" />-->
                 <item
                     android:id="@+id/back_cam_switch"
                     android:icon="@drawable/flip_cam_rear"

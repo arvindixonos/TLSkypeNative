@@ -116,14 +116,12 @@ public class AppManager extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
 
-        final Thread arCoreCheckThread = new Thread(new Runnable() {
-            @Override
-            public void run()
-            {
-                Log.d(VideoChatActivity.TAG, " VideoChatActivity HERE ");
 
-                CheckArCoreAvailablity();
-            }
+        final Thread arCoreCheckThread = new Thread(() ->
+        {
+            Log.d(VideoChatActivity.TAG, " VideoChatActivity HERE ");
+
+            CheckArCoreAvailablity();
         });
 
         Session session = null;
@@ -181,10 +179,12 @@ public class AppManager extends AppCompatActivity
             try
             {
                 setContentView(R.layout.activity_login);
+
             }
             catch(Exception e)
             {
                 Log.d(TAG, "Exception is " + e.getMessage());
+                e.printStackTrace();
             }
             Log.d(TAG, "not Logged in a second time");
         }
