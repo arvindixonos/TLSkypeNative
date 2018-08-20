@@ -17,7 +17,7 @@ precision highp float;
 
 //uniform sampler2D u_Texture;
 //uniform float tileSize;
-//uniform float tileCount;
+uniform vec3 color;
 
 varying vec3  normal;
 //varying vec2  tileCoord;
@@ -32,7 +32,7 @@ void main() {
 //      vec2 tileOffset = 2.0 * tileSize * tileCoord;
 //      float denom     = 2.0 * tileSize * tileCount;
 
-      vec4 color = vec4(0.2, 0.9, 0.3, 1.0);
+//      vec4 color = vec4(0.2, 0.9, 0.3, 1.0);
 
 //      for(int dx=0; dx<2; ++dx) {
 //         for(int dy=0; dy<2; ++dy) {

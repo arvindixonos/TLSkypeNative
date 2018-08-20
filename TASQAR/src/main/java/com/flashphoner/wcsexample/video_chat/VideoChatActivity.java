@@ -158,7 +158,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
-    //    String roomName = "room-cd696c";
+//    String roomName = "room-cd696c";
     String roomName = "NEWFTP";
 //    UI references.
 
@@ -783,10 +783,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    Object syncObject = new Object();
+
     public void DecodeBreakMessage()
     {
-        motionEvents.clear();
-        pointRenderer.AddBreak();
+        synchronized (syncObject)
+        {
+            motionEvents.clear();
+            pointRenderer.AddBreak();
+        }
     }
 
     public void DecodeTapMessage(String tapMessage)
@@ -841,48 +846,51 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     private void handleTap(Frame frame, Camera camera)
     {
-        while (motionEvents.size() > 0)
+        synchronized (syncObject)
         {
-            MotionEvent tap = motionEvents.get(0);
-            motionEvents.remove(0);
-
-            if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+            while (motionEvents.size() > 0)
             {
+                MotionEvent tap = motionEvents.get(0);
+                motionEvents.remove(0);
+
+                if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+                {
 //                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
-                for (HitResult hit : frame.hitTest(tap)) {
+                    for (HitResult hit : frame.hitTest(tap)) {
 //                if (anchors.size() >= 20) {
 //                    anchors.get(0).anchor.detach();
 //                    anchors.remove(0);
 //                }
 //
-                    currentTrackable = hit.getTrackable();
-                    hitPose = hit.getHitPose();
+                        currentTrackable = hit.getTrackable();
+                        hitPose = hit.getHitPose();
 
-                    if(!arrowMode)
-                    {
-                        SpawnPoint(hit);
-                    }
-                    else
-                    {
-                        if(pointsOrPlaneSpawn)
+                        if(!arrowMode)
                         {
-//                        if(currentTrackable instanceof com.google.ar.core.Point)
-                            {
-                                SpawnArrow(hit, camera);
-                            }
+                            SpawnPoint(hit);
                         }
                         else
                         {
-//                        if(currentTrackable instanceof com.google.ar.core.Plane)
+                            if(pointsOrPlaneSpawn)
                             {
-                                SpawnArrow(hit, camera);
+//                        if(currentTrackable instanceof com.google.ar.core.Point)
+                                {
+                                    SpawnArrow(hit, camera);
+                                }
+                            }
+                            else
+                            {
+//                        if(currentTrackable instanceof com.google.ar.core.Plane)
+                                {
+                                    SpawnArrow(hit, camera);
+                                }
                             }
                         }
+
+                        break;
+
                     }
-
-                    break;
-
                 }
             }
         }
@@ -1267,7 +1275,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 }
                                 else
                                 {
-                                    Log.d(TAG, "Percentage :" + percentage + " DC :" + downloadCount + " TC :" + targetDownloadCount);
                                     uiHandler.UpdateNotification((int) (percentage * 100));
                                 }
 
@@ -1671,7 +1678,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void StopFTP()
     {
-        Log.d(TAG, "STOPPING FTP");
         fileDownloading = false;
         fileDownloadingFinishing = false;
         fileUploading = false;
