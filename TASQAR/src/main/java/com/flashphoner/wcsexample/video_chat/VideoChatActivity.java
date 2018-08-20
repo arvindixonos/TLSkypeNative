@@ -158,7 +158,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean connected = false;
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
-//    String roomName = "room-cd696c";
+    //    String roomName = "room-cd696c";
     String roomName = "NEWFTP";
 //    UI references.
 
@@ -337,7 +337,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     public static VideoChatActivity getInstance() {
-        if (Instance == null) {
+        if (Instance == null)
+        {
             Instance = new VideoChatActivity();
         }
         return Instance;
@@ -855,32 +856,32 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //                    anchors.remove(0);
 //                }
 //
-                currentTrackable = hit.getTrackable();
-                hitPose = hit.getHitPose();
+                    currentTrackable = hit.getTrackable();
+                    hitPose = hit.getHitPose();
 
-                if(!arrowMode)
-                {
-                    SpawnPoint(hit);
-                }
-                else
-                {
-                    if(pointsOrPlaneSpawn)
+                    if(!arrowMode)
                     {
-//                        if(currentTrackable instanceof com.google.ar.core.Point)
-                        {
-                            SpawnArrow(hit, camera);
-                        }
+                        SpawnPoint(hit);
                     }
                     else
                     {
-//                        if(currentTrackable instanceof com.google.ar.core.Plane)
+                        if(pointsOrPlaneSpawn)
                         {
-                            SpawnArrow(hit, camera);
+//                        if(currentTrackable instanceof com.google.ar.core.Point)
+                            {
+                                SpawnArrow(hit, camera);
+                            }
+                        }
+                        else
+                        {
+//                        if(currentTrackable instanceof com.google.ar.core.Plane)
+                            {
+                                SpawnArrow(hit, camera);
+                            }
                         }
                     }
-                }
 
-                break;
+                    break;
 
                 }
             }
@@ -1266,6 +1267,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 }
                                 else
                                 {
+                                    Log.d(TAG, "Percentage :" + percentage + " DC :" + downloadCount + " TC :" + targetDownloadCount);
                                     uiHandler.UpdateNotification((int) (percentage * 100));
                                 }
 
@@ -1361,30 +1363,30 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         switch (requestCode)
         {
             case PICKFILE_RESULT_CODE:
-            if (resultCode == RESULT_OK)
-            {
-                ContentResolver contentResolver = getApplicationContext().getContentResolver();
-                try
+                if (resultCode == RESULT_OK)
                 {
-                    fileReadStream = (FileInputStream) contentResolver.openInputStream(data.getData());
-                    String FilePath = data.getData().getPath();
-                    Log.d(TAG, " The File Path is " + FilePath);
-                     try
-                     {
-                         UploadFile(FilePath);
-                     }
-                     catch (RuntimeException e)
-                     {
-                         Log.d(TAG, e.getMessage());
-                     }
+                    ContentResolver contentResolver = getApplicationContext().getContentResolver();
+                    try
+                    {
+                        fileReadStream = (FileInputStream) contentResolver.openInputStream(data.getData());
+                        String FilePath = data.getData().getPath();
+                        Log.d(TAG, " The File Path is " + FilePath);
+                        try
+                        {
+                            UploadFile(FilePath);
+                        }
+                        catch (RuntimeException e)
+                        {
+                            Log.d(TAG, e.getMessage());
+                        }
+                    }
+                    catch (FileNotFoundException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
-                catch (FileNotFoundException e)
-                {
-                    e.printStackTrace();
-                }
-            }
 
-            break;
+                break;
 
             case ScreenRecorder.PERMISSION_CODE:
                 if (resultCode == RESULT_OK)
@@ -1402,7 +1404,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                     handler.postDelayed(runnable, 200);
                 }
-            break;
+                break;
         }
     }
 
@@ -1450,9 +1452,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         fileUploading = true;
 
         int fileLengthInBytes = 0;
-        try {
+        try
+        {
             fileLengthInBytes = fileReadStream.available();
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
 
@@ -1460,131 +1465,135 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath) + "@@" + fileLengthInBytes);
 
-            fileUploadThread = new Thread(new Runnable()
+        fileUploadThread = new Thread(new Runnable()
+        {
+            Charset charset = Charset.forName("ISO-8859-1");
+
+            boolean acceptedMessage = true;
+            int uploadCount;
+            int targetUploadCount;
+            @Override
+            public void run()
             {
-                Charset charset = Charset.forName("ISO-8859-1");
+                Log.d(TAG, "Thread Running");
+                targetUploadCount = lengthInBytes / uploadBlockSize;
+                targetUploadCount = (0 == (targetUploadCount % uploadBlockSize)) ? targetUploadCount : targetUploadCount + 1;
+                cancelled = false;
 
-                boolean acceptedMessage = true;
-                int uploadCount;
-                int targetUploadCount;
-                @Override
-                public void run()
+                boolean sendingEndMark = false;
+                boolean sentEndMark = false;
+                while (true)
                 {
-                    Log.d(TAG, "Thread Running");
-                    targetUploadCount = lengthInBytes / uploadBlockSize;
-                    targetUploadCount = (0 == (targetUploadCount % uploadBlockSize)) ? targetUploadCount : targetUploadCount + 1;
-
-                    boolean sendingEndMark = false;
-                    boolean sentEndMark = false;
-                    while (true)
+                    try
                     {
-                        try
+                        if(acceptedMessage)
                         {
-                            if(acceptedMessage)
+                            int available = fileReadStream.available();
+                            int uploadSize = uploadBlockSize;
+
+                            Message message = new Message();
+                            message.setTo(friendName);
+                            message.getRoomConfig().put("name", room.getName());
+
+                            if (available < uploadSize || available == 0)
                             {
-                                int available = fileReadStream.available();
-                                int uploadSize = uploadBlockSize;
+                                uploadSize = available;
 
-                                Message message = new Message();
-                                message.setTo(friendName);
-                                message.getRoomConfig().put("name", room.getName());
-
-                                if (available < uploadSize || available == 0)
+                                if (!sentEndMark)
                                 {
-                                    uploadSize = available;
-
-                                    if (!sentEndMark)
-                                    {
-                                        message.setText(":FUF" + uploadSize);
-                                        sentEndMark = true;
-                                        sendingEndMark = true;
-                                    }
-                                }
-
-                                if(uploadSize > 0 && !sendingEndMark)
-                                {
-                                    byte[] data = new byte[uploadSize];
-
-                                    fileReadStream.read(data);
-
-                                    ByteBuffer byteBuffer = ByteBuffer.wrap(data);
-
-                                    String stringData = charset.decode(byteBuffer).toString();
-
-                                    message.setText(stringData);
-
-                                    if(sentEndMark)
-                                    {
-                                        fileUploading = false;
-                                    }
-                                }
-
-                                acceptedMessage = false;
-                                room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler()
-                                {
-                                    @Override
-                                    public void onAccepted(Data data)
-                                    {
-                                        if(cancelled)
-                                            return;
-
-                                        float percentage = ((float) uploadCount/(float) targetUploadCount);
-
-                                        if(uploadCount == 0)
-                                        {
-                                            uiHandler.showNotification(getApplicationContext(), "Uploading", filePath, new Intent ());
-                                        }
-                                        else
-                                        {
-                                            uiHandler.UpdateNotification((int)(percentage * 100));
-                                        }
-
-                                        uiHandler.SetProgress(percentage, filePath);
-
-                                        Log.d(TAG, "Percentage " + percentage);
-
-                                        if(uploadCount == targetUploadCount)
-                                        {
-                                            uiHandler.SetProgress(0, "");
-                                            uiHandler.StopNotification();
-                                        }
-
-                                        acceptedMessage = true;
-                                        uploadCount++;
-                                    }
-
-                                    @Override
-                                    public void onRejected(Data data)
-                                    {
-
-                                    }
-                                });
-                                sendingEndMark = false;
-
-                                if(!fileUploading)
-                                {
-                                    String[] fileNames = filePath.split("/");
-                                    uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
-
-                                    fileReadStream.close();
-                                    break;
+                                    message.setText(":FUF" + uploadSize);
+                                    sentEndMark = true;
+                                    sendingEndMark = true;
                                 }
                             }
-                            Thread.sleep(10);
+
+                            if(uploadSize > 0 && !sendingEndMark)
+                            {
+                                byte[] data = new byte[uploadSize];
+
+                                fileReadStream.read(data);
+
+                                ByteBuffer byteBuffer = ByteBuffer.wrap(data);
+
+                                String stringData = charset.decode(byteBuffer).toString();
+
+                                message.setText(stringData);
+
+                                if(sentEndMark)
+                                {
+                                    fileUploading = false;
+                                }
+                            }
+
+                            acceptedMessage = false;
+                            room.sendAppCommand("sendMessage", message, new RestAppCommunicator.Handler()
+                            {
+                                @Override
+                                public void onAccepted(Data data)
+                                {
+                                    if(cancelled)
+                                    {
+                                        acceptedMessage = true;
+                                        return;
+                                    }
+
+                                    float percentage = ((float) uploadCount/(float) targetUploadCount);
+
+                                    if(uploadCount == 0)
+                                    {
+                                        uiHandler.showNotification(getApplicationContext(), "Uploading", filePath, new Intent ());
+                                    }
+                                    else
+                                    {
+                                        uiHandler.UpdateNotification((int)(percentage * 100));
+                                    }
+
+                                    uiHandler.SetProgress(percentage, filePath);
+
+                                    if(uploadCount == targetUploadCount)
+                                    {
+                                        uiHandler.SetProgress(0, "");
+                                        uiHandler.StopNotification();
+                                    }
+
+                                    acceptedMessage = true;
+                                    uploadCount++;
+                                }
+
+                                @Override
+                                public void onRejected(Data data)
+                                {
+
+                                }
+                            });
+                            sendingEndMark = false;
+
+                            if(!fileUploading)
+                            {
+                                String[] fileNames = filePath.split("/");
+                                uiHandler.fileButtonHelper.AddData(fileNames[fileNames.length - 1], filePath, "SENT", uiHandler.GetDate());
+
+                                fileReadStream.close();
+
+                                StopFTP();
+                                break;
+                            }
                         }
-                        catch (IOException e)
-                        {
-                            e.printStackTrace();
-                        }
-                        catch (InterruptedException e)
-                        {
-                            e.printStackTrace();
-                        }catch (ArrayIndexOutOfBoundsException e)
-                        {
-                            e.printStackTrace();
-                        }
+                        Thread.sleep(10);
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    catch (InterruptedException e)
+                    {
+                        e.printStackTrace();
+                    }catch (ArrayIndexOutOfBoundsException e)
+                    {
+                        e.printStackTrace();
                     }
                 }
+            }
         });
         fileUploadThread.start();
     }
@@ -1601,48 +1610,57 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         downloadThread = new Thread(new Runnable() {
             @Override
-            public void run() {
-                try {
-                final String fileDate = uiHandler.GetDate();
-                String filePath = "/sdcard/ReceivedFiles/" + fileName;
-
-                File downloadDir = new File("/sdcard/ReceivedFiles");
-                if (!downloadDir.exists())
+            public void run()
+            {
+                try
                 {
-                    downloadDir.mkdirs();
-                }
+                    final String fileDate = uiHandler.GetDate();
+                    String filePath = "/sdcard/ReceivedFiles/" + fileName;
 
-                File downloadedFile = new File(filePath);
-                if (!downloadedFile.exists())
+                    File downloadDir = new File("/sdcard/ReceivedFiles");
+                    if (!downloadDir.exists())
+                    {
+                        downloadDir.mkdirs();
+                    }
+
+                    File downloadedFile = new File(filePath);
+                    if (!downloadedFile.exists())
+                    {
+                        downloadedFile.createNewFile();
+                    }
+
+                    fileWriteStream = new FileOutputStream(filePath);
+                    while (fileDownloading)
+                    {
+                        Thread.sleep(100);
+                    }
+
+                    File thisFile = new File(filePath);
+                    String pathName = "";
+                    if (thisFile.exists())
+                    {
+                        pathName = "/sdcard/ReceivedFiles/" + uiHandler.AddTimeStampToName(GetFileName(filePath), fileDate);
+
+                        thisFile.renameTo(new File(pathName));
+                    }
+
+                    uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" + uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
+
+                    fileWriteStream.close();
+                    uiHandler.SetProgress(0, "");
+                    OpenFile(pathName);
+                    StopFTP();
+                }
+                catch (FileNotFoundException e1)
                 {
-                    downloadedFile.createNewFile();
-                }
-
-                fileWriteStream = new FileOutputStream(filePath);
-                while (fileDownloading)
-                {
-                    Thread.sleep(100);
-                }
-
-                File thisFile = new File(filePath);
-                String pathName = "";
-                if (thisFile.exists())
-                {
-                    pathName = "/sdcard/ReceivedFiles/" + uiHandler.AddTimeStampToName(GetFileName(filePath), fileDate);
-
-                    thisFile.renameTo(new File(pathName));
-                }
-
-                uiHandler.fileButtonHelper.AddData(fileName, "/sdcard/ReceivedFiles/" + uiHandler.AddTimeStampToName(fileName, fileDate), "RECEIVED", fileDate);
-
-                fileWriteStream.close();
-                uiHandler.SetProgress(0, "");
-                OpenFile(pathName);
-                } catch (FileNotFoundException e1) {
                     e1.printStackTrace();
-                } catch (IOException e1) {
+                }
+                catch (IOException e1)
+                {
                     e1.printStackTrace();
-                } catch (InterruptedException e) {
+                }
+                catch (InterruptedException e)
+                {
                     e.printStackTrace();
                 }
             }
@@ -1653,6 +1671,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void StopFTP()
     {
+        Log.d(TAG, "STOPPING FTP");
         fileDownloading = false;
         fileDownloadingFinishing = false;
         fileUploading = false;
@@ -1683,6 +1702,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 fileReadStream.close();
             if(fileWriteStream != null)
                 fileWriteStream.close();
+
+            fileReadStream = null;
+            fileWriteStream = null;
         }
         catch (IOException e)
         {
