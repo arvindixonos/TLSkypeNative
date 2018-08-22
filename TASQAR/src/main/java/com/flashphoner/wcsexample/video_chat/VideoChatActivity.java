@@ -655,6 +655,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     }
 
+    public void CleanUp()
+    {
+        pointRenderer.DestroyAll();
+    }
+
     public void SavePicture() throws IOException {
         int pixelData[] = new int[screenWidth * screenHeight];
 
