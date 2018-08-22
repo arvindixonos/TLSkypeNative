@@ -1,29 +1,19 @@
 package com.flashphoner.wcsexample.video_chat;
-import android.Manifest;
-import android.content.ContentResolver;
+
 import android.content.Context;
 import android.os.AsyncTask;
-import android.os.Handler;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
-import android.support.v4.app.ActivityCompat;
 import android.util.Log;
-import android.widget.Toast;
-
-import java.awt.font.TextAttribute;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
 import org.apache.commons.net.io.CopyStreamAdapter;
 
-import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class FTPManager extends AsyncTask {
 
@@ -37,7 +27,7 @@ public class FTPManager extends AsyncTask {
     int progress;
     int uploadORdownload = 1;
     String filePath = "";
-    String fileDate = "";
+    String fileName = "";
     Context applicationContext;
     private CopyStreamAdapter streamListener;
     boolean transferSuccess = false;
@@ -47,6 +37,8 @@ public class FTPManager extends AsyncTask {
 //    Handler mHandler = new Handler();
 
     public  boolean running = false;
+
+    public  static  String  TAG = "TLSKYPE";
 
     @Override
     protected Object doInBackground(Object[] objects)
@@ -102,14 +94,12 @@ public class FTPManager extends AsyncTask {
             {
                 Log.d(TAG, fileInputStream.available() + " ");
 
-                success = ftpClient.storeFile(GetFileName(filePath), buffIn);
+                success = ftpClient.storeFile(fileName, buffIn);
 
                 if(success)
                 {
                     ToastFunction("Successfully Uploaded File " + GetFileName(filePath));
                     transferSuccess = true;
-
-                    VideoChatActivity.getInstance().SendMessage(":FU" + VideoChatActivity.getInstance().android_id + "-" + GetFileName(filePath));
                 }
                 else
                 {
@@ -143,11 +133,8 @@ public class FTPManager extends AsyncTask {
                     String pathName = "";
                     if (thisFile.exists())
                     {
-                        pathName = "/sdcard/ReceivedFiles/" + VideoChatActivity.getInstance()
-                                .uiHandler.AddTimeStampToName(GetFileName(filePath).replace("/", ""), fileDate);
-                        thisFile.renameTo(new File(pathName));
+
                     }
-                    VideoChatActivity.getInstance().OpenFile(pathName);
                 }
                 else
                 {
@@ -169,8 +156,8 @@ public class FTPManager extends AsyncTask {
         return null;
     }
 
-        public void ToastFunction(final String toastMessage)
-        {
+    public void ToastFunction(final String toastMessage)
+    {
 //            new Thread(new Runnable() {
 //                @Override
 //                public void run() {
@@ -188,15 +175,13 @@ public class FTPManager extends AsyncTask {
 //                    }
 //                }
 //            }).start();
+    }
 
-            VideoChatActivity.ShowToast(toastMessage, this.applicationContext);
-        }
-
-    public  String GetFileName(String filePath)
+    public String GetFileName(String filePath)
     {
-       filePath = filePath.replace("primary:", "");
+        filePath = filePath.replace("primary:", "");
 
-       return filePath.substring(filePath.lastIndexOf("/"));
+        return filePath.substring(filePath.lastIndexOf("/"));
     }
 
     private static void showServerReply(FTPClient ftpClient) {

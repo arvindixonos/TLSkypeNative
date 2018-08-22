@@ -43,6 +43,8 @@ public class AppManager extends AppCompatActivity
     private ArCoreApk.InstallStatus installStatus = ArCoreApk.InstallStatus.INSTALL_REQUESTED;
     private boolean installRequested = false;
 
+    private LoginUIHandler loginUIHandler;
+
     public void ShowToast(final String message, final Context applicationContext)
     {
         this.runOnUiThread(new Runnable()
@@ -176,16 +178,8 @@ public class AppManager extends AppCompatActivity
         else
         {
             Log.d(TAG, "not Logged in");
-            try
-            {
-                setContentView(R.layout.activity_login);
-
-            }
-            catch(Exception e)
-            {
-                Log.d(TAG, "Exception is " + e.getMessage());
-                e.printStackTrace();
-            }
+            setContentView(R.layout.activity_login);
+            loginUIHandler = new LoginUIHandler(this);
             Log.d(TAG, "not Logged in a second time");
         }
     }

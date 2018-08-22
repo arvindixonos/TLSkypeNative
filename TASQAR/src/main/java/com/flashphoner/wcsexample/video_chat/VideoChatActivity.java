@@ -280,7 +280,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
 
-            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow.obj", "models/andy.png");
+            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow_v2.obj", "models/arrow_tex.png");
             virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
             virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/andy_shadow.png");
@@ -556,8 +556,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    public void onDrawFrame(GL10 gl) {
-
+    public void onDrawFrame(GL10 gl)
+    {
 //        Log.d(TAG, "ON DRAW");
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
@@ -589,7 +589,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //            // Get projection matrix.
             float[] projmtx = new float[16];
             camera.getProjectionMatrix(projmtx, 0, 0.1f, 100.0f);
-//
+
 //            // Get camera matrix and draw.
             float[] viewmtx = new float[16];
             camera.getViewMatrix(viewmtx, 0);
@@ -617,36 +617,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
             }
 
-            if(arrowMode)
-            {
-//             Visualize anchors created by touch.
-                float scaleFactor = 0.3f;
-                for (ColoredAnchor coloredAnchor : anchors) {
-                    if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING) {
-                        continue;
-                    }
-                    // Get the current pose of an Anchor in world space. The Anchor pose is updated
-                    // during calls to session.update() as ARCore refines its estimate of the world.
-                    coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
-
-                    float[] rotationQuaternion = coloredAnchor.anchor.getPose().getRotationQuaternion();
-
-                    Rotation ourRotation = new Rotation(rotationQuaternion[0], rotationQuaternion[1], rotationQuaternion[2], rotationQuaternion[3], false);
-
-                    double angle = ourRotation.getAngle();
-
-                    Vector3D axis = ourRotation.getAxis();
-
-                    // Update and draw the model and its shadow.
-                    virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-                    virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
-                    virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-                    virtualObjectShadow.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-                }
-            }
-            else {
-                pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
-            }
+            DrawArrow(viewmtx, projmtx, colorCorrectionRgba);
+            pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -655,6 +627,34 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             Log.e(TAG, "Exception on the OpenGL thread", t);
         }
 
+    }
+
+    void DrawArrow (float[] viewmtx, float[] projmtx, final float[] colorCorrectionRgba)
+    {
+        float scaleFactor = 0.3f;
+        for (ColoredAnchor coloredAnchor : anchors)
+        {
+            if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING)
+            {
+                continue;
+            }
+            // Get the current pose of an Anchor in world space. The Anchor pose is updated
+            // during calls to session.update() as ARCore refines its estimate of the world.
+            coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
+
+            float[] rotationQuaternion = coloredAnchor.anchor.getPose().getRotationQuaternion();
+
+            Rotation ourRotation = new Rotation(rotationQuaternion[0], rotationQuaternion[1], rotationQuaternion[2], rotationQuaternion[3], false);
+
+            double angle = ourRotation.getAngle();
+
+            Vector3D axis = ourRotation.getAxis();
+
+            // Update and draw the model and its shadow.
+            virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
+            virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
+            virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
+        }
     }
 
     public void SavePicture() throws IOException {
@@ -1078,7 +1078,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         videoCapturerAndroid.switchCamera(cameraSwitchHandler);
     }
 
-    public void Connect() {
+    public void Connect()
+    {
         if (connected)
             return;
 

@@ -152,7 +152,7 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
         mPointOrPlaneButton.setOnClickListener(v ->
         {
             Toast.makeText(currentContext, "Point Or Plane", Toast.LENGTH_SHORT).show();
-            VideoChatActivity.getInstance().pointsOrPlaneSpawn = true;
+            VideoChatActivity.getInstance().pointsOrPlaneSpawn = !VideoChatActivity.getInstance().pointsOrPlaneSpawn;
         });
 
         mDrawModeButton.setOnClickListener(v ->

@@ -50,8 +50,8 @@ public class ObjectRenderer {
     }
 
     // Shader names.
-    private static final String VERTEX_SHADER_NAME = "shaders/object.vert";
-    private static final String FRAGMENT_SHADER_NAME = "shaders/object.frag";
+    private static final String VERTEX_SHADER_NAME = "shaders/arrow.vert";
+    private static final String FRAGMENT_SHADER_NAME = "shaders/arrow.frag";
 
     private static final int COORDS_PER_VERTEX = 3;
     private static final float[] DEFAULT_COLOR = new float[] {0f, 0f, 0f, 0f};

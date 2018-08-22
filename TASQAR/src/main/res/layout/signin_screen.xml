@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/SI_Screen"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/SI_NameText"
+        android:layout_width="55dp"
+        android:layout_height="50dp"
+        android:layout_marginLeft="52dp"
+        android:layout_marginTop="192dp"
+        android:gravity="bottom"
+        android:text="UserID"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/SI_PasswordText"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:layout_marginTop="35dp"
+        android:gravity="bottom"
+        android:text="Password"
+        app:layout_constraintEnd_toEndOf="@+id/SI_NameText"
+        app:layout_constraintTop_toBottomOf="@+id/SI_NameText" />
+
+    <EditText
+        android:id="@+id/SI_UserIDField"
+        android:layout_width="183dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="80dp"
+        android:layout_marginStart="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/SI_NameText"
+        app:layout_constraintTop_toTopOf="@+id/SI_NameText" />
+
+    <EditText
+        android:id="@+id/SI_PasswordField"
+        android:layout_width="183dp"
+        android:layout_height="50dp"
+        android:layout_marginEnd="80dp"
+        android:layout_marginStart="8dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toEndOf="@+id/SI_PasswordText"
+        app:layout_constraintTop_toTopOf="@+id/SI_PasswordText" />
+
+    <Button
+        android:id="@+id/SI_SignInButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="75dp"
+        android:layout_marginTop="48dp"
+        android:text="SIGN IN"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/SI_PasswordText" />
+
+    <Button
+        android:id="@+id/SI_SignUpButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="75dp"
+        android:text="SIGN UP"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/SI_SignInButton" />
+
+
+</android.support.constraint.ConstraintLayout>

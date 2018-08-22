@@ -18,6 +18,8 @@ import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
 import android.content.res.Configuration;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.hardware.Camera;
@@ -27,6 +29,7 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -40,7 +43,9 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.text.Layout;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Rational;
 import android.view.Display;
@@ -54,6 +59,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.CompoundButton;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -68,17 +74,36 @@ import com.flashphoner.fpwcsapi.room.Room;
 import com.flashphoner.fpwcsapi.room.RoomManager;
 import com.flashphoner.fpwcsapi.session.Stream;
 import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
+import com.obsez.android.lib.filechooser.ChooserDialog;
+import com.obsez.android.lib.filechooser.tool.DirAdapter;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturerAndroid;
+import org.xml.sax.SAXException;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
 import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 public class MainUIHandler implements NavigationView.OnNavigationItemSelectedListener, NavigationMenuItemView.OnClickListener
 {
@@ -283,14 +308,20 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 //                    TurnOffOnDelay(switchLayoutItem, switchLayoutButton);
 //                    mSwitchLayoutButton.callOnClick();
 //                });
-                togglePointItem = currentActivity.findViewById(R.id.point2plane);
-                togglePointButton = (Switch) togglePointItem.getChildAt(0);
-                togglePointButton.setOnClickListener(v ->
-                {
-                    TurnOffOnDelay(togglePointItem, togglePointButton, 2000);
-                    mPointToPlaneButton.callOnClick();
-                });
-
+//                togglePointItem = currentActivity.findViewById(R.id.point2plane);
+//                togglePointButton = (Switch) togglePointItem.getChildAt(0);
+//                togglePointButton.setOnClickListener(v ->
+//                {
+//                    TurnOffOnDelay(togglePointItem, togglePointButton, 2000);
+//                    mPointToPlaneButton.callOnClick();
+//                });
+//                toggleArrowMode = currentActivity.findViewById(R.id.arrow_mode);
+//                toggleArrowButton = (Switch) toggleArrowMode.getChildAt(0);
+//                toggleArrowButton.setOnClickListener(v ->
+//                {
+//                    TurnOffOnDelay(toggleArrowMode, toggleArrowButton, 2000);
+//                    chatActivity.arrowMode = !chatActivity.arrowMode;
+//                });
                 toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
                 toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
                 toggleBackcamButton.setOnClickListener(v ->
@@ -300,13 +331,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                     mSwitchCamera.callOnClick();
                 });
 
-                toggleArrowMode = currentActivity.findViewById(R.id.arrow_mode);
-                toggleArrowButton = (Switch) toggleArrowMode.getChildAt(0);
-                toggleArrowButton.setOnClickListener(v ->
-                {
-                    TurnOffOnDelay(toggleArrowMode, toggleArrowButton, 2000);
-                    chatActivity.arrowMode = !chatActivity.arrowMode;
-                });
             }
         };
 
@@ -935,3 +959,4 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }
     }
 }
+
