@@ -91,8 +91,8 @@ public class PointRenderer{
             }
         }
 
-        public  float   CAM_RAY_CAST_DISTANCE_THRESHOLD = 0.2f;
-        public void CheckHitCameraRay(float[] camPosition, float[] camAxis)
+        public  float   CAM_RAY_CAST_DISTANCE_THRESHOLD = 0.3f;
+        public void CheckHitCameraRay(float[] camPosition, float[] camAxis, int anchorIndex, int numAnchors)
         {
             isHitCameraRay = false;
 
@@ -117,10 +117,13 @@ public class PointRenderer{
                     }
                 }
 
-                if (hitResults.size() > 0) {
+                if (hitResults.size() > 0)
+                {
                     float percentHit = (float) hitCount / (float) hitResults.size();
 
-                    isHitCameraRay = percentHit > 0.2f;
+//                    Log.d(TAG, "LOCAL CAM HIT PER:" + anchorIndex + " " + percentHit * 100 + " " + numAnchors);
+
+                    isHitCameraRay = percentHit > 0.4f;
                 }
             }
         }
@@ -165,8 +168,6 @@ public class PointRenderer{
         public  int         numAnchors = 0;
 
         float[] modelMatrix = null;
-
-        public boolean  dontDraw = false;
 
         public void updateModelMatrix(float[] modelMatrix, float scaleFactor) {
             float[] scaleMatrix = new float[16];
@@ -241,17 +242,17 @@ public class PointRenderer{
             float[] currentCameraAxis = new float[]{currentCameraQuaternion[0], currentCameraQuaternion[1], currentCameraQuaternion[2]};
             PVector vecCurrentCameraAxis = new PVector(currentCameraAxis[0], currentCameraAxis[1], currentCameraAxis[2]);
             vecCurrentCameraAxis.normalize();
-            currentCameraAxis = new float[]{vecCurrentCameraAxis.x, vecCurrentCameraAxis.y, vecCurrentCameraAxis.z};
 
             int numHitAnchors = 0;
+            int numVisibleAnchors = 0;
             for (int i = 0; i < numAnchors; i++)
             {
 //                Log.d(TAG, "Anchor Visiblity " + (anchors.get(i).isPointVisibleToCamera ? "YES" : "NO"));
 
-//                if(!anchors.get(i).isPointVisibleToCamera)// || anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
-//                {
-//                    continue;
-//                }
+                if(anchors.get(i).isPointVisibleToCamera)// || anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
+                {
+                    numVisibleAnchors += 1;
+                }
 
                 PVector toAnchor = new PVector( anchors.get(i).getPose().tx() - currentCameraPosition[0],
                                                 anchors.get(i).getPose().ty() - currentCameraPosition[1],
@@ -260,7 +261,7 @@ public class PointRenderer{
 
                 currentCameraAxis = new float[]{toAnchor.x, toAnchor.y, toAnchor.z};
 
-                anchors.get(i).CheckHitCameraRay(currentCameraPosition, currentCameraAxis);
+                anchors.get(i).CheckHitCameraRay(currentCameraPosition, currentCameraAxis, i, numAnchors);
 
                 if(anchors.get(i).isHitCameraRay)
                 {
@@ -272,17 +273,12 @@ public class PointRenderer{
                 listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
             }
 
+            float visibleAccPercentage = (float)numVisibleAnchors / (float)numAnchors;
             float hitAccPercentage = (float)numHitAnchors / (float)numAnchors;
 
-            Log.d(TAG, "HIT PERCENTAGE: " + hitAccPercentage * 100 + "%");
+//            Log.d(TAG, "HIT PERCENTAGE: " + hitAccPercentage * 100 + "%" + " VISIBLE PERCENTAGE: " + visibleAccPercentage * 100 + "%");
 
-//            if(listOfPoints.size() < 3)
-//            {
-//                isDirty = false;
-//                return;
-//            }
-
-            if(hitAccPercentage < 0.1f)
+            if(hitAccPercentage < 0.9f || visibleAccPercentage < 0.9f)
             {
                 isDirty = false;
                 return;
