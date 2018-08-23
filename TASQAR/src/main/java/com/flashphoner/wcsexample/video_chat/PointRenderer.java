@@ -8,14 +8,19 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.util.Log;
 
 import com.google.ar.core.Anchor;
+import com.google.ar.core.Camera;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Pose;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 
+import org.apache.commons.math3.complex.Quaternion;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.io.IOException;
@@ -25,6 +30,7 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import processing.core.PApplet;
@@ -45,6 +51,7 @@ import shapes3d.utils.P_Bezier3D;
 import shapes3d.utils.P_BezierSpline;
 import shapes3d.utils.Path;
 
+import static android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND;
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
 /**
@@ -60,6 +67,10 @@ public class PointRenderer{
         public AnchorList   parentAnchorList;
 
         public TrackingState previousAnchorTrackingState;
+
+        public  boolean     isPointVisibleToCamera = false;
+
+        public boolean      isHitCameraRay = false;
 
         public TASQAR_Anchor(Anchor anchor, AnchorList parentAnchorList)
         {
@@ -80,12 +91,57 @@ public class PointRenderer{
             }
         }
 
+        public  float   CAM_RAY_CAST_DISTANCE_THRESHOLD = 0.2f;
+        public void CheckHitCameraRay(float[] camPosition, float[] camAxis)
+        {
+            isHitCameraRay = false;
+
+            if(VideoChatActivity.getInstance() != null) {
+                List<HitResult> hitResults = VideoChatActivity.getInstance().frame.hitTest(camPosition, 0, camAxis, 0);
+
+                if (hitResults.size() == 0)
+                    return;
+
+                int hitCount = 0;
+                for (HitResult hitResult : hitResults) {
+                    float[] hitPosition = hitResult.getHitPose().getTranslation();
+
+                    float[] ourPosition = getPose().getTranslation();
+
+//                    Log.d(TAG, "DISTANCE IS " + PVector.dist(new PVector(ourPosition[0], ourPosition[1], ourPosition[2]),
+//                            new PVector(hitPosition[0], hitPosition[1], hitPosition[2])));
+
+                    if (PVector.dist(new PVector(ourPosition[0], ourPosition[1], ourPosition[2]),
+                            new PVector(hitPosition[0], hitPosition[1], hitPosition[2])) < CAM_RAY_CAST_DISTANCE_THRESHOLD) {
+                        hitCount += 1;
+                    }
+                }
+
+                if (hitResults.size() > 0) {
+                    float percentHit = (float) hitCount / (float) hitResults.size();
+
+                    isHitCameraRay = percentHit > 0.5f;
+                }
+            }
+        }
+
         public Pose getPose() {
             return anchor.getPose();
         }
 
         public void detach() {
             anchor.detach();
+        }
+
+        public void UpdateAnchor() {
+
+            Pose ourPose = getPose();
+
+            float[] ourPosition = ourPose.getTranslation();
+
+            isPointVisibleToCamera = frustumVisibilityTester.isPointInFrustum(ourPosition[0], ourPosition[1], ourPosition[2]);
+
+            parentAnchorList.isDirty = true;
         }
     }
 
@@ -110,6 +166,8 @@ public class PointRenderer{
 
         float[] modelMatrix = null;
 
+        public boolean  dontDraw = false;
+
         public void updateModelMatrix(float[] modelMatrix, float scaleFactor) {
             float[] scaleMatrix = new float[16];
             Matrix.setIdentityM(scaleMatrix, 0);
@@ -117,6 +175,16 @@ public class PointRenderer{
             scaleMatrix[5] = scaleFactor;
             scaleMatrix[10] = scaleFactor;
             Matrix.multiplyMM(this.modelMatrix, 0, modelMatrix, 0, scaleMatrix, 0);
+        }
+
+        public void UpdateAllAnchors()
+        {
+            int numAnchors = anchors.size();
+
+            for(int i = 0; i < numAnchors; i++)
+            {
+                anchors.get(i).UpdateAnchor();
+            }
         }
 
         public void RemoveAllVertices()
@@ -164,19 +232,59 @@ public class PointRenderer{
         {
             RemoveAllVertices();
 
+            UpdateAllAnchors();
+
             ArrayList<PVector> listOfPoints = new ArrayList<>();
 
+            float[] currentCameraPosition = VideoChatActivity.getInstance().camera.getPose().getTranslation();
+            float[] currentCameraQuaternion = VideoChatActivity.getInstance().camera.getPose().getRotationQuaternion();
+            float[] currentCameraAxis = new float[]{currentCameraQuaternion[0], currentCameraQuaternion[1], currentCameraQuaternion[2]};
+            PVector vecCurrentCameraAxis = new PVector(currentCameraAxis[0], currentCameraAxis[1], currentCameraAxis[2]);
+            vecCurrentCameraAxis.normalize();
+            currentCameraAxis = new float[]{vecCurrentCameraAxis.x, vecCurrentCameraAxis.y, vecCurrentCameraAxis.z};
+
+            int numHitAnchors = 0;
             for (int i = 0; i < numAnchors; i++)
             {
-                if(anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
+//                Log.d(TAG, "Anchor Visiblity " + (anchors.get(i).isPointVisibleToCamera ? "YES" : "NO"));
+
+                if(!anchors.get(i).isPointVisibleToCamera)// || anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
+                {
                     continue;
+                }
+
+                PVector toAnchor = new PVector( anchors.get(i).getPose().tx() - currentCameraPosition[0],
+                                                anchors.get(i).getPose().ty() - currentCameraPosition[1],
+                                                anchors.get(i).getPose().tz() - currentCameraPosition[2]);
+                toAnchor.normalize();
+
+                currentCameraAxis = new float[]{toAnchor.x, toAnchor.y, toAnchor.z};
+
+                anchors.get(i).CheckHitCameraRay(currentCameraPosition, currentCameraAxis);
+
+                if(!anchors.get(i).isHitCameraRay)
+                {
+                    continue;
+                }
 
                 Pose pose = anchors.get(i).getPose();
                 float[] originPoint = pose.getTranslation();
                 listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
+
+                numHitAnchors += 1;
             }
 
+            float hitAccPercentage = (float)numHitAnchors / (float)numAnchors;
+
+            Log.d(TAG, "HIT PERCENTAGE: " + hitAccPercentage * 100 + "%");
+
             if(listOfPoints.size() < 3)
+            {
+                isDirty = false;
+                return;
+            }
+
+            if(hitAccPercentage < 0.3f)
             {
                 isDirty = false;
                 return;
@@ -338,6 +446,16 @@ public class PointRenderer{
         }
     }
 
+    public void UpdateAllAnchors()
+    {
+        int numAnchorList = anchorsLists.size();
+
+        for(int i = 0; i < numAnchorList; i++)
+        {
+            AnchorList anchorList = anchorsLists.get(i);
+            anchorList.UpdateAllAnchors();
+        }
+    }
 
     private static final String VERTEX_SHADER_NAME = "shaders/object.vert";
     private static final String FRAGMENT_SHADER_NAME = "shaders/object.frag";
@@ -366,6 +484,7 @@ public class PointRenderer{
     private boolean firstTranslationSet = false;
 
     private Thread makeExtrusionVerticesThread = null;
+    private Thread updateAnchorsThread = null;
 
     public void DestroyAll()
     {
@@ -373,6 +492,11 @@ public class PointRenderer{
             makeExtrusionVerticesThread.interrupt();
 
         makeExtrusionVerticesThread = null;
+
+        if(updateAnchorsThread != null)
+            updateAnchorsThread.interrupt();
+
+        updateAnchorsThread = null;
 
         int numAnchorLists = anchorsLists.size();
 
@@ -385,6 +509,8 @@ public class PointRenderer{
     PointRenderer()
     {
         MakeExtrusionVerticesThreadLoop();
+
+        UpdateAchorsThreadLoop();
     }
 
     public void createOnGlThread(Context context, String diffuseTextureAssetName) throws IOException
@@ -451,6 +577,8 @@ public class PointRenderer{
 
                 anchorsLists.remove(i);
 
+                numAnchorsLists = anchorsLists.size();
+
                 i = 0;
             }
         }
@@ -473,7 +601,6 @@ public class PointRenderer{
         pointerCounter = 0;
     }
 
-    Trackable firstTrackable = null;
     int pointerCounter = 0;
     public void AddPoint(HitResult hitResult)
     {
@@ -486,11 +613,6 @@ public class PointRenderer{
 //                return;
 //            }
 //        }
-
-        if(firstTrackable == null)
-        {
-            firstTrackable = hitResult.getTrackable();
-        }
 
         Pose hitPose = hitResult.getHitPose();
 
@@ -622,7 +744,7 @@ public class PointRenderer{
 
             if (anchorList.isDirty)
             {
-                Log.d(TAG, "Calculating Vertices for " + anchorList.anchorListID);
+//                Log.d(TAG, "Calculating Vertices for " + anchorList.anchorListID);
                 anchorList.calcVertices();
             }
         }
@@ -648,6 +770,44 @@ public class PointRenderer{
         }
     }
 
+
+    public void UpdateAchorsThreadLoop()
+    {
+        updateAnchorsThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+                long sleepTime = 1000;
+
+               while (true)
+               {
+                    if(VideoChatActivity.getInstance() != null)
+                    {
+                        if(VideoChatActivity.getInstance().camera != null)
+                        {
+                            if (isCameraMovedRotatedALot())
+                            {
+                                UpdateAllAnchors();
+
+//                                Log.d(TAG, "CAMERA CHANGED A LOT JI");
+                            }
+
+                            previousCameraPose = VideoChatActivity.getInstance().camera.getPose();
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        updateAnchorsThread.start();
+    }
+
     public void MakeExtrusionVerticesThreadLoop()
     {
         makeExtrusionVerticesThread = new Thread(new Runnable() {
@@ -669,18 +829,57 @@ public class PointRenderer{
         makeExtrusionVerticesThread.start();
     }
 
-    public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
+    public static   float   CAM_DISTANCE_THRESHOLD = 0.1f;
+    public static   float   CAM_ANGLE_THRESHOLD = 5.0f;
+    public boolean  isCameraMovedRotatedALot()
+    {
+        if(VideoChatActivity.getInstance().camera == null)
+            return false;
 
-        if(firstTrackable != null)
+        float[] previousCameraTranslation = previousCameraPose.getTranslation();
+        float[] currentCameraTranslation = VideoChatActivity.getInstance().camera.getPose().getTranslation();
+
+        float camDistanceDelta = PVector.dist(new PVector(previousCameraTranslation[0], previousCameraTranslation[1], previousCameraTranslation[2]),
+                                         new PVector(currentCameraTranslation[0], currentCameraTranslation[1], currentCameraTranslation[2]));
+
+        if(camDistanceDelta > CAM_DISTANCE_THRESHOLD)
         {
-            Log.d(TAG, "FIRST TRACKABLE STATE: " + firstTrackable.getTrackingState());
+//            Log.d(TAG, "DISTANCE CHANGE " + camDistanceDelta);
+            return true;
         }
+
+        float[] previousCameraQuaternion = previousCameraPose.getRotationQuaternion();
+        float[] currentCameraQuaternion = VideoChatActivity.getInstance().camera.getPose().getRotationQuaternion();
+
+        Quaternion quatPreviousCameraQuaternion = new Quaternion(previousCameraQuaternion[0], previousCameraQuaternion[1], previousCameraQuaternion[2], previousCameraQuaternion[3]);
+        Quaternion quatCurrentCameraQuaternion = new Quaternion(currentCameraQuaternion[0], currentCameraQuaternion[1], currentCameraQuaternion[2], currentCameraQuaternion[3]);
+
+        double previousAngle = Math.toDegrees(Math.acos(quatPreviousCameraQuaternion.getScalarPart()) * 2.0f);
+        double currentAngle = Math.toDegrees(Math.acos(quatCurrentCameraQuaternion.getScalarPart()) * 2.0f);
+
+        if(Math.abs(previousAngle - currentAngle) > CAM_ANGLE_THRESHOLD) {
+
+//            Log.d(TAG, "ANGLE CHANGE " + Math.abs(previousAngle - currentAngle));
+            return true;
+        }
+
+        return false;
+    }
+
+
+    public Pose previousCameraPose = Pose.IDENTITY;
+    public FrustumVisibilityTester frustumVisibilityTester = new FrustumVisibilityTester();
+    public void draw(float[] cameraView, float[] cameraPerspective) {
+
+        frustumVisibilityTester.calculateFrustum(cameraPerspective, cameraView);
 
         if(firstTranslationSet && isWorldReferenceChanged())
         {
-            Log.d(TAG, "WORLD REFERENCE CHANGED");
+//            Log.d(TAG, "WORLD REFERENCE CHANGED");
 
             firstTranslationSet = false;
+
+            UpdateAllAnchors();
 
             DirtyAllAnchorLists();
         }
@@ -693,13 +892,12 @@ public class PointRenderer{
         GLES20.glEnableVertexAttribArray(positionAttribute);
         GLES20.glEnableVertexAttribArray(normalAttribute);
 
-
-
         int numAnchorsLists = anchorsLists.size();
 
         for(int anchorListCount = 0; anchorListCount < numAnchorsLists; anchorListCount++)
         {
             AnchorList anchorList = anchorsLists.get(anchorListCount);
+
             float[] modelMatrix = anchorList.modelMatrix;
 
             if(modelMatrix == null)

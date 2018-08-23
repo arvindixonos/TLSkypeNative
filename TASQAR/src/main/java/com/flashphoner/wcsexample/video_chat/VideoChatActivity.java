@@ -159,7 +159,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTP!";
+    String roomName = "NEWFTP!POP";
 //    UI references.
 
     private Thread ftpThread;
@@ -223,7 +223,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public GLSurfaceView glsurfaceView;
     private DisplayRotationHelper displayRotationHelper;
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
-    private final PointRenderer      pointRenderer = new PointRenderer();
+    private  PointRenderer      pointRenderer;
 
     private final ObjectRenderer virtualObject = new ObjectRenderer();
     private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
@@ -347,7 +347,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
+
         Instance = this;
+
+        pointRenderer = new PointRenderer();
+
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -553,6 +557,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         SetLocalRendererMirror();
     }
 
+    public Camera camera = null;
+    public Frame frame = null;
     @Override
     public void onDrawFrame(GL10 gl) {
 
@@ -570,8 +576,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         {
             session.setCameraTextureName(backgroundRenderer.getTextureId());
 
-            Frame frame = session.update();
-            Camera camera = frame.getCamera();
+            frame = session.update();
+            camera = frame.getCamera();
 
             handleTap(frame, camera);
 
@@ -643,7 +649,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 }
             }
             else {
-                pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
+                pointRenderer.draw(viewmtx, projmtx);
             }
 
             byte[] ardata = GetScreenPixels();

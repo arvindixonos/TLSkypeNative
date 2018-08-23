@@ -77,9 +77,9 @@ dependencies {
     //    implementation project(':google_ar_required')
     //noinspection GradleCompatible
     compile 'com.google.android.support:wearable:1.1.+'
-    implementation project(':Shapes3D')
     implementation project(':flashphoner')
     implementation project(':processing-core')
+    implementation project(':Shapes3D')
 }
 
 play {
