@@ -120,7 +120,7 @@ public class PointRenderer{
                 if (hitResults.size() > 0) {
                     float percentHit = (float) hitCount / (float) hitResults.size();
 
-                    isHitCameraRay = percentHit > 0.5f;
+                    isHitCameraRay = percentHit > 0.2f;
                 }
             }
         }
@@ -248,10 +248,10 @@ public class PointRenderer{
             {
 //                Log.d(TAG, "Anchor Visiblity " + (anchors.get(i).isPointVisibleToCamera ? "YES" : "NO"));
 
-                if(!anchors.get(i).isPointVisibleToCamera)// || anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
-                {
-                    continue;
-                }
+//                if(!anchors.get(i).isPointVisibleToCamera)// || anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
+//                {
+//                    continue;
+//                }
 
                 PVector toAnchor = new PVector( anchors.get(i).getPose().tx() - currentCameraPosition[0],
                                                 anchors.get(i).getPose().ty() - currentCameraPosition[1],
@@ -262,29 +262,27 @@ public class PointRenderer{
 
                 anchors.get(i).CheckHitCameraRay(currentCameraPosition, currentCameraAxis);
 
-                if(!anchors.get(i).isHitCameraRay)
+                if(anchors.get(i).isHitCameraRay)
                 {
-                    continue;
+                    numHitAnchors += 1;
                 }
 
                 Pose pose = anchors.get(i).getPose();
                 float[] originPoint = pose.getTranslation();
                 listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
-
-                numHitAnchors += 1;
             }
 
             float hitAccPercentage = (float)numHitAnchors / (float)numAnchors;
 
             Log.d(TAG, "HIT PERCENTAGE: " + hitAccPercentage * 100 + "%");
 
-            if(listOfPoints.size() < 3)
-            {
-                isDirty = false;
-                return;
-            }
+//            if(listOfPoints.size() < 3)
+//            {
+//                isDirty = false;
+//                return;
+//            }
 
-            if(hitAccPercentage < 0.3f)
+            if(hitAccPercentage < 0.1f)
             {
                 isDirty = false;
                 return;
