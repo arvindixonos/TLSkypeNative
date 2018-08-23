@@ -912,7 +912,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     {
         Calendar calendar = Calendar.getInstance();
         Date date = calendar.getTime();
-        DateFormat dateFormat = new SimpleDateFormat("dd-mm-yyyy_HH-mm-ss");
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-YYYY_hh-mm-ss");
 
         return dateFormat.format(date);
     }

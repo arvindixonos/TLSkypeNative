@@ -17,7 +17,7 @@ public class ActionReceiver extends BroadcastReceiver
         if(action.equals("CancelDownload"))
         {
             PerformAction();
-            VideoChatActivity.ShowToast("Download Cancelled", context);
+            VideoChatActivity.ShowToast("File Transfer Cancelled", context);
         }
 
         Intent it = new Intent(Intent.ACTION_CLOSE_SYSTEM_DIALOGS);

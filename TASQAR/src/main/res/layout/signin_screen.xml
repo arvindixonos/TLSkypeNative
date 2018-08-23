@@ -31,12 +31,10 @@
         android:id="@+id/SI_UserIDField"
         android:layout_width="183dp"
         android:layout_height="50dp"
-        android:layout_marginEnd="80dp"
         android:layout_marginStart="8dp"
         android:ems="10"
         android:inputType="textPersonName"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        android:text="adish@takeleap.in"
         app:layout_constraintStart_toEndOf="@+id/SI_NameText"
         app:layout_constraintTop_toTopOf="@+id/SI_NameText" />
 
@@ -44,12 +42,11 @@
         android:id="@+id/SI_PasswordField"
         android:layout_width="183dp"
         android:layout_height="50dp"
-        android:layout_marginEnd="80dp"
         android:layout_marginStart="8dp"
         android:ems="10"
         android:inputType="textPersonName"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        android:password="true"
+        android:text="Hello9!?"
         app:layout_constraintStart_toEndOf="@+id/SI_PasswordText"
         app:layout_constraintTop_toTopOf="@+id/SI_PasswordText" />
 

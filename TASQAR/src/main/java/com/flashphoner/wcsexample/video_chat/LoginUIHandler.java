@@ -14,6 +14,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.obsez.android.lib.filechooser.ChooserDialog;
 
@@ -40,6 +41,7 @@ public class LoginUIHandler
 {
     private Activity currentActivity;
     private static String TAG = "TLSKYPE";
+    private AppManager  manager;
 
     //SI UI Elements
     private EditText SI_PasswordField;
@@ -97,10 +99,10 @@ public class LoginUIHandler
     public String photoftpLink = "";
     private Handler mHandler = new Handler();
 
-    public LoginUIHandler (Activity appContext)
+    public LoginUIHandler (Activity appContext, AppManager managerClass)
     {
         currentActivity = appContext;
-
+        manager = managerClass;
         getNextUserId();
 
         //Screens
@@ -142,15 +144,16 @@ public class LoginUIHandler
 //            Log.d(TAG, SI_SignUpButton.getTransitionName());
         }
 
-        if(SU_NextButton != null)
+        if(SU_SubmitPasswordButton != null)
         {
             Log.d(TAG, "Works");
         }
 
-        SI_SignUpButton.setOnClickListener(new View.OnClickListener() {
+        SI_SignUpButton.setOnClickListener(new View.OnClickListener()
+        {
             @Override
-            public void onClick(View v) {
-
+            public void onClick(View v)
+            {
                 mLoginScreen.setVisibility(View.GONE);
                 mSignUpScreen.setVisibility(View.VISIBLE);
                 mDetailsScreen.setVisibility(View.VISIBLE);
@@ -158,22 +161,18 @@ public class LoginUIHandler
             }
         });
 
-        //        SI_SubmitButton.setOnClickListener(v ->
-//        {
-//            String userID = SI_UserIDField.getText().toString();
-//            String password = SI_PasswordField.getText().toString();
-//
-//            Login(userID, password);
-//
-////            Login("arvindsemail@gmail.com", "asaadfghjk");
-//        });
+        SI_SubmitButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v) {
+                String userID = SI_UserIDField.getText().toString();
+                String password = SI_PasswordField.getText().toString();
 
-//        SU_SubmitPasswordButton.setOnClickListener(v ->
-//        {
-//            OnSubmitPasswordClicked();
-//        });
-//
-//        Log.d(TAG, "Running");
+                Login(userID, password);
+
+//            Login("arvindsemail@gmail.com", "asaadfghjk");
+            }
+        });
 
         Log.d(TAG, "TAG1");
         SU_NextButton.setOnClickListener(new View.OnClickListener()
@@ -184,15 +183,6 @@ public class LoginUIHandler
                 OnSubmitClicked();
             }
         });
-//
-//        SI_SignUpButton.setOnClickListener(new View.OnClickListener()
-//        {
-//            Log.d(TAG, "Sign UP");
-//            mLoginScreen.setVisibility(View.GONE);
-//            mSignUpScreen.setVisibility(View.VISIBLE);
-//            mDetailsScreen.setVisibility(View.VISIBLE);
-//            mPasswordScreen.setVisibility(View.GONE);
-//        });
 
         SU_NameField.addTextChangedListener(new TextWatcher()
         {
@@ -424,7 +414,7 @@ public class LoginUIHandler
             submitNewUserThread.interrupt();
             submitNewUserThread = null;
         }
-
+        Log.d(TAG, "Submit New User");
 
         submitNewUserThread = new Thread(new Runnable()
         {
@@ -488,6 +478,8 @@ public class LoginUIHandler
             submitNextThread = null;
         }
 
+        Log.d(TAG, "Submit Next");
+
         submitNextThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -510,20 +502,24 @@ public class LoginUIHandler
                         String value = node.getNodeValue();
 
                         boolean submitted = Integer.parseInt(value) == 1 ? true : false;
-
+                        Log.d(TAG, submitted ? "Submitted" : "Not Submitted");
                         if(submitted)
-                            Log.d(TAG, "DONE YOYO");
-
+                        {
+                                currentActivity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        mPasswordScreen.setVisibility(View.GONE);
+                                        mDetailsScreen.setVisibility(View.VISIBLE);
+                                        mSignUpScreen.setVisibility(View.GONE);
+                                        mLoginScreen.setVisibility(View.VISIBLE);
+                                    }
+                                });
+                        }
                         break;
                     }
-
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ParserConfigurationException e) {
-                    e.printStackTrace();
-                } catch (SAXException e) {
+                }
+                catch (IOException | ParserConfigurationException | SAXException e)
+                {
                     e.printStackTrace();
                 }
             }
@@ -581,8 +577,11 @@ public class LoginUIHandler
         String role = SU_RoleField.getText().toString();
         String hierarchy = SU_HeirarchyField.getText().toString();
 
-        if (isNamePresent && isPhonePresent && isEmailPresent) {
-            if (lastFetchedUserID != -1) {
+        if (isNamePresent && isPhonePresent && isEmailPresent)
+        {
+            if (lastFetchedUserID != -1)
+            {
+                Log.d(TAG, "OnSubmitClicked");
                 SubmitNewUser(lastFetchedUserID, photoftpLink, name, email, phone , role, hierarchy);
 
 //                if (result) {
@@ -600,10 +599,23 @@ public class LoginUIHandler
     {
         String otp = SU_OTPField.getText().toString();
         String password = SU_PasswordText.getText().toString();
+        String passwordText = SU_PasswordText.getText().toString();
+        String reEnterText = SU_ReEnterText.getText().toString();
+
+
+        Log.d(TAG, "OnSubmitPasswordClicked");
 
         if(isOTPPresent && isPasswordPresent && isReEnterPresent)
         {
-            SubmitNext(lastFetchedUserID, otp, password);
+            if(!passwordText.equals(reEnterText))
+            {
+                Toast.makeText(currentActivity, "Password Mismatch", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "Password Text : " + SU_PasswordText.getText() + " ReEnter Text : " + SU_ReEnterText.getText());
+            }
+            else
+            {
+                SubmitNext(lastFetchedUserID, otp, password);
+            }
         }
     }
 
@@ -611,6 +623,8 @@ public class LoginUIHandler
     {
         mDetailsScreen.setVisibility(View.GONE);
         mPasswordScreen.setVisibility(View.VISIBLE);
+
+        Log.d(TAG, "OpenOTPPasswordWindow");
 
         SU_PasswordErrorImage = currentActivity.findViewById(R.id.SU_PasswordError);
         SU_PasswordText = currentActivity.findViewById(R.id.SU_PasswordField);
@@ -719,9 +733,11 @@ public class LoginUIHandler
         });
 
         SU_SubmitPasswordButton = currentActivity.findViewById(R.id.SU_SubmitPasswordButton);
-        SU_SubmitPasswordButton.setOnClickListener(new View.OnClickListener() {
+        SU_SubmitPasswordButton.setOnClickListener(new View.OnClickListener()
+        {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v)
+            {
                 OnSubmitPasswordClicked();
             }
         });
@@ -797,7 +813,12 @@ public class LoginUIHandler
                     boolean submitted = Integer.parseInt(value) == 1;
 
                     if (submitted)
-                        Log.d(TAG, "DONE YOYO");
+                        currentActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                manager.SetupUserScreen();
+                            }
+                        });
                     else
                         Log.e(TAG, "NotDone");
 

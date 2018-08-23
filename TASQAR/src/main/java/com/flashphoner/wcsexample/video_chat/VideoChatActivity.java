@@ -1542,7 +1542,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 {
                                     if(cancelled)
                                     {
-                                        acceptedMessage = true;
+                                        acceptedMessage = false;
+                                        ShowToast("File Transfer Cancelled", getApplicationContext());
                                         return;
                                     }
 
@@ -1686,6 +1687,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         cancelled = true;
         downloadCount = 0;
         targetDownloadCount = 0;
+
 
         if(fileUploadThread != null)
         {

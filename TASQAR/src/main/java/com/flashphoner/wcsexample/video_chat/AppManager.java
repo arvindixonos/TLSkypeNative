@@ -179,7 +179,7 @@ public class AppManager extends AppCompatActivity
         {
             Log.d(TAG, "not Logged in");
             setContentView(R.layout.activity_login);
-            loginUIHandler = new LoginUIHandler(this);
+            loginUIHandler = new LoginUIHandler(this , this);
             Log.d(TAG, "not Logged in a second time");
         }
     }
@@ -222,7 +222,7 @@ public class AppManager extends AppCompatActivity
         }
     }
 
-    void SetupUserScreen () {
+    public void SetupUserScreen () {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this.getApplicationContext());
 
         if (availability == ArCoreApk.Availability.SUPPORTED_INSTALLED)
