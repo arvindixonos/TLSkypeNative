@@ -514,6 +514,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         SetLocalRendererMirror();
     }
 
+    Frame frame = null;
+    Camera camera = null;
     @Override
     public void onDrawFrame(GL10 gl)
     {
@@ -531,8 +533,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         {
             session.setCameraTextureName(backgroundRenderer.getTextureId());
 
-            Frame frame = session.update();
-            Camera camera = frame.getCamera();
+            frame = session.update();
+            camera = frame.getCamera();
 
             handleTap(frame, camera);
 
@@ -577,7 +579,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
 
             DrawArrow(viewmtx, projmtx, colorCorrectionRgba);
-            pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
+            pointRenderer.draw(viewmtx, projmtx);
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -616,8 +618,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
-    public void SavePicture() throws IOException
+
+    public void CleanUp()
     {
+        pointRenderer.DestroyAll();
+    }
+
+    public void SavePicture() throws IOException {
+
         int pixelData[] = new int[screenWidth * screenHeight];
 
         // Read the pixels from the current GL frame.
