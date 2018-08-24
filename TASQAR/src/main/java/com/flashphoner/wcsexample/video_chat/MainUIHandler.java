@@ -493,7 +493,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             public void onClick(View v)
             {
                 ToggleVideoView();
-                chatActivity.CleanUp();
+//                chatActivity.CleanUp();
                 chatActivity.SendMessage("Disconnect");
                 chatActivity.Disconnect();
                 ChangeActivity();
