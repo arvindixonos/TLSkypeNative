@@ -106,7 +106,6 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
     public Button   mDrawModeButton;
     public Button   mArrowModeButton;
 
-    @SuppressLint("ClickableViewAccessibility")
     public TempButton(Context context, AttributeSet attrs)
     {
         super(context, attrs);

@@ -2,108 +2,57 @@ package com.flashphoner.wcsexample.video_chat;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.app.AutomaticZenRule;
-import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
-import android.app.RemoteAction;
 import android.app.TaskStackBuilder;
-import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
-import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.os.Build;
 import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.provider.MediaStore;
-import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
-import android.support.design.internal.NavigationMenu;
 import android.support.design.internal.NavigationMenuItemView;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActionBarDrawerToggle;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.RecyclerView;
-import android.text.Editable;
-import android.text.Layout;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.util.Rational;
 import android.view.Display;
-import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.CompoundButton;
-import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.SlidingDrawer;
 import android.widget.Switch;
 import android.widget.TextView;
-import android.widget.ToggleButton;
 
-import com.flashphoner.fpwcsapi.room.Room;
-import com.flashphoner.fpwcsapi.room.RoomManager;
-import com.flashphoner.fpwcsapi.session.Stream;
 import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
-import com.obsez.android.lib.filechooser.ChooserDialog;
-import com.obsez.android.lib.filechooser.tool.DirAdapter;
 
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturerAndroid;
-import org.xml.sax.SAXException;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
-import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
 
 public class MainUIHandler implements NavigationView.OnNavigationItemSelectedListener, NavigationMenuItemView.OnClickListener
 {
@@ -142,6 +91,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private String channelId = "channel-01";
     private String channelName = "Channel Name";
     private int importance = NotificationManager.IMPORTANCE_HIGH;
+    private String userName = "";
     //Notification Variables
 
     DrawerLayout    drawerLayout;
@@ -151,8 +101,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
 
+    CircularImageView   profilePhoto;
+
     ConstraintLayout mFloatingButtonsLayout;
     ConstraintLayout mHistoryScreen;
+    ConstraintLayout mExtraButtons;
 
     FloatingActionButton mEndCallButton;
     FloatingActionButton mPlusButton;
@@ -179,6 +132,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     TextView recordingText;
     TextView pointModeText;
     TextView timerText;
+    TextView userNameText;
 
     LinearLayout historyScreen;
 
@@ -244,6 +198,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         mFloatingButtonsLayout = currentActivity.findViewById(R.id.FloatingButtonsLayout);
         mHistoryScreen = currentActivity.findViewById(R.id.FileHistory);
+        mExtraButtons = currentActivity.findViewById(R.id.AddedButtons);
 
         mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
         mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
@@ -289,6 +244,16 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mTempButton.mPointOrPlaneModeFloatingButton = currentActivity.findViewById(R.id.PointOrPlaneFloatingButton);
         mTempButton.chatActivity = chatActivity;
         mTempButton.InitialiseButtons();
+
+        //Set Photo and Name
+        NavigationView headerLayout = currentActivity.findViewById(R.id.nav_view);
+        View header = headerLayout.getHeaderView(0);
+        profilePhoto = header.findViewById(R.id.ProfilePics);
+        profilePhoto.setImageBitmap(GetUsetProfilePhoto());
+        Log.d(TAG, "User Name " + userName);
+        userNameText = header.findViewById(R.id.ProfileName);
+        userNameText.setText(userName);
+        //Set Photo and Name
 
         android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
                 (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -351,13 +316,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mRenderHolder.addView(currentRenderLayout, 1);
 
             isAboveEight = true;
-            Log.d(TAG, "Current Version is Above 7");
         }
-        else
-        {
-            Log.d(TAG, "Current Version is 7 or below");
-        }
-
         mFlashButton.setOnClickListener(new View.OnClickListener()
         {
             CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
@@ -467,25 +426,26 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mHistoryButton.setOnClickListener(v ->
         {
 
-            mHistoryScreen.setVisibility(View.VISIBLE);
-            mFlashButton.setVisibility(View.GONE);
-            mStartRecordingButton.setVisibility(View.GONE);
-            mFloatingButtonsLayout.setVisibility(View.GONE);
-            mEndCallButton.setVisibility(View.GONE);
-            mRenderHolder.setVisibility(View.GONE);
+            mHistoryScreen.setVisibility(VISIBLE);
+            mFlashButton.setVisibility(GONE);
+            mStartRecordingButton.setVisibility(GONE);
+            mFloatingButtonsLayout.setVisibility(GONE);
+            mEndCallButton.setVisibility(GONE);
+            mRenderHolder.setVisibility(GONE);
+            mExtraButtons.setVisibility(GONE);
 
             fileButtonHelper.GetData();
         });
 
         mPlusButton.setOnClickListener(v ->
         {
-            if(mSpawnButtonLayout.getVisibility() == View.VISIBLE)
+            if(mSpawnButtonLayout.getVisibility() == VISIBLE)
             {
-                mSpawnButtonLayout.setVisibility(View.GONE);
+                mSpawnButtonLayout.setVisibility(GONE);
             }
             else
             {
-                mSpawnButtonLayout.setVisibility(View.VISIBLE);
+                mSpawnButtonLayout.setVisibility(VISIBLE);
             }
         });
 
@@ -664,6 +624,19 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     int count = 0;
     int width;
 
+    public Bitmap GetUsetProfilePhoto ()
+    {
+        LoginDatabaseHelper loginHelper = new LoginDatabaseHelper(currentActivity);
+        Cursor data = loginHelper.showData();
+        data.moveToFirst();
+        String imageName = data.getString(1) + "_PIC.jpg";
+        userName = data.getString(2);
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        return BitmapFactory.decodeFile(LoginUIHandler.filePath + "/" + imageName, options);
+    }
+
     public void showNotification(Context context, String title, String body, Intent intent)
     {
         notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -748,14 +721,15 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
             drawer.closeDrawers();
         }
-        if(mHistoryScreen.getVisibility() == View.VISIBLE)
+        if(mHistoryScreen.getVisibility() == VISIBLE)
         {
-            mHistoryScreen.setVisibility(View.GONE);
-            mFloatingButtonsLayout.setVisibility(View.VISIBLE);
-            mFlashButton.setVisibility(View.VISIBLE);
-            mStartRecordingButton.setVisibility(View.VISIBLE);
-            mEndCallButton.setVisibility(View.VISIBLE);
-            mRenderHolder.setVisibility(View.VISIBLE);
+            mHistoryScreen.setVisibility(GONE);
+            mFloatingButtonsLayout.setVisibility(VISIBLE);
+            mFlashButton.setVisibility(VISIBLE);
+            mStartRecordingButton.setVisibility(VISIBLE);
+            mEndCallButton.setVisibility(VISIBLE);
+            mRenderHolder.setVisibility(VISIBLE);
+            mExtraButtons.setVisibility(VISIBLE);
         }
     }
 
@@ -882,23 +856,23 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         if(isSmall)
         {
             Log.d(TAG, "Screen is small");
-            currentRender.setVisibility(View.GONE);
-            mEndCall.setVisibility(View.GONE);
-            mPlusButton.setVisibility(View.GONE);
-            mSpawnButtonLayout.setVisibility(View.GONE);
-            mFlashButton.setVisibility(View.GONE);
-            mStartRecordingButton.setVisibility(View.GONE);
+            currentRender.setVisibility(GONE);
+            mEndCall.setVisibility(GONE);
+            mPlusButton.setVisibility(GONE);
+            mSpawnButtonLayout.setVisibility(GONE);
+            mFlashButton.setVisibility(GONE);
+            mStartRecordingButton.setVisibility(GONE);
         }
         else
         {
             Log.d(TAG, "Screen is big");
-            currentRender.setVisibility(View.VISIBLE);
-            if((mHistoryScreen.getVisibility() != View.VISIBLE))
+            currentRender.setVisibility(VISIBLE);
+            if((mHistoryScreen.getVisibility() != VISIBLE))
             {
-                mEndCall.setVisibility(View.VISIBLE);
+                mEndCall.setVisibility(VISIBLE);
 
-                mFlashButton.setVisibility(View.VISIBLE);
-                mStartRecordingButton.setVisibility(View.VISIBLE);
+                mFlashButton.setVisibility(VISIBLE);
+                mStartRecordingButton.setVisibility(VISIBLE);
             }
         }
     }
@@ -951,12 +925,12 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         RelativeLayout mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
         if(!videoView)
         {
-            mRenderHolder.setVisibility(View.VISIBLE);
+            mRenderHolder.setVisibility(VISIBLE);
             videoView = true;
         }
         else
         {
-            mRenderHolder.setVisibility(View.GONE);
+            mRenderHolder.setVisibility(GONE);
             videoView = false;
         }
     }

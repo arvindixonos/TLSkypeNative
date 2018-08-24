@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public class FTPManager extends AsyncTask {
 
@@ -67,31 +68,30 @@ public class FTPManager extends AsyncTask {
 
             ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 
-            BufferedInputStream buffIn = null;
-            final File file = new File(filePath);
-
-            buffIn = new BufferedInputStream(fileInputStream, (int)file.length());
-            ftpClient.enterLocalPassiveMode();
-
-            streamListener = new CopyStreamAdapter()
-            {
-
-                @Override
-                public void bytesTransferred(long totalBytesTransferred,
-                                             int bytesTransferred, long streamSize)
-                {
-                    progress = (int) (totalBytesTransferred * 100 / file.length());
-                    if (totalBytesTransferred == file.length())
-                    {
-                        removeCopyStreamListener(streamListener);
-                    }
-                }
-
-            };
-            ftpClient.setCopyStreamListener(streamListener);
-
             if(uploadORdownload == 1)
             {
+                BufferedInputStream buffIn = null;
+                final File file = new File(filePath);
+
+                buffIn = new BufferedInputStream(fileInputStream, (int)file.length());
+                ftpClient.enterLocalPassiveMode();
+
+                streamListener = new CopyStreamAdapter()
+                {
+
+                    @Override
+                    public void bytesTransferred(long totalBytesTransferred,
+                                                 int bytesTransferred, long streamSize)
+                    {
+                        progress = (int) (totalBytesTransferred * 100 / file.length());
+                        if (totalBytesTransferred == file.length())
+                        {
+                            removeCopyStreamListener(streamListener);
+                        }
+                    }
+
+                };
+                ftpClient.setCopyStreamListener(streamListener);
                 Log.d(TAG, fileInputStream.available() + " ");
 
                 success = ftpClient.storeFile(fileName, buffIn);
@@ -111,23 +111,22 @@ public class FTPManager extends AsyncTask {
             }
             else
             {
-                File downloadDir = new File("/sdcard/ReceivedFiles");
+                File downloadDir = new File(filePath);
                 if (!downloadDir.exists())
                 {
                     downloadDir.mkdirs();
                 }
 
-                File downloadedFile = new File(filePath);
+                File downloadedFile = new File(filePath + "/" + fileName);
                 if (!downloadedFile.exists())
                 {
                     downloadedFile.createNewFile();
                 }
 
-                FileOutputStream fos = new FileOutputStream(filePath);
-                success = ftpClient.retrieveFile(GetFileName(filePath), fos);
+                FileOutputStream fos = new FileOutputStream(filePath + "/" + fileName);
+                success = ftpClient.retrieveFile(fileName, fos);
                 if(success)
                 {
-                    ToastFunction("Successfully Downloaded File " + GetFileName(filePath));
                     transferSuccess = true;
                     File thisFile = new File(filePath);
                     String pathName = "";
@@ -135,10 +134,6 @@ public class FTPManager extends AsyncTask {
                     {
 
                     }
-                }
-                else
-                {
-                    ToastFunction(" Failed to Downloaded File " + GetFileName(filePath));
                 }
 
                 fos.close();

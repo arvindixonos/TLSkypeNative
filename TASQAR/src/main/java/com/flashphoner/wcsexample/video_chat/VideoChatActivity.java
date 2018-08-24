@@ -1,8 +1,6 @@
 package com.flashphoner.wcsexample.video_chat;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.PictureInPictureParams;
 import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -16,31 +14,21 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
-import android.media.Image;
-import android.media.AudioManager;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.PowerManager;
 import android.os.SystemClock;
-import android.provider.MediaStore;
 import android.provider.Settings;
-import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.util.Rational;
 import android.view.Display;
-import android.view.KeyEvent;
 import android.view.MotionEvent;
-import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup;
@@ -50,17 +38,14 @@ import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.flashphoner.fpwcsapi.Flashphoner;
-import com.flashphoner.fpwcsapi.MediaDeviceList;
 import com.flashphoner.fpwcsapi.bean.Connection;
 import com.flashphoner.fpwcsapi.bean.Data;
-import com.flashphoner.fpwcsapi.layout.PercentFrameLayout;
 import com.flashphoner.fpwcsapi.room.Message;
 import com.flashphoner.fpwcsapi.room.Participant;
 import com.flashphoner.fpwcsapi.room.Room;
@@ -74,12 +59,7 @@ import com.flashphoner.fpwcsapi.session.Stream;
 import com.flashphoner.fpwcsapi.webrtc.MediaDevice;
 import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
 
-import com.flashphoner.fpwcsapi.ws.CallArguments;
-import com.flashphoner.fpwcsapi.ws.WSMessage;
-import com.flashphoner.fpwcsapi.ws.WebSocketChannelClient;
-import com.flashphoner.fpwcsapi.ws.WebSocketChannelEvents;
 import com.google.ar.core.Anchor;
-import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
@@ -91,21 +71,13 @@ import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
-import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.obsez.android.lib.filechooser.tool.DirAdapter;
 
 import org.android.opensource.libraryyuv.Libyuv;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.math3.complex.Quaternion;
 import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
-import org.webrtc.CameraEnumerationAndroid;
-import org.webrtc.RendererCommon;
 import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturerAndroid;
 
@@ -114,32 +86,16 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.sql.Time;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
-
-import processing.android.PFragment;
-import processing.core.PVector;
-import shapes3d.utils.MeshSection;
-import shapes3d.utils.P_Bezier3D;
 
 
 /**
@@ -458,7 +414,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         uiHandler = new MainUIHandler(Instance);
 
-        loginName = findViewById(R.id.UserName);
+        loginName = findViewById(R.id.ProfileName);
         loginName.setText(Build.MODEL);
 
         localRenderer.setMirror(true);

@@ -34,7 +34,6 @@
         android:layout_marginStart="8dp"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="adish@takeleap.in"
         app:layout_constraintStart_toEndOf="@+id/SI_NameText"
         app:layout_constraintTop_toTopOf="@+id/SI_NameText" />
 
@@ -46,7 +45,6 @@
         android:ems="10"
         android:inputType="textPersonName"
         android:password="true"
-        android:text="Hello9!?"
         app:layout_constraintStart_toEndOf="@+id/SI_PasswordText"
         app:layout_constraintTop_toTopOf="@+id/SI_PasswordText" />
 

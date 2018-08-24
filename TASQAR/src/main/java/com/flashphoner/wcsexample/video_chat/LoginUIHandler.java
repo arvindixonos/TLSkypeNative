@@ -1,8 +1,12 @@
 package com.flashphoner.wcsexample.video_chat;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.icu.text.SimpleDateFormat;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.constraint.ConstraintLayout;
@@ -28,9 +32,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,12 +44,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import processing.core.PShapeSVG;
+
 public class LoginUIHandler
 {
     private Activity currentActivity;
     private static String TAG = "TLSKYPE";
     private AppManager  manager;
     private int         currentScreen;
+    private LoginDatabaseHelper loginDB;
+    private String[]    userData;
+
+    public  final static  String filePath = Environment.getExternalStorageDirectory().getPath() + "/TASQAR/ReceivedFiles/UserData/";
 
     private FloatingActionButton    SA_BackButton;
 
@@ -51,7 +63,7 @@ public class LoginUIHandler
     private EditText    SI_PasswordField;
     private EditText    SI_UserIDField;
 
-    private Button SI_SubmitButton;
+    private Button      SI_SubmitButton;
     private Button      SI_SignUpButton;
     //SI UI Elements
 
@@ -109,6 +121,7 @@ public class LoginUIHandler
         manager = managerClass;
         getNextUserId();
 
+        loginDB = new LoginDatabaseHelper(currentActivity);
         SA_BackButton = currentActivity.findViewById(R.id.SA_BackButton);
 
         //Screens
@@ -144,16 +157,7 @@ public class LoginUIHandler
 //        SU_PhoneFieldImage = currentActivity.findViewById(R.id.SU_PhoneErrorImage);
         //SU Screen
 
-        if(SI_SignUpButton != null)
-        {
-            Log.d(TAG, "TAG");
-//            Log.d(TAG, SI_SignUpButton.getTransitionName());
-        }
-
-        if(SU_SubmitPasswordButton != null)
-        {
-            Log.d(TAG, "Works");
-        }
+        TryLogin();
 
         SA_BackButton.setOnClickListener(new View.OnClickListener()
         {
@@ -277,7 +281,6 @@ public class LoginUIHandler
             }
         });
 
-        SU_UserImageButton = currentActivity.findViewById(R.id.SU_ProfilePic);
         SU_UserImageButton.setOnClickListener(v -> new ChooserDialog(currentActivity)
                 .withStartFile(null)
 //                        .withResources(R.string.title_choose_any_file, R.string.title_choose, R.string.dialog_cancel)
@@ -317,6 +320,23 @@ public class LoginUIHandler
                 .show());
     }
 
+    void SignOut ()
+    {
+        loginDB.deleteData("0");
+    }
+
+    private void TryLogin ()
+    {
+        Cursor data = loginDB.showData();
+        data.moveToFirst();
+        if(data.getCount() == 0)
+        {
+            return;
+        }
+        DownloadFile(data.getString(1) + "_PIC.jpg");
+        Login(data.getString(3), data.getString(5));
+    }
+
     public void UploadFile(final String filePath, final InputStream inputStream)
     {
 
@@ -346,9 +366,12 @@ public class LoginUIHandler
                         ftpManager.execute();
                         while (!ftpManager.transferSuccess)
                         {
-                            try {
+                            try
+                            {
                                 Thread.sleep(10);
-                            } catch (InterruptedException e) {
+                            }
+                            catch (InterruptedException e)
+                            {
                                 e.printStackTrace();
                             }
                         }
@@ -362,9 +385,47 @@ public class LoginUIHandler
         }).start();
     }
 
+    private void DownloadFile (final String fileName)
+    {
+        final FTPManager ftpManager = new FTPManager();
+        ftpManager.uploadORdownload = 0;
+        ftpManager.applicationContext = currentActivity.getApplicationContext();
+        ftpManager.filePath = Environment.getExternalStorageDirectory().getPath() + "/TASQAR/ReceivedFiles/UserData/";
+        ftpManager.fileName = fileName;
+
+        new Thread(new Runnable()
+        {
+            @Override
+            public void run() {
+
+                Looper looper = mHandler.getLooper();
+                looper.prepare();
+                mHandler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        ftpManager.execute();
+                        while (!ftpManager.transferSuccess)
+                        {
+                            try
+                            {
+                                Thread.sleep(10);
+                            }
+                            catch (InterruptedException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+                        Log.d(TAG, "Complete");
+                    }
+                });
+            }
+        }).start();
+    }
+
     public void isEmailPresent(final String emailId)
     {
-
         if(emailIDCheckThread != null && emailIDCheckThread.isAlive())
         {
             emailIDCheckThread.interrupt();
@@ -800,7 +861,46 @@ public class LoginUIHandler
         return false;
     }
 
-    public  void Login(final String userID, final String Password)
+    private void OnLoginSuccess ()
+    {
+        Cursor data = loginDB.showData();
+        data.moveToFirst();
+        if(data.getCount() == 0)
+        {
+            new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    GetUserDetails(SI_UserIDField.getText().toString());
+                    while(userData == null)
+                    {
+                        try
+                        {
+                            Thread.sleep(10);
+                        }
+                        catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                    loginDB.addData
+                    (
+                            userData[0],                        //User ID
+                            userData[1],                        //Name
+                            SI_UserIDField.getText().toString(),//Email
+                            userData[2],                        //Number
+                            userData[3],                        //Password
+                            userData[4],                        //Hierarchy
+                            userData[5]                         //Role
+                    );
+
+                }
+            }).start();
+        }
+    }
+
+    private void Login(final String userID, final String Password)
     {
         if (loginThread != null && loginThread.isAlive())
         {
@@ -821,25 +921,26 @@ public class LoginUIHandler
                 Node userIDNode = doc.getElementsByTagName("int").item(0);
                 NodeList list = userIDNode.getChildNodes();
 
-                for (int i = 0; i < list.getLength(); i++)
-                {
-                    Node node = list.item(i);
+                    Node node = list.item(0);
                     String value = node.getNodeValue();
 
                     boolean submitted = Integer.parseInt(value) == 1;
 
+
+
                     if (submitted)
-                        currentActivity.runOnUiThread(new Runnable() {
+                        currentActivity.runOnUiThread(new Runnable()
+                        {
                             @Override
-                            public void run() {
+                            public void run()
+                            {
+                                OnLoginSuccess();
                                 manager.SetupUserScreen();
                             }
                         });
                     else
                         Log.e(TAG, "NotDone");
 
-                    break;
-                }
 
             } catch (IOException | ParserConfigurationException | SAXException e) {
                 e.printStackTrace();
@@ -847,6 +948,45 @@ public class LoginUIHandler
         });
 
         loginThread.start();
+    }
+
+    Thread getUserThread = null;
+    public  void GetUserDetails(final String emailID)
+    {
+        if (getUserThread != null && getUserThread.isAlive())
+        {
+            getUserThread.interrupt();
+            getUserThread = null;
+        }
+
+        getUserThread = new Thread(() ->
+        {
+            URL url = null;
+            try
+            {
+                url = new URL("http://13.127.231.176/Tasqar/TasqarWebService.asmx/UserData?emailID=" + emailID);
+                URLConnection con = url.openConnection();
+                DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+                Document doc = docBuilder.parse(con.getInputStream());
+
+                Log.d(TAG, "Document : " + doc.getElementsByTagName("string").item(0));
+
+                Node userIDNode = doc.getElementsByTagName("string").item(0);
+                NodeList list = userIDNode.getChildNodes();
+                Node node = list.item(0);
+                String value = node.getNodeValue();
+
+                if(!value.equals(""))
+                {
+                    userData = value.split(";");
+                }
+            } catch (IOException | ParserConfigurationException | SAXException e) {
+                e.printStackTrace();
+            }
+        });
+
+        getUserThread.start();
     }
 
     public void backKey ()
