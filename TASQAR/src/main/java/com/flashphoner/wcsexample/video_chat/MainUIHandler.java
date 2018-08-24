@@ -487,15 +487,20 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             }
         });
 
-        mEndCallButton.setOnClickListener(v ->
+        mEndCallButton.setOnClickListener(new View.OnClickListener()
         {
-            ToggleVideoView();
-            chatActivity.SendMessage("Disconnect");
-            chatActivity.Disconnect();
-            ChangeActivity();
-            if(flashOn)
+            @Override
+            public void onClick(View v)
             {
-                mFlashButton.callOnClick();
+                ToggleVideoView();
+                chatActivity.CleanUp();
+                chatActivity.SendMessage("Disconnect");
+                chatActivity.Disconnect();
+                ChangeActivity();
+                if(flashOn)
+                {
+                    mFlashButton.callOnClick();
+                }
             }
         });
 
