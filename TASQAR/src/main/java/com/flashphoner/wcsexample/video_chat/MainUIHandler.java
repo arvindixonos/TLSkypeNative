@@ -495,7 +495,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             ChangeActivity();
             if(flashOn)
             {
-                mFlashButton.callOnClick();
+                ToggleVideoView();
+                chatActivity.CleanUp();
+                chatActivity.SendMessage("Disconnect");
+                chatActivity.Disconnect();
+                ChangeActivity();
             }
         });
 

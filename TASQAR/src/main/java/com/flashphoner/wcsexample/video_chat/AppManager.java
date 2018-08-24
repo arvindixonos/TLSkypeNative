@@ -160,7 +160,6 @@ public class AppManager extends AppCompatActivity
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
         {
-
             RequestAllPermissions();
         }
         else
