@@ -11,6 +11,7 @@
     <string name="_7">7</string>
     <string name="_8">8</string>
     <string name="_9">9</string>
+    <string name="Lesser">&lt;</string>
     <string-array name="planets_array">
         <item>Mercury</item>
         <item>Venus</item>

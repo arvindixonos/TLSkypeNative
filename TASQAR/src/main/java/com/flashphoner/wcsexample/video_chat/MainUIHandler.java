@@ -183,6 +183,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     LinearLayout historyScreen;
 
     Button mButton;
+    TempButton mTempButton;
     Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
@@ -208,9 +209,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     }
 
     public MainUIHandler (Activity activity)
-    {
-
-//        WCSAudioManager wcsAudioManager = WCSAudioManager.create(getApplicationContext(), deviceStateChangedListener);
+    {//        WCSAudioManager wcsAudioManager = WCSAudioManager.create(getApplicationContext(), deviceStateChangedListener);
 //        deviceStateChangedListener = new Runnable() {
 //            @Override
 //            public void run()
@@ -232,7 +231,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 //            }
 //            Log.d(TAG, aud.name());
 //        }
-
         currentActivity = activity;
 
         width = GetScreenWidth();
@@ -281,12 +279,16 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
 
-        TempButton temp = currentActivity.findViewById(R.id.tempButton);
-        temp.layoutHolder = currentActivity.findViewById(R.id.ConLayout);
-        temp.mArrowModeButton = currentActivity.findViewById(R.id.ArrowModeButton);
-        temp.mDrawModeButton = currentActivity.findViewById(R.id.DrawModeButton);
-        temp.mPointOrPlaneButton = currentActivity.findViewById(R.id.PointOrPlaneButton);
-        temp.InitialiseButtons();
+        mTempButton = currentActivity.findViewById(R.id.tempButton);
+        mTempButton.layoutHolder = currentActivity.findViewById(R.id.ConLayout);
+        mTempButton.mArrowModeButton = currentActivity.findViewById(R.id.ArrowModeButton);
+        mTempButton.mDrawModeButton = currentActivity.findViewById(R.id.DrawModeButton);
+        mTempButton.mPointOrPlaneButton = currentActivity.findViewById(R.id.PointOrPlaneButton);
+        mTempButton.mArrowModeFloatingButton = currentActivity.findViewById(R.id.ArrowModeFloatingButton);
+        mTempButton.mDrawModeFloatingButton = currentActivity.findViewById(R.id.DrawModeFloatingButton);
+        mTempButton.mPointOrPlaneModeFloatingButton = currentActivity.findViewById(R.id.PointOrPlaneFloatingButton);
+        mTempButton.chatActivity = chatActivity;
+        mTempButton.InitialiseButtons();
 
         android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
                 (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -959,4 +961,3 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }
     }
 }
-

@@ -50,8 +50,8 @@ public class AppManager extends AppCompatActivity
         this.runOnUiThread(new Runnable()
         {
             @Override
-            public void run() {
-
+            public void run()
+            {
                 Toast toast = Toast.makeText(applicationContext, message, Toast.LENGTH_LONG);
                 toast.show();
             }
@@ -259,6 +259,14 @@ public class AppManager extends AppCompatActivity
         Toast toast = Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG);
         toast.show();
     }
+
+
+    @Override
+    public void onBackPressed()
+    {
+        loginUIHandler.backKey();
+    }
+
 //    MySurfaceView mySurfaceView;
 //
 //    /** Called when the activity is first created. */

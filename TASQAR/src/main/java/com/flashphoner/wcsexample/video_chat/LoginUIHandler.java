@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -42,9 +43,12 @@ public class LoginUIHandler
     private Activity currentActivity;
     private static String TAG = "TLSKYPE";
     private AppManager  manager;
+    private int         currentScreen;
+
+    private FloatingActionButton    SA_BackButton;
 
     //SI UI Elements
-    private EditText SI_PasswordField;
+    private EditText    SI_PasswordField;
     private EditText    SI_UserIDField;
 
     private Button SI_SubmitButton;
@@ -67,12 +71,12 @@ public class LoginUIHandler
 
     private ImageButton SU_UserImageButton;
 
-    private ImageView SU_NameFieldImage;
-    private ImageView   SU_EmailFieldImage;
-    private ImageView   SU_PhoneFieldImage;
-    private ImageView   SU_ReEnterErrorImage;
-    private ImageView   SU_PasswordErrorImage;
-    private ImageView   SU_OTPErrorImage;
+//    private ImageView SU_NameFieldImage;
+//    private ImageView   SU_EmailFieldImage;
+//    private ImageView   SU_PhoneFieldImage;
+//    private ImageView   SU_ReEnterErrorImage;
+//    private ImageView   SU_PasswordErrorImage;
+//    private ImageView   SU_OTPErrorImage;
 
     //SU UI Elements
 
@@ -105,6 +109,8 @@ public class LoginUIHandler
         manager = managerClass;
         getNextUserId();
 
+        SA_BackButton = currentActivity.findViewById(R.id.SA_BackButton);
+
         //Screens
         mLoginScreen = currentActivity.findViewById(R.id.SignInScreen);
         mSignUpScreen = currentActivity.findViewById(R.id.SignUpScreen);
@@ -133,9 +139,9 @@ public class LoginUIHandler
 
         SU_NextButton = currentActivity.findViewById(R.id.SU_NextButton);
 
-        SU_NameFieldImage = currentActivity.findViewById(R.id.SU_NameErrorImage);
-        SU_EmailFieldImage = currentActivity.findViewById(R.id.SU_EmailErrorImage);
-        SU_PhoneFieldImage = currentActivity.findViewById(R.id.SU_PhoneErrorImage);
+//        SU_NameFieldImage = currentActivity.findViewById(R.id.SU_NameErrorImage);
+//        SU_EmailFieldImage = currentActivity.findViewById(R.id.SU_EmailErrorImage);
+//        SU_PhoneFieldImage = currentActivity.findViewById(R.id.SU_PhoneErrorImage);
         //SU Screen
 
         if(SI_SignUpButton != null)
@@ -149,6 +155,15 @@ public class LoginUIHandler
             Log.d(TAG, "Works");
         }
 
+        SA_BackButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                backKey();
+            }
+        });
+
         SI_SignUpButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -158,6 +173,8 @@ public class LoginUIHandler
                 mSignUpScreen.setVisibility(View.VISIBLE);
                 mDetailsScreen.setVisibility(View.VISIBLE);
                 mPasswordScreen.setVisibility(View.GONE);
+                SA_BackButton.setVisibility(View.VISIBLE);
+                currentScreen = 1;
             }
         });
 
@@ -174,12 +191,10 @@ public class LoginUIHandler
             }
         });
 
-        Log.d(TAG, "TAG1");
         SU_NextButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "TAG2");
                 OnSubmitClicked();
             }
         });
@@ -197,7 +212,7 @@ public class LoginUIHandler
                 currentActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        SU_NameFieldImage.setVisibility(View.INVISIBLE);
+//                        SU_NameFieldImage.setVisibility(View.INVISIBLE);
                     }
                 });
 
@@ -221,7 +236,7 @@ public class LoginUIHandler
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count)
             {
-                SU_EmailFieldImage.setVisibility(View.INVISIBLE);
+//                SU_EmailFieldImage.setVisibility(View.INVISIBLE);
                 String email = SU_EmailField.getText().toString();
 
                 if (isValidEmail(email))
@@ -249,7 +264,7 @@ public class LoginUIHandler
                 currentActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        SU_PhoneFieldImage.setVisibility(View.INVISIBLE);
+//                        SU_PhoneFieldImage.setVisibility(View.INVISIBLE);
                     }
                 });
 
@@ -378,15 +393,15 @@ public class LoginUIHandler
 
                         isEmailPresent = !(Integer.parseInt(value) == 1);
 
-                        currentActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if(!isEmailPresent)
-                                    SU_EmailFieldImage.setVisibility(View.VISIBLE);
-                                else
-                                    SU_EmailFieldImage.setVisibility(View.INVISIBLE);
-                            }
-                        });
+//                        currentActivity.runOnUiThread(new Runnable() {
+//                            @Override
+//                            public void run() {
+//                                if(!isEmailPresent)
+//                                    SU_EmailFieldImage.setVisibility(View.VISIBLE);
+//                                else
+//                                    SU_EmailFieldImage.setVisibility(View.INVISIBLE);
+//                            }
+//                        });
 
                         break;
                     }
@@ -623,10 +638,11 @@ public class LoginUIHandler
     {
         mDetailsScreen.setVisibility(View.GONE);
         mPasswordScreen.setVisibility(View.VISIBLE);
+        currentScreen = 2;
 
         Log.d(TAG, "OpenOTPPasswordWindow");
 
-        SU_PasswordErrorImage = currentActivity.findViewById(R.id.SU_PasswordError);
+//        SU_PasswordErrorImage = currentActivity.findViewById(R.id.SU_PasswordError);
         SU_PasswordText = currentActivity.findViewById(R.id.SU_PasswordField);
         SU_PasswordText.addTextChangedListener(new TextWatcher()
         {
@@ -640,12 +656,12 @@ public class LoginUIHandler
 
                 isPasswordPresent = isValidPassword(SU_PasswordText.getText().toString());
 
-                currentActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        SU_PasswordErrorImage.setVisibility(isPasswordPresent ? View.INVISIBLE : View.VISIBLE);
-                    }
-                });
+//                currentActivity.runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        SU_PasswordErrorImage.setVisibility(isPasswordPresent ? View.INVISIBLE : View.VISIBLE);
+//                    }
+//                });
 
             }
 
@@ -655,7 +671,7 @@ public class LoginUIHandler
             }
         });
 
-        SU_ReEnterErrorImage = currentActivity.findViewById(R.id.SU_ReEnterError);
+//        SU_ReEnterErrorImage = currentActivity.findViewById(R.id.SU_ReEnterError);
         SU_ReEnterText = currentActivity.findViewById(R.id.SU_ReEnterField);
         SU_ReEnterText.addTextChangedListener(new TextWatcher() {
             @Override
@@ -666,13 +682,13 @@ public class LoginUIHandler
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
 
-                currentActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        SU_ReEnterErrorImage.setVisibility(View.INVISIBLE);
-
-                    }
-                });
+//                currentActivity.runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        SU_ReEnterErrorImage.setVisibility(View.INVISIBLE);
+//
+//                    }
+//                });
 
                 String password = SU_PasswordText.getText().toString();
 
@@ -683,12 +699,12 @@ public class LoginUIHandler
 
                     isReEnterPresent = reenter.equals(password);
 
-                    currentActivity.runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            SU_ReEnterErrorImage.setVisibility(isReEnterPresent ? View.INVISIBLE : View.VISIBLE);
-                        }
-                    });
+//                    currentActivity.runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            SU_ReEnterErrorImage.setVisibility(isReEnterPresent ? View.INVISIBLE : View.VISIBLE);
+//                        }
+//                    });
                 }
             }
 
@@ -698,7 +714,7 @@ public class LoginUIHandler
             }
         });
 
-        SU_OTPErrorImage = currentActivity.findViewById(R.id.SU_OTPError);
+//        SU_OTPErrorImage = currentActivity.findViewById(R.id.SU_OTPError);
         SU_OTPField = currentActivity.findViewById(R.id.SU_OTPField);
         SU_OTPField.addTextChangedListener(new TextWatcher() {
             @Override
@@ -712,7 +728,7 @@ public class LoginUIHandler
                 currentActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        SU_OTPErrorImage.setVisibility(View.INVISIBLE);
+//                        SU_OTPErrorImage.setVisibility(View.INVISIBLE);
                     }
                 });
 
@@ -721,7 +737,7 @@ public class LoginUIHandler
                 currentActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        SU_OTPErrorImage.setVisibility(isOTPPresent ? View.INVISIBLE : View.VISIBLE);
+//                        SU_OTPErrorImage.setVisibility(isOTPPresent ? View.INVISIBLE : View.VISIBLE);
                     }
                 });
             }
@@ -742,14 +758,14 @@ public class LoginUIHandler
             }
         });
 
-        currentActivity.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                SU_PasswordErrorImage.setVisibility(View.INVISIBLE);
-                SU_OTPErrorImage.setVisibility(View.INVISIBLE);
-                SU_ReEnterErrorImage.setVisibility(View.INVISIBLE);
-            }
-        });
+//        currentActivity.runOnUiThread(new Runnable() {
+//            @Override
+//            public void run() {
+//                SU_PasswordErrorImage.setVisibility(View.INVISIBLE);
+//                SU_OTPErrorImage.setVisibility(View.INVISIBLE);
+//                SU_ReEnterErrorImage.setVisibility(View.INVISIBLE);
+//            }
+//        });
     }
 
     boolean isValidEmail(String email)
@@ -831,5 +847,30 @@ public class LoginUIHandler
         });
 
         loginThread.start();
+    }
+
+    public void backKey ()
+    {
+        switch(currentScreen)
+        {
+            case 0:
+                System.exit(0);
+                break;
+            case 1:
+                mLoginScreen.setVisibility(View.VISIBLE);
+                mSignUpScreen.setVisibility(View.GONE);
+                mDetailsScreen.setVisibility(View.VISIBLE);
+                mPasswordScreen.setVisibility(View.GONE);
+                SA_BackButton.setVisibility(View.GONE);
+                currentScreen = 0;
+                break;
+            case 2:
+                mLoginScreen.setVisibility(View.GONE);
+                mSignUpScreen.setVisibility(View.VISIBLE);
+                mDetailsScreen.setVisibility(View.VISIBLE);
+                mPasswordScreen.setVisibility(View.GONE);
+                currentScreen = 1;
+                break;
+        }
     }
 }

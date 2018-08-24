@@ -17,6 +17,25 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/bg" />
 
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/SA_BackButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_weight="1"
+        android:clickable="true"
+        android:focusable="auto"
+        android:scaleX="0.85"
+        android:scaleY="0.85"
+        android:visibility="gone"
+        app:backgroundTint="@color/BackColor"
+        app:elevation="0dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:rippleColor="@android:color/holo_purple"
+        app:srcCompat="@drawable/button_back" />
+
     <include
         android:id="@+id/PINLayout"
         layout="@layout/activity_pin"

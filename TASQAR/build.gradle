@@ -4,11 +4,13 @@ apply plugin: 'com.github.triplet.play'
 
 Properties signingProps = null
 
-android {
+android
+{
     compileSdkVersion 27
     buildToolsVersion '27.0.3'
 
-    defaultConfig {
+    defaultConfig
+    {
         applicationId "com.flashphoner.wcsexample.video_chat"
         minSdkVersion 24
         targetSdkVersion 27
@@ -17,12 +19,15 @@ android {
     }
 
     def signingPropsFile = System.getenv('SIGNING_PROPERTIES')
-    if (signingPropsFile && new File(signingPropsFile).exists()) {
+    if (signingPropsFile && new File(signingPropsFile).exists())
+    {
         signingProps = new Properties()
         signingProps.load(new FileInputStream(file(signingPropsFile)))
 
-        signingConfigs {
-            release {
+        signingConfigs
+        {
+            release
+            {
                 storeFile file(signingProps['keystore'])
                 storePassword signingProps['keystore.password']
                 keyAlias signingProps['key.alias']
@@ -31,59 +36,69 @@ android {
         }
     }
 
-    buildTypes {
-        release {
+    buildTypes
+    {
+        release
+        {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 
-            if(signingProps) {
+            if(signingProps)
+            {
                 signingConfig signingConfigs.release
             }
         }
     }
-    compileOptions {
+    compileOptions
+    {
         targetCompatibility 1.8
         sourceCompatibility 1.8
     }
 
-    lintOptions {
+    lintOptions
+    {
         checkReleaseBuilds false
         abortOnError false
     }
 }
 
-ext {
+ext
+{
     jmeVersion = "[3.2,)"
 }
 
-dependencies {
-    compile fileTree(include: ['*.jar'], dir: 'libs')
-    implementation 'com.google.ar:core:1.4.0'
-    testCompile 'junit:junit:4.12'
-    compile 'com.android.support:appcompat-v7:27.1.1'
-    compile 'com.android.support:design:27.1.1'
-    implementation 'com.google.code.gson:gson:2.2.4'
-    implementation project(':commons-net-3.6')
-    implementation project(':autobahn.0.5.2')
-    implementation 'com.android.support.constraint:constraint-layout:1.1.2'
-    implementation 'com.android.support:gridlayout-v7:27.1.1'
-    implementation 'de.javagl:obj:0.2.1'
-    implementation project(':libraryyuv')
-    implementation 'com.github.hedzr:android-file-chooser:83d0e18f63'
-    implementation project(':libjingle_peerconnection')
-    compile 'org.apache.commons:commons-lang3:3.7'
-    compile 'org.apache.commons:commons-math3:3.6.1'
-    //    implementation project(':arcore_client')
-    //    implementation project(':google_ar_required')
-    //noinspection GradleCompatible
-    compile 'com.google.android.support:wearable:1.1.+'
-    implementation project(':Shapes3D')
-    implementation project(':processing-core')
-    implementation project(':flashphoner')
-}
+dependencies
+        {
+            compile fileTree(include: ['*.jar'], dir: 'libs')
+            implementation 'com.google.ar:core:1.4.0'
+            testCompile 'junit:junit:4.12'
+            compile 'com.android.support:appcompat-v7:27.1.1'
+            compile 'com.android.support:design:27.1.1'
+            implementation 'com.google.code.gson:gson:2.2.4'
+            implementation project(':commons-net-3.6')
+            implementation project(':autobahn.0.5.2')
+            implementation 'com.android.support.constraint:constraint-layout:1.1.2'
+            implementation 'com.android.support:gridlayout-v7:27.1.1'
+            implementation 'de.javagl:obj:0.2.1'
+            implementation project(':libraryyuv')
+            implementation 'com.github.hedzr:android-file-chooser:83d0e18f63'
+            implementation project(':libjingle_peerconnection')
+            compile 'org.apache.commons:commons-lang3:3.7'
+            compile 'org.apache.commons:commons-math3:3.6.1'
+            compile 'de.hdodenhof:circleimageview:1.2.1'
+            //      implementation project(':arcore_client')
+            //      implementation project(':google_ar_required')
+            //      noinspection GradleCompatible
+            compile 'com.google.android.support:wearable:1.1.+'
+            implementation project(':Shapes3D')
+            implementation project(':processing-core')
+            implementation project(':flashphoner')
+        }
 
-play {
-    if(signingProps) {
+play
+{
+    if(signingProps)
+    {
         track = 'production'
         serviceAccountEmail = signingProps['service.account.email']
         pk12File = file(signingProps['service.account.pk12file'])

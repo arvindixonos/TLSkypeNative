@@ -220,7 +220,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     byte[]  ybuffer;
     byte[]  uvbuffer;
     byte[] frameData;
-    public GLSurfaceView glsurfaceView;
+    public  GLSurfaceView   glsurfaceView;
     private DisplayRotationHelper displayRotationHelper;
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
     private final PointRenderer      pointRenderer = new PointRenderer();
@@ -250,7 +250,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private FileOutputStream fileWriteStream = null;
 
     // Anchors created from taps used for object placing with a given color.
-    private static class ColoredAnchor {
+    private static class ColoredAnchor
+    {
         public final Anchor anchor;
         public final float[] color;
 
@@ -267,7 +268,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private int mHeight;
 
     @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated(GL10 gl, EGLConfig config)
+    {
         GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         Log.d(TAG, "SURFACE ASD PARAMS " + glsurfaceView.getWidth() + " " + glsurfaceView.getHeight());
@@ -295,7 +297,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
+    public void onSurfaceChanged(GL10 gl, int width, int height)
+    {
 
 //        width = 1280;
 //        height = 720;
@@ -336,7 +339,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
     }
 
-    public static VideoChatActivity getInstance() {
+    public static VideoChatActivity getInstance()
+    {
         if (Instance == null)
         {
             Instance = new VideoChatActivity();
@@ -400,7 +404,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    protected void onResume() {
+    protected void onResume()
+    {
         super.onResume();
 
         if (session != null) {
@@ -421,8 +426,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 //        if(screenRecorder != null)
 //            screenRecorder.ResumeRecording();
     }
-
-
 
     void SetupCallScreen ()
     {
@@ -657,7 +660,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
-    public void SavePicture() throws IOException {
+    public void SavePicture() throws IOException
+    {
         int pixelData[] = new int[screenWidth * screenHeight];
 
         // Read the pixels from the current GL frame.
@@ -696,7 +700,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         fos.close();
     }
 
-    public byte[] GetScreenPixels() throws IOException {
+    public byte[] GetScreenPixels() throws IOException
+    {
         buf.position(0);
 
         GLES20.glReadPixels(0, 0, screenWidth, screenHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
@@ -734,7 +739,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     }
 
     @Override
-    public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
+    public void onPreviewFrame(byte[] data, android.hardware.Camera camera)
+    {
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
@@ -858,12 +864,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 {
 //                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
 
-                    for (HitResult hit : frame.hitTest(tap)) {
-//                if (anchors.size() >= 20) {
-//                    anchors.get(0).anchor.detach();
-//                    anchors.remove(0);
-//                }
-//
+                    for (HitResult hit : frame.hitTest(tap))
+                    {
                         currentTrackable = hit.getTrackable();
                         hitPose = hit.getHitPose();
 
@@ -875,7 +877,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         {
                             if(pointsOrPlaneSpawn)
                             {
-//                        if(currentTrackable instanceof com.google.ar.core.Point)
                                 {
                                     SpawnArrow(hit, camera);
                                 }
@@ -883,9 +884,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             else
                             {
 //                        if(currentTrackable instanceof com.google.ar.core.Plane)
-                                {
-                                    SpawnArrow(hit, camera);
-                                }
+//                                {
+                                SpawnArrow(hit, camera);
+//                                }
                             }
                         }
 
@@ -964,8 +965,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     boolean openingARCORE = false;
     boolean arcoreRunning = false;
 
-    public void StopARCORE() {
-        if (session != null) {
+    public void StopARCORE()
+    {
+        if (session != null)
+        {
             session.pause();
             arcoreRunning = false;
         }

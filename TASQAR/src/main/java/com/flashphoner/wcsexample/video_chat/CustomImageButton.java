@@ -10,10 +10,14 @@ import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
+import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.AppCompatImageButton;
 import android.support.v7.widget.AppCompatImageView;
 import android.support.v7.widget.AppCompatTextView;
@@ -28,6 +32,8 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
 public class CustomImageButton extends AppCompatImageButton implements View.OnTouchListener
 {
@@ -85,11 +91,17 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
     private float yPos;
 
     private Context currentContext;
+    public VideoChatActivity chatActivity;
 
     private boolean moved = false;
     private boolean movedDown = false;
 
     public ConstraintLayout layoutHolder;
+
+    public FloatingActionButton mPointOrPlaneModeFloatingButton;
+    public FloatingActionButton mDrawModeFloatingButton;
+    public FloatingActionButton mArrowModeFloatingButton;
+
     public Button   mPointOrPlaneButton;
     public Button   mDrawModeButton;
     public Button   mArrowModeButton;
@@ -105,7 +117,7 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
             switch (event.getAction())
             {
                 case MotionEvent.ACTION_DOWN:
-                    Log.d(VideoChatActivity.TAG, "Tapped");
+                    Log.d(TAG, "Tapped");
                     startXPos = event.getX();
                     startYPos = event.getY();
                     moved = false;
@@ -116,7 +128,7 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
                         if ((startYPos + 50) < event.getY())
                         {
                             moved = true;
-                            Log.d(VideoChatActivity.TAG, "Moved BY :" + startYPos + "Y :" + event.getY());
+                            Log.d(TAG, "Moved BY :" + startYPos + "Y :" + event.getY());
 
                             MoveDrawer(event.getX(), event.getY());
                         }
@@ -125,14 +137,14 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
                         if ((startYPos + 50) > event.getY())
                         {
                             moved = true;
-                            Log.d(VideoChatActivity.TAG, "Moved");
+                            Log.d(TAG, "Moved");
                             MoveDrawer(event.getX(), event.getY());
                         }
                     }
                     break;
                 case MotionEvent.ACTION_UP:
 
-                    Log.d(VideoChatActivity.TAG, "Released");
+                    Log.d(TAG, "Released");
                     if(moved)
                     {
                         AdjustParams();
@@ -166,6 +178,21 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
             Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
             VideoChatActivity.getInstance().arrowMode = true;
         });
+
+        mPointOrPlaneModeFloatingButton.setOnClickListener(v ->
+        {
+            mPointOrPlaneButton.callOnClick();
+        });
+
+        mDrawModeFloatingButton.setOnClickListener(v ->
+        {
+            mDrawModeButton.callOnClick();
+        });
+
+        mArrowModeFloatingButton.setOnClickListener(v ->
+        {
+            mArrowModeButton.callOnClick();
+        });
     }
 
     public void AdjustParams ()
@@ -178,10 +205,51 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
         }
         else
         {
-            params.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 6, getResources().getDisplayMetrics());
+            params.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
             movedDown = false;
         }
         layoutHolder.setLayoutParams(params);
+    }
+
+    public void Close ()
+    {
+        if(!movedDown)
+            return;
+
+        ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) layoutHolder.getLayoutParams();
+        params.height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 4, getResources().getDisplayMetrics());
+        layoutHolder.setLayoutParams(params);
+        movedDown = false;
+    }
+
+    public void StartClose()
+    {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+
+
+                for(int i = 150; i >= 4; i -= 2)
+                {
+                    final int count = i;
+                    chatActivity.runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            Log.d(TAG, "Count :" + count);
+                            try {
+                                Thread.sleep(10);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            Close();
+                        }
+                    });
+                }
+
+            }
+        }).start();
     }
 
     public void MoveDrawer (float xPosition, float yPosition)
@@ -197,4 +265,84 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
     {
         return false;
     }
+}
+
+class CircularImageView extends AppCompatImageButton
+{
+
+    public CircularImageView( Context context )
+    {
+        super( context );
+    }
+
+    public CircularImageView( Context context, AttributeSet attrs )
+    {
+        super( context, attrs );
+    }
+
+    public CircularImageView( Context context, AttributeSet attrs, int defStyle )
+    {
+        super( context, attrs, defStyle );
+    }
+
+    @Override
+    protected void onDraw( @NonNull Canvas canvas )
+    {
+
+        Drawable drawable = getDrawable( );
+
+        if ( drawable == null )
+        {
+            return;
+        }
+
+        if ( getWidth( ) == 0 || getHeight( ) == 0 )
+        {
+            return;
+        }
+        Bitmap b = ( (BitmapDrawable) drawable ).getBitmap( );
+        Bitmap bitmap = b.copy( Bitmap.Config.ARGB_8888, true );
+
+        int w = getWidth( )/*, h = getHeight( )*/;
+
+        Bitmap roundBitmap = getCroppedBitmap( bitmap, w );
+        canvas.drawBitmap( roundBitmap, 0, 0, null );
+
+    }
+
+    private static Bitmap getCroppedBitmap( @NonNull Bitmap bmp, int radius )
+    {
+        Bitmap bitmap;
+
+        if ( bmp.getWidth( ) != radius || bmp.getHeight( ) != radius )
+        {
+            float smallest = Math.min( bmp.getWidth( ), bmp.getHeight( ) );
+            float factor = smallest / radius;
+            bitmap = Bitmap.createScaledBitmap( bmp, ( int ) ( bmp.getWidth( ) / factor ), ( int ) ( bmp.getHeight( ) / factor ), false );
+        }
+        else
+        {
+            bitmap = bmp;
+        }
+
+        Bitmap output = Bitmap.createBitmap( radius, radius,
+                Bitmap.Config.ARGB_8888 );
+        Canvas canvas = new Canvas( output );
+
+        final Paint paint = new Paint( );
+        final Rect rect = new Rect( 0, 0, radius, radius );
+
+        paint.setAntiAlias( true );
+        paint.setFilterBitmap( true );
+        paint.setDither( true );
+        canvas.drawARGB( 0, 0, 0, 0 );
+        paint.setColor( Color.parseColor( "#BAB399" ) );
+        canvas.drawCircle( radius / 2 + 0.7f,
+                radius / 2 + 0.7f, radius / 2 + 0.1f, paint );
+        paint.setXfermode( new PorterDuffXfermode( PorterDuff.Mode.SRC_IN ) );
+        canvas.drawBitmap( bitmap, rect, rect, paint );
+
+        return output;
+    }
+
 }

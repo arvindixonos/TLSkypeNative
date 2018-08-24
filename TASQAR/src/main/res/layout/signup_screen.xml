@@ -6,15 +6,21 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <ImageButton
+    <com.flashphoner.wcsexample.video_chat.CircularImageView
         android:id="@+id/SU_ProfilePic"
         android:layout_width="150dp"
         android:layout_height="150dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="30dp"
         android:adjustViewBounds="false"
-        android:rotation="-90"
+        android:background="@null"
+        android:backgroundTint="@null"
+        android:backgroundTintMode="@null"
         android:scaleType="fitCenter"
-        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@mipmap/ic_launcher" />
 
@@ -23,6 +29,7 @@
         android:layout_width="match_parent"
         android:layout_height="372dp"
         android:layout_marginTop="8dp"
+        android:visibility="visible"
         app:layout_constraintTop_toBottomOf="@+id/SU_ProfilePic">
 
         <TextView
@@ -42,12 +49,11 @@
             android:layout_width="60dp"
             android:layout_height="50dp"
             android:layout_marginLeft="56dp"
-            android:layout_marginTop="32dp"
             android:gravity="bottom"
             android:text="Name"
             android:textAlignment="textEnd"
             app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/SU_ProfilePic" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <EditText
             android:id="@+id/SU_EmailField"
@@ -57,26 +63,26 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="12dp"
             android:ems="10"
-            android:hint="Email"
+            android:hint="Email*"
             android:inputType="textPersonName"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.15"
             app:layout_constraintStart_toEndOf="@+id/SU_EmailText"
             app:layout_constraintTop_toBottomOf="@+id/SU_NameField" />
 
-        <ImageView
-            android:id="@+id/SU_PhoneErrorImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/SU_PhoneNoField"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SU_PhoneNoField"
-            app:layout_constraintTop_toTopOf="@+id/SU_PhoneNoField"
-            app:srcCompat="@android:drawable/btn_dialog" />
+        <!--<ImageView-->
+            <!--android:id="@+id/SU_PhoneErrorImage"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginBottom="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginTop="8dp"-->
+            <!--app:layout_constraintBottom_toBottomOf="@+id/SU_PhoneNoField"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintStart_toEndOf="@+id/SU_PhoneNoField"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/SU_PhoneNoField"-->
+            <!--app:srcCompat="@android:drawable/btn_dialog" />-->
 
         <TextView
             android:id="@+id/SU_HeirarchyText"
@@ -98,7 +104,7 @@
             android:layout_marginStart="8dp"
             android:layout_marginTop="12dp"
             android:ems="10"
-            android:hint="Phone no."
+            android:hint="Phone no*"
             android:inputType="textPersonName"
             android:phoneNumber="true"
             app:layout_constraintEnd_toEndOf="parent"
@@ -112,6 +118,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
+            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="@+id/SU_NameField"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.578"
@@ -148,20 +155,20 @@
             app:layout_constraintStart_toEndOf="@+id/SU_RoleText"
             app:layout_constraintTop_toBottomOf="@+id/SU_PhoneNoField" />
 
-        <ImageView
-            android:id="@+id/SU_EmailErrorImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/SU_EmailField"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.578"
-            app:layout_constraintStart_toEndOf="@+id/SU_EmailField"
-            app:layout_constraintTop_toTopOf="@+id/SU_EmailField"
-            app:srcCompat="@android:drawable/btn_dialog" />
+        <!--<ImageView-->
+            <!--android:id="@+id/SU_EmailErrorImage"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginBottom="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginTop="8dp"-->
+            <!--app:layout_constraintBottom_toBottomOf="@+id/SU_EmailField"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintHorizontal_bias="0.578"-->
+            <!--app:layout_constraintStart_toEndOf="@+id/SU_EmailField"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/SU_EmailField"-->
+            <!--app:srcCompat="@android:drawable/btn_dialog" />-->
 
         <TextView
             android:id="@+id/SU_EmailText"
@@ -181,14 +188,13 @@
             android:layout_height="50dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
-            android:layout_marginTop="32dp"
             android:ems="10"
-            android:hint="Name"
+            android:hint="Name*"
             android:inputType="textPersonName"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.15"
             app:layout_constraintStart_toEndOf="@+id/SI_NameText"
-            app:layout_constraintTop_toBottomOf="@+id/SU_ProfilePic" />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
             android:id="@+id/SU_PhoneText"
@@ -226,47 +232,47 @@
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/SU_ProfilePic">
 
-        <ImageView
-            android:id="@+id/SU_ReEnterError"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/SU_ReEnterField"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SU_ReEnterField"
-            app:layout_constraintTop_toTopOf="@+id/SU_ReEnterField"
-            app:srcCompat="@android:drawable/btn_dialog" />
+        <!--<ImageView-->
+            <!--android:id="@+id/SU_ReEnterError"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginBottom="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginTop="8dp"-->
+            <!--app:layout_constraintBottom_toBottomOf="@+id/SU_ReEnterField"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintStart_toEndOf="@+id/SU_ReEnterField"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/SU_ReEnterField"-->
+            <!--app:srcCompat="@android:drawable/btn_dialog" />-->
 
-        <ImageView
-            android:id="@+id/SU_PasswordError"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/SU_PasswordField"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SU_PasswordField"
-            app:layout_constraintTop_toTopOf="@+id/SU_PasswordField"
-            app:srcCompat="@android:drawable/btn_dialog" />
+        <!--<ImageView-->
+            <!--android:id="@+id/SU_PasswordError"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginBottom="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginTop="8dp"-->
+            <!--app:layout_constraintBottom_toBottomOf="@+id/SU_PasswordField"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintStart_toEndOf="@+id/SU_PasswordField"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/SU_PasswordField"-->
+            <!--app:srcCompat="@android:drawable/btn_dialog" />-->
 
-        <ImageView
-            android:id="@+id/SU_OTPError"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="@+id/SU_OTPField"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/SU_OTPField"
-            app:layout_constraintTop_toTopOf="@+id/SU_OTPField"
-            app:srcCompat="@android:drawable/btn_dialog" />
+        <!--<ImageView-->
+            <!--android:id="@+id/SU_OTPError"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:layout_marginBottom="8dp"-->
+            <!--android:layout_marginEnd="8dp"-->
+            <!--android:layout_marginStart="8dp"-->
+            <!--android:layout_marginTop="8dp"-->
+            <!--app:layout_constraintBottom_toBottomOf="@+id/SU_OTPField"-->
+            <!--app:layout_constraintEnd_toEndOf="parent"-->
+            <!--app:layout_constraintStart_toEndOf="@+id/SU_OTPField"-->
+            <!--app:layout_constraintTop_toTopOf="@+id/SU_OTPField"-->
+            <!--app:srcCompat="@android:drawable/btn_dialog" />-->
 
         <TextView
             android:id="@+id/textView18"

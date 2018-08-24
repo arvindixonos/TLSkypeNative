@@ -5,6 +5,7 @@
     <color name="blueGlow">#29f2ef</color>
     <color name="blueBG">#07274b</color>
     <color name="FlashColor">#33494949</color>
+    <color name="BackColor">#5a717171</color>
     <color name="FullRed">#ff0000</color>
 
     <!--EXTENSION COLORS-->

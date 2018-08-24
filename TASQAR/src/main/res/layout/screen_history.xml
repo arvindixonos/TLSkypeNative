@@ -37,7 +37,7 @@
             android:layout_marginBottom="15dp"
             android:layout_marginStart="-1dp"
             android:background="@color/white"
-            android:text="<"
+            android:text="@string/Lesser"
             android:textColor="@color/black" />
 
         <ImageView
