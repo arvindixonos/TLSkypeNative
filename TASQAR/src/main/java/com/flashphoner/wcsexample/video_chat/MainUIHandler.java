@@ -175,7 +175,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     Rational aspectRatio;
 
 
-
     public enum CameraTorchMode
     {
         ON,

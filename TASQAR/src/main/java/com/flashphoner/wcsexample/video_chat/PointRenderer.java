@@ -5,6 +5,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.util.Log;
 
 import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
@@ -103,7 +104,7 @@ public class PointRenderer{
 
 //                    Log.d(TAG, "LOCAL CAM HIT PER:" + anchorIndex + " " + percentHit * 100 + " " + numAnchors);
 
-                    isHitCameraRay = percentHit > 0.4f;
+                    isHitCameraRay = percentHit > 0.2f;
                 }
             }
         }
@@ -452,7 +453,8 @@ public class PointRenderer{
 
     private ArrayList<AnchorList> anchorsLists = new ArrayList<AnchorList>();
 
-    private Pose previousPose = null;
+    private Pose previousPoseLocal = null;
+    private Pose previousPoseRemote = null;
 
     private float[] firstTranslation = new float[3];
     private boolean firstTranslationSet = false;
@@ -558,34 +560,36 @@ public class PointRenderer{
         }
     }
 
-    public void AddBreak()
+    public void AddBreak(boolean local)
     {
-        previousPose = null;
+        if(local) {
+            previousPoseLocal = null;
 
-        if(currentAnchorListLocal != null)
+            if (currentAnchorListLocal != null)
             anchorsLists.add(currentAnchorListLocal);
 
+            currentAnchorListLocal = null;
+        }
+        else
+        {
+            previousPoseRemote = null;
+
+            if (currentAnchorListRemote != null)
+                anchorsLists.add(currentAnchorListRemote);
+
+            currentAnchorListRemote = null;
+        }
+
         RemoveAllZeroAnchorsList();
-
-        currentAnchorListLocal = null;
-
-        pointerCounter = 0;
     }
 
-    int pointerCounter = 0;
-    public void AddPoint(HitResult hitResult)
+    public void AddPoint(HitResult hitResult, boolean local)
     {
-//        if(pointerCounter != 0)
-//        {
-//            if (pointerCounter % 3 != 0)
-//            {
-//                anchor.detach();
-//                pointerCounter += 1;
-//                return;
-//            }
-//        }
+        Log.d(TAG, "ADDING POINT " + (local == true ? "LOCAL" : "REMOTE"));
 
         Pose hitPose = hitResult.getHitPose();
+
+        Pose previousPose = local == true ? previousPoseLocal : previousPoseRemote;
 
         if(previousPose != null)
         {
@@ -620,37 +624,49 @@ public class PointRenderer{
                     double newZ = (1.0f - t) * (1.0f - t) * previousPoint.getZ() + 2.0f * (1.0f - t) * t * controlPoint.getZ() + t * t * currentPoint.getZ();
 
                     Pose newPose = new Pose(new float[]{(float) newX, (float) newY, (float) newZ}, new float[]{0, 0, 0, 0});
-                    AddAnchor(hitResult, newPose);
+                    AddAnchor(hitResult, newPose, local);
                 }
             }
             else
             {
-                AddAnchor(hitResult, hitPose);
+                AddAnchor(hitResult, hitPose, local);
             }
-
-//            Log.d(TAG, "NEW POINT " + px + " " + py + " " + pz + " " + hx + " " + hy + " " + hz + " " + currentPoint.getX() + " " + currentPoint.getY() + " " + currentPoint.getZ() + " " + distance);
         }
         else
         {
-            AddAnchor(hitResult, hitPose);
+            AddAnchor(hitResult, hitPose, local);
         }
 
-        previousPose = hitPose;
-
-//        Log.d(TAG, "NEW POSE " + anchor.getPose().tx() + " " + anchor.getPose().ty() + " " + anchor.getPose().tz());
+        if(local)
+            previousPoseLocal = hitPose;
+        else
+            previousPoseRemote = hitPose;
     }
 
     public AnchorList currentAnchorListLocal = null;
-    public void AddAnchor(HitResult hitResult, Pose hitPose)
+    public AnchorList currentAnchorListRemote = null;
+    public void AddAnchor(HitResult hitResult, Pose hitPose, boolean local)
     {
-        if(currentAnchorListLocal == null)
+        if(local)
         {
-            currentAnchorListLocal = new AnchorList();
-        }
+            if(currentAnchorListLocal == null)
+            {
+                currentAnchorListLocal = new AnchorList();
+            }
 
-        Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
-        currentAnchorListLocal.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorListLocal));
-        pointerCounter += 1;
+            Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
+            currentAnchorListLocal.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorListLocal));
+        }
+        else
+        {
+            if(currentAnchorListRemote == null)
+            {
+                currentAnchorListRemote = new AnchorList();
+            }
+
+            Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
+            currentAnchorListRemote.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorListRemote));
+        }
     }
 
     public static float clamp(float val, float min, float max) {
@@ -834,16 +850,16 @@ public class PointRenderer{
         return false;
     }
 
-    public void DrawCurrentAnchorList(float[] cameraView, float[] cameraPerspective)
+    public void DrawAnchorList(AnchorList list, float[] cameraView, float[] cameraPerspective)
     {
-        if(currentAnchorListLocal != null)
+        if(list != null)
         {
-            if(currentAnchorListLocal.numAnchors < 3)
+            if(list.numAnchors < 3)
                 return;
 
-            currentAnchorListLocal.calcVertices();
+            list.calcVertices();
 
-            float[] modelMatrix = currentAnchorListLocal.modelMatrix;
+            float[] modelMatrix = list.modelMatrix;
 
             if(modelMatrix == null)
                 return;
@@ -855,8 +871,8 @@ public class PointRenderer{
             Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
             GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
 
-            float[] vertices = currentAnchorListLocal.vertices;
-            float[] normals = currentAnchorListLocal.normals;
+            float[] vertices = list.vertices;
+            float[] normals = list.normals;
 
             if(vertices == null)
                 return;
@@ -864,13 +880,13 @@ public class PointRenderer{
             GLES20.glUniform3f(colorUniform, 0.2f, 0.9f, 0.3f);
             DrawVertices(vertices, normals, GLES20.GL_TRIANGLE_STRIP);
 
-            vertices = currentAnchorListLocal.verticesStartCap;
-            normals = currentAnchorListLocal.normalsStartCap;
+            vertices = list.verticesStartCap;
+            normals = list.normalsStartCap;
             GLES20.glUniform3f(colorUniform, 0.9f, 0.2f, 0.3f);
             DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
 
-            vertices = currentAnchorListLocal.verticesEndCap;
-            normals = currentAnchorListLocal.normalsEndCap;
+            vertices = list.verticesEndCap;
+            normals = list.normalsEndCap;
             GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
             DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
         }
@@ -940,7 +956,8 @@ public class PointRenderer{
             DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
         }
 
-        DrawCurrentAnchorList(cameraView, cameraPerspective);
+        DrawAnchorList(currentAnchorListLocal, cameraView, cameraPerspective);
+        DrawAnchorList(currentAnchorListRemote, cameraView, cameraPerspective);
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glDisableVertexAttribArray(normalAttribute);

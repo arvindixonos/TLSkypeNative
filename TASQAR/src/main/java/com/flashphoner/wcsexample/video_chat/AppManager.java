@@ -114,10 +114,10 @@ public class AppManager extends AppCompatActivity
         }
     }
 
+    Session session = null;
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-
 
         final Thread arCoreCheckThread = new Thread(() ->
         {
@@ -126,35 +126,33 @@ public class AppManager extends AppCompatActivity
             CheckArCoreAvailablity();
         });
 
-        Session session = null;
-
-        if (session == null) {
-            Exception exception = null;
-            String message = null;
-            try {
-                // Create the session.
-                session = new Session(/* context= */ getApplicationContext());
-            } catch (UnavailableApkTooOldException e) {
-                message = "Please update ARCore";
-                exception = e;
-            } catch (UnavailableSdkTooOldException e) {
-                message = "Please update this app";
-                exception = e;
-            } catch (UnavailableArcoreNotInstalledException e) {
-                message = "Failed to create AR session";
-                exception = e;
-
-                arCoreCheckThread.start();
-            }
-            catch (Exception e) {
-
-                VideoCapturerAndroid.arCorePresent = false;
-
-                message = "Please update this app";
-                exception = e;
-            }
-
-        }
+//        if (session == null)
+//        {
+//            Exception exception = null;
+//            String message = null;
+//            try {
+//                // Create the session.
+//                session = new Session(/* context= */ getApplicationContext());
+//            } catch (UnavailableApkTooOldException e) {
+//                message = "Please update ARCore";
+//                exception = e;
+//            } catch (UnavailableSdkTooOldException e) {
+//                message = "Please update this app";
+//                exception = e;
+//            } catch (UnavailableArcoreNotInstalledException e) {
+//                message = "Failed to create AR session";
+//                exception = e;
+//
+//                arCoreCheckThread.start();
+//            }
+//            catch (Exception e) {
+//
+//                VideoCapturerAndroid.arCorePresent = false;
+//
+//                message = "Please update this app";
+//                exception = e;
+//            }
+//        }
 
         if( ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED &&
@@ -270,6 +268,10 @@ public class AppManager extends AppCompatActivity
     @Override
     public void onBackPressed()
     {
+        if(session != null) {
+            session.pause();
+        }
+
         if(loginUIHandler != null)
             loginUIHandler.backKey();
         else
