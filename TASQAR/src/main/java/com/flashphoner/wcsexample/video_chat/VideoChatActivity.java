@@ -568,7 +568,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             final float[] colorCorrectionRgba = new float[4];
             frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
 
-            if(pointsOrPlaneSpawn)
+//            if(pointsOrPlaneSpawn)
             {
                 // Visualize tracked points.
                 PointCloud pointCloud = frame.acquirePointCloud();
@@ -579,7 +579,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 // using it.
                 pointCloud.release();
             }
-            else
+//            else
             {
                 // Visualize planes.
                 planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
@@ -797,7 +797,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
 //        Log.d(TAG, "TAP SEND " + motionEvents.size());
 
-        SendMessage("TAP: " + x + " " + y + " " + width + " " + height);
+        if(arrowMode)
+        {
+            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR");
+        }
+        else
+        {
+            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR");
+        }
 
         DecodeTapMessage("TAP: " + x + " " + y + " " + width + " " + height);
     }
@@ -1309,15 +1316,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             }
                             else if(messageReceived.equals("AR"))
                             {
-                                uiHandler.mTempButton.mArrowModeFloatingButton.callOnClick();
+                                uiHandler.mTempButton.ToggleArrowMode(false);
                             }
                             else if(messageReceived.equals("DR"))
                             {
-                                uiHandler.mTempButton.mDrawModeFloatingButton.callOnClick();
+                                uiHandler.mTempButton.ToggleDrawMode(false);
                             }
                             else if(messageReceived.equals("PP"))
                             {
-                                uiHandler.mTempButton.mPointOrPlaneModeFloatingButton.callOnClick();
+                                uiHandler.mTempButton.TogglePointOrPlaneMode(false);
                             }
                         }
                         else if (messageReceived.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)

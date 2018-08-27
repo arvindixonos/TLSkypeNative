@@ -162,54 +162,78 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
     {
         mPointOrPlaneButton.setOnClickListener(v ->
         {
-            Toast.makeText(currentContext, "Point Or Plane", Toast.LENGTH_SHORT).show();
-            chatActivity.pointsOrPlaneSpawn = !chatActivity.pointsOrPlaneSpawn;
+            TogglePointOrPlaneMode(true);
         });
 
         mDrawModeButton.setOnClickListener(v ->
         {
-            Toast.makeText(currentContext, "Draw Mode", Toast.LENGTH_SHORT).show();
-            chatActivity.arrowMode = false;
+            ToggleDrawMode(true);
         });
 
         mArrowModeButton.setOnClickListener(v ->
         {
-            Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
-            chatActivity.arrowMode = true;
+            ToggleArrowMode(true);
         });
 
         mPointOrPlaneModeFloatingButton.setOnClickListener(v ->
         {
-            mPointOrPlaneButton.callOnClick();
+            TogglePointOrPlaneMode(true);
         });
 
         mDrawModeFloatingButton.setOnClickListener(v ->
         {
-            mDrawModeButton.callOnClick();
+            ToggleDrawMode(true);
         });
 
         mArrowModeFloatingButton.setOnClickListener(v ->
         {
-            mArrowModeButton.callOnClick();
+            ToggleArrowMode(true);
         });
     }
 
-    public void ToggleArrowMode ()
+    public void ToggleArrowMode (boolean isSender)
     {
-
-        chatActivity.SendMessage("CTRL:-AR");
+        if(isSender)
+        {
+            Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
+            chatActivity.arrowMode = true;
+//            chatActivity.SendMessage("CTRL:-AR");
+        }
+        else
+        {
+            Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
+            chatActivity.arrowMode = true;
+        }
     }
 
-    public void ToggleDrawMode ()
+    public void ToggleDrawMode (boolean isSender)
     {
-
-        chatActivity.SendMessage("CTRL:-DR");
+        if(isSender)
+        {
+            Toast.makeText(currentContext, "Draw Mode", Toast.LENGTH_SHORT).show();
+            chatActivity.arrowMode = false;
+//            chatActivity.SendMessage("CTRL:-DR");
+        }
+        else
+        {
+            Toast.makeText(currentContext, "Draw Mode", Toast.LENGTH_SHORT).show();
+            chatActivity.arrowMode = false;
+        }
     }
 
-    public void TogglePointOrPlaneMode ()
+    public void TogglePointOrPlaneMode (boolean isSender)
     {
-
-        chatActivity.SendMessage("CTRL:-PP");
+        if(isSender)
+        {
+            Toast.makeText(currentContext, "Point Or Plane", Toast.LENGTH_SHORT).show();
+            chatActivity.pointsOrPlaneSpawn = !chatActivity.pointsOrPlaneSpawn;
+//            chatActivity.SendMessage("CTRL:-PP");
+        }
+        else
+        {
+            Toast.makeText(currentContext, "Point Or Plane", Toast.LENGTH_SHORT).show();
+            chatActivity.pointsOrPlaneSpawn = !chatActivity.pointsOrPlaneSpawn;
+        }
     }
 
     public void AdjustParams ()
