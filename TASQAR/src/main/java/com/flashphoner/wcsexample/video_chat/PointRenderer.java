@@ -1,23 +1,14 @@
 package com.flashphoner.wcsexample.video_chat;
 
-import android.content.ActivityNotFoundException;
 import android.content.Context;
-import android.database.CursorIndexOutOfBoundsException;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
-import android.opengl.GLUtils;
 import android.opengl.Matrix;
-import android.os.Handler;
-import android.os.Looper;
-import android.os.Message;
-import android.util.Log;
 
 import com.google.ar.core.Anchor;
-import com.google.ar.core.Camera;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Pose;
-import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingState;
 
 import org.apache.commons.math3.complex.Quaternion;
@@ -27,18 +18,10 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
-import processing.core.PApplet;
 import processing.core.PVector;
-import processing.opengl.PGL;
-import processing.opengl.PGraphics3D;
-import processing.opengl.PGraphicsOpenGL;
-import processing.opengl.PShader;
 import shapes3d.EndCapContour;
 import shapes3d.Extrusion;
 import shapes3d.Mesh2DCore;
@@ -48,10 +31,7 @@ import shapes3d.utils.Contour;
 import shapes3d.utils.ContourScale;
 import shapes3d.utils.MeshSection;
 import shapes3d.utils.P_Bezier3D;
-import shapes3d.utils.P_BezierSpline;
-import shapes3d.utils.Path;
 
-import static android.content.ComponentCallbacks2.TRIM_MEMORY_BACKGROUND;
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
 /**
@@ -582,15 +562,12 @@ public class PointRenderer{
     {
         previousPose = null;
 
-//        synchronized (anchorsLists)
-        {
-            if(currentAnchorList != null)
-                anchorsLists.add(currentAnchorList);
-        }
+        if(currentAnchorListLocal != null)
+            anchorsLists.add(currentAnchorListLocal);
 
         RemoveAllZeroAnchorsList();
 
-        currentAnchorList = null;
+        currentAnchorListLocal = null;
 
         pointerCounter = 0;
     }
@@ -663,16 +640,16 @@ public class PointRenderer{
 //        Log.d(TAG, "NEW POSE " + anchor.getPose().tx() + " " + anchor.getPose().ty() + " " + anchor.getPose().tz());
     }
 
-    public AnchorList   currentAnchorList = null;
+    public AnchorList currentAnchorListLocal = null;
     public void AddAnchor(HitResult hitResult, Pose hitPose)
     {
-        if(currentAnchorList == null)
+        if(currentAnchorListLocal == null)
         {
-            currentAnchorList = new AnchorList();
+            currentAnchorListLocal = new AnchorList();
         }
 
         Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
-        currentAnchorList.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorList));
+        currentAnchorListLocal.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorListLocal));
         pointerCounter += 1;
     }
 
@@ -857,6 +834,48 @@ public class PointRenderer{
         return false;
     }
 
+    public void DrawCurrentAnchorList(float[] cameraView, float[] cameraPerspective)
+    {
+        if(currentAnchorListLocal != null)
+        {
+            if(currentAnchorListLocal.numAnchors < 3)
+                return;
+
+            currentAnchorListLocal.calcVertices();
+
+            float[] modelMatrix = currentAnchorListLocal.modelMatrix;
+
+            if(modelMatrix == null)
+                return;
+
+            float[] modelViewMatrix = new float[16];
+            float[] modelViewProjectionMatrix = new float[16];
+            Matrix.setIdentityM(modelMatrix, 0);
+            Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
+            Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
+            GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+
+            float[] vertices = currentAnchorListLocal.vertices;
+            float[] normals = currentAnchorListLocal.normals;
+
+            if(vertices == null)
+                return;
+
+            GLES20.glUniform3f(colorUniform, 0.2f, 0.9f, 0.3f);
+            DrawVertices(vertices, normals, GLES20.GL_TRIANGLE_STRIP);
+
+            vertices = currentAnchorListLocal.verticesStartCap;
+            normals = currentAnchorListLocal.normalsStartCap;
+            GLES20.glUniform3f(colorUniform, 0.9f, 0.2f, 0.3f);
+            DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+
+            vertices = currentAnchorListLocal.verticesEndCap;
+            normals = currentAnchorListLocal.normalsEndCap;
+            GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
+            DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+        }
+    }
+
 
     public Pose previousCameraPose = Pose.IDENTITY;
     public FrustumVisibilityTester frustumVisibilityTester = new FrustumVisibilityTester();
@@ -920,6 +939,8 @@ public class PointRenderer{
             GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
             DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
         }
+
+        DrawCurrentAnchorList(cameraView, cameraPerspective);
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glDisableVertexAttribArray(normalAttribute);
