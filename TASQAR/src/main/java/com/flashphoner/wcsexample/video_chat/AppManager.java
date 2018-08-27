@@ -167,19 +167,19 @@ public class AppManager extends AppCompatActivity
             allPermissionsGiven = true;
         }
 
-        String message = getIntent().getStringExtra("KEY");
-        Log.d(TAG, "Message is " + message);
-        if(message != null)
+        String message = getIntent().getStringExtra("PIC");
+        if(message == null)
         {
-            Log.d(TAG, "Already Logged in");
-            SetupUserScreen();
-        }
-        else
-        {
-            Log.d(TAG, "not Logged in");
             setContentView(R.layout.activity_login);
             loginUIHandler = new LoginUIHandler(this , this);
-            Log.d(TAG, "not Logged in a second time");
+        }
+        else if(message.equals("ABSENT"))
+        {
+            SetupUserScreen(false);
+        }
+        else if(message.equals("PRESENT"))
+        {
+            SetupUserScreen(true);
         }
     }
 
@@ -210,8 +210,9 @@ public class AppManager extends AppCompatActivity
     {
         count += 1;
         if(count == 4) {
-            if (allPermissionsGiven) {
-                SetupUserScreen();
+            if (allPermissionsGiven)
+            {
+
             }
             else
             {
@@ -221,7 +222,7 @@ public class AppManager extends AppCompatActivity
         }
     }
 
-    public void SetupUserScreen () {
+    public void SetupUserScreen (boolean profilePicPresent) {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this.getApplicationContext());
 
         if (availability == ArCoreApk.Availability.SUPPORTED_INSTALLED)
@@ -240,15 +241,22 @@ public class AppManager extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                ChangeActivity();
+                ChangeActivity(profilePicPresent);
             }
         });
     }
 
-    void ChangeActivity ()
+    void ChangeActivity (boolean profilePicPresent)
     {
         Intent intent = new Intent(this, VideoChatActivity.class);
-        intent.putExtra("MIN", "FALSE");
+        if(profilePicPresent)
+        {
+            intent.putExtra("PIC", "PRESENT");
+        }
+        else
+        {
+            intent.putExtra("PIC", "ABSENT");
+        }
         this.finish();
         startActivity(intent);
     }
@@ -259,13 +267,14 @@ public class AppManager extends AppCompatActivity
         toast.show();
     }
 
-
     @Override
     public void onBackPressed()
     {
-        loginUIHandler.backKey();
+        if(loginUIHandler != null)
+            loginUIHandler.backKey();
+        else
+            System.exit(0);
     }
-
 //    MySurfaceView mySurfaceView;
 //
 //    /** Called when the activity is first created. */

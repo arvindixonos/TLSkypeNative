@@ -163,19 +163,19 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
         mPointOrPlaneButton.setOnClickListener(v ->
         {
             Toast.makeText(currentContext, "Point Or Plane", Toast.LENGTH_SHORT).show();
-            VideoChatActivity.getInstance().pointsOrPlaneSpawn = !VideoChatActivity.getInstance().pointsOrPlaneSpawn;
+            chatActivity.pointsOrPlaneSpawn = !chatActivity.pointsOrPlaneSpawn;
         });
 
         mDrawModeButton.setOnClickListener(v ->
         {
             Toast.makeText(currentContext, "Draw Mode", Toast.LENGTH_SHORT).show();
-            VideoChatActivity.getInstance().arrowMode = false;
+            chatActivity.arrowMode = false;
         });
 
         mArrowModeButton.setOnClickListener(v ->
         {
             Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
-            VideoChatActivity.getInstance().arrowMode = true;
+            chatActivity.arrowMode = true;
         });
 
         mPointOrPlaneModeFloatingButton.setOnClickListener(v ->
@@ -192,6 +192,24 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
         {
             mArrowModeButton.callOnClick();
         });
+    }
+
+    public void ToggleArrowMode ()
+    {
+
+        chatActivity.SendMessage("CTRL:-AR");
+    }
+
+    public void ToggleDrawMode ()
+    {
+
+        chatActivity.SendMessage("CTRL:-DR");
+    }
+
+    public void TogglePointOrPlaneMode ()
+    {
+
+        chatActivity.SendMessage("CTRL:-PP");
     }
 
     public void AdjustParams ()

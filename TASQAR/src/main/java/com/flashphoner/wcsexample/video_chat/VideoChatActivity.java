@@ -313,8 +313,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        currentActivityIntent = getIntent();
-        String Message = currentActivityIntent.getStringExtra("MIN");
+
         screenSize = GetScreeenSize();
 
         WebRTCMediaProvider.cameraID = 1;
@@ -412,8 +411,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
-        uiHandler = new MainUIHandler(Instance);
-
+        currentActivityIntent = getIntent();
+        String Message = currentActivityIntent.getStringExtra("PIC");
+        if(Message.equals("PRESENT"))
+        {
+            uiHandler = new MainUIHandler(Instance, true);
+        }
+        else
+        {
+            uiHandler = new MainUIHandler(Instance, false);
+        }
         loginName = findViewById(R.id.ProfileName);
         loginName.setText(Build.MODEL);
 
@@ -1292,10 +1299,26 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             fileName = messageReceived;
                             DownloadFile(messageReceived);
                         }
-                        else if(messageReceived.contains("Disconnect"))
+                        else if(messageReceived.contains("CTRL:-"))
                         {
-                            FloatingActionButton mEndButton = findViewById(R.id.EndCallButton);
-                            mEndButton.callOnClick();
+                            messageReceived = messageReceived.replace("CTRL:-", "");
+                            if(messageReceived.equals("DC"))
+                            {
+                                FloatingActionButton mEndButton = findViewById(R.id.EndCallButton);
+                                mEndButton.callOnClick();
+                            }
+                            else if(messageReceived.equals("AR"))
+                            {
+                                uiHandler.mTempButton.mArrowModeFloatingButton.callOnClick();
+                            }
+                            else if(messageReceived.equals("DR"))
+                            {
+                                uiHandler.mTempButton.mDrawModeFloatingButton.callOnClick();
+                            }
+                            else if(messageReceived.equals("PP"))
+                            {
+                                uiHandler.mTempButton.mPointOrPlaneModeFloatingButton.callOnClick();
+                            }
                         }
                         else if (messageReceived.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
                         {
@@ -1810,7 +1833,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
 
     @Override
-    public void onConfigurationChanged(Configuration newConfig) {
+    public void onConfigurationChanged(Configuration newConfig)
+    {
         super.onConfigurationChanged(newConfig);
         adjustFullScreen(newConfig);
     }

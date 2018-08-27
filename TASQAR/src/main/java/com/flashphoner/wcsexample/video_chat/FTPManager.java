@@ -32,6 +32,7 @@ public class FTPManager extends AsyncTask {
     Context applicationContext;
     private CopyStreamAdapter streamListener;
     boolean transferSuccess = false;
+    static String serverReply = "";
 
     InputStream fileInputStream = null;
 
@@ -184,6 +185,7 @@ public class FTPManager extends AsyncTask {
         if (replies != null && replies.length > 0) {
             for (String aReply : replies)
             {
+                serverReply = aReply;
                 Log.d(TAG, "Server " + aReply);
             }
         }

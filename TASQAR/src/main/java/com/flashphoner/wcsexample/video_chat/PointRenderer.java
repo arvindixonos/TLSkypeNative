@@ -775,6 +775,12 @@ public class PointRenderer{
 
                 while (true)
                 {
+
+                    try {
+                        Thread.sleep(sleepTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     if(VideoChatActivity.getInstance() != null)
                     {
                         if(VideoChatActivity.getInstance().camera != null)
@@ -782,18 +788,9 @@ public class PointRenderer{
                             if (isCameraMovedRotatedALot())
                             {
                                 UpdateAllAnchors();
-
-//                                Log.d(TAG, "CAMERA CHANGED A LOT JI");
                             }
-
                             previousCameraPose = VideoChatActivity.getInstance().camera.getPose();
                         }
-                    }
-
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
                 }
             }
