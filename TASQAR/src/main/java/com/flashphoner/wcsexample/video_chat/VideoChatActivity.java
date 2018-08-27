@@ -14,8 +14,6 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -207,6 +205,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private FileInputStream  fileReadStream = null;
     private FileOutputStream fileWriteStream = null;
 
+    private  Thread          localMessageHandler = null;
+    private  ArrayList<String>    localMessages = new ArrayList<String>();
+
+    private  Thread          remoteMessageHandler = null;
+    private  ArrayList<String>    remoteMessages = new ArrayList<String>();
+
     // Anchors created from taps used for object placing with a given color.
     private static class ColoredAnchor
     {
@@ -309,12 +313,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-
         super.onCreate(savedInstanceState);
         Instance = this;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
 
         screenSize = GetScreeenSize();
 
@@ -338,11 +340,75 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        /**
-         * Initialization of the API.
-         */
         Flashphoner.init(this);
 
+        localMessageHandler = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true)
+                {
+                    synchronized (localSyncObject)
+                    {
+                        if(localMessages.size() > 0)
+                        {
+                            String localMessage = localMessages.get(0);
+                            localMessages.remove(0);
+
+                            if (localMessage.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
+                            {
+                                DecodeTapMessage(localMessage);
+                            }
+                            else if (localMessage.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
+                            {
+                                DecodeLocalBreakMessage();
+                            }
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        localMessageHandler.start();
+
+        remoteMessageHandler = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true)
+                {
+                    synchronized (remoteSyncObject)
+                    {
+                        if(remoteMessages.size() > 0)
+                        {
+                            String remoteMessage = remoteMessages.get(0);
+                            remoteMessages.remove(0);
+
+                            if (remoteMessage.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
+                            {
+                                DecodeTapMessage(remoteMessage);
+                            }
+                            else if (remoteMessage.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
+                            {
+                                DecodeRemoteBreakMessage();
+                            }
+                        }
+                    }
+
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        });
+
+        remoteMessageHandler.start();
     }
 
     public Point GetScreeenSize()
@@ -545,7 +611,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             frame = session.update();
             camera = frame.getCamera();
 
-            handleTap(frame, camera);
+            handleLocalTap(frame, camera);
+            handleRemoteTap(frame, camera);
 
             backgroundRenderer.draw(frame);
 
@@ -631,6 +698,19 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public void CleanUp()
     {
         pointRenderer.DestroyAll();
+
+        localMessages.clear();
+        remoteMessages.clear();
+
+        if(localMessageHandler != null)
+        {
+            localMessageHandler.interrupt();
+        }
+
+        if(remoteMessageHandler != null)
+        {
+            remoteMessageHandler.interrupt();
+        }
     }
 
     public void SavePicture() throws IOException {
@@ -763,14 +843,38 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
-    Object syncObject = new Object();
+    Object localSyncObject = new Object();
+    Object remoteSyncObject = new Object();
 
-    public void DecodeBreakMessage()
+    public void DecodeLocalBreakMessage()
     {
-        synchronized (syncObject)
+        synchronized (localSyncObject)
         {
-            motionEvents.clear();
-            pointRenderer.AddBreak();
+            motionEventsLocal.clear();
+            pointRenderer.AddBreak(true);
+        }
+    }
+
+    public void DecodeRemoteBreakMessage()
+    {
+        synchronized (remoteSyncObject)
+        {
+            motionEventsRemote.clear();
+            pointRenderer.AddBreak(false);
+        }
+    }
+
+    class TASQAR_MotionEvent
+    {
+        public String userName = "";
+        public String mode = "";
+        public MotionEvent motionEvent;
+
+        public TASQAR_MotionEvent(String userName, String mode, float xVal, float yVal)
+        {
+            this.mode = mode;
+            this.motionEvent = MotionEvent.obtain(1, 1, MotionEvent.ACTION_DOWN, xVal, yVal, 0);;
+            this.userName = userName;
         }
     }
 
@@ -784,90 +888,91 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         float width = Float.valueOf(values[2]);
         float height = Float.valueOf(values[3]);
 
-        MotionEvent motionEvent = MotionEvent.obtain(1, 1, MotionEvent.ACTION_DOWN, xVal, yVal, 0);
-        TapHandle(motionEvent, width, height);
+        String mode = values[4];
+        String userName = "";
+
+        if(values.length > 5)
+           userName = values[5];
+
+        TASQAR_MotionEvent motionEvent = new TASQAR_MotionEvent(userName, mode, xVal, yVal);
+        TapHandle(motionEvent, mode, width, height);
     }
 
     public void BreakSend()
     {
-        SendMessage("BREAK: ");
+        SendMessage("BREAK: " + roomManager.getUsername());
 
-        DecodeBreakMessage();
+        synchronized (localSyncObject)
+        {
+            localMessages.add("BREAK: " + roomManager.getUsername());
+        }
     }
 
     public void TapSend(int x, int y, int width, int height)
     {
-//        Log.d(TAG, "TAP SEND " + motionEvents.size());
-
-        if(arrowMode)
-        {
-            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR");
+        if(arrowMode) {
+            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername());
+            synchronized (localSyncObject) {
+                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername());
+            }
         }
-        else
-        {
-            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR");
+        else {
+            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername());
+            synchronized (localSyncObject) {
+                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername());
+            }
         }
-
-        DecodeTapMessage("TAP: " + x + " " + y + " " + width + " " + height);
     }
 
-    ArrayList<MotionEvent> motionEvents = new ArrayList<MotionEvent>();
+    ArrayList<TASQAR_MotionEvent> motionEventsLocal = new ArrayList<TASQAR_MotionEvent>();
+    ArrayList<TASQAR_MotionEvent> motionEventsRemote = new ArrayList<TASQAR_MotionEvent>();
 
-    public void TapHandle(MotionEvent event, float width, float height)
-    {
-        float xMul = event.getX() / width;
-        float yMul = event.getY() / height;
+    public void TapHandle(TASQAR_MotionEvent event, String mode, float width, float height) {
+        float xMul = event.motionEvent.getX() / width;
+        float yMul = event.motionEvent.getY() / height;
 
         float xVal = screenWidth * xMul;
         float yVal = screenHeight * yMul;
 
-        event.setLocation(xVal, yVal);
+        event.motionEvent.setLocation(xVal, yVal);
 
-        motionEvents.add(event);
+        boolean local = event.userName.equals(roomManager.getUsername());
+
+        if (local) {
+            motionEventsLocal.add(event);
+        }
+        else
+        {
+            motionEventsRemote.add(event);
+        }
     }
 
     public  boolean pointsOrPlaneSpawn = false;
 
-    public  Pose    hitPose;
-    public Trackable currentTrackable;
-
-    private void handleTap(Frame frame, Camera camera)
+    private void handleLocalTap(Frame frame, Camera camera)
     {
-        synchronized (syncObject)
+        synchronized (localSyncObject)
         {
-            while (motionEvents.size() > 0)
+            while (motionEventsLocal.size() > 0)
             {
-                MotionEvent tap = motionEvents.get(0);
-                motionEvents.remove(0);
+                TASQAR_MotionEvent tasqar_motionEvent = motionEventsLocal.get(0);
+
+                String mode = tasqar_motionEvent.mode;
+
+                MotionEvent tap = tasqar_motionEvent.motionEvent;
+                motionEventsLocal.remove(0);
 
                 if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
                 {
-//                Log.d(TAG, "MOVE TAP " + tap.getX() + " " + tap.getY());
-
                     for (HitResult hit : frame.hitTest(tap))
                     {
-                        currentTrackable = hit.getTrackable();
-                        hitPose = hit.getHitPose();
-
-                        if(!arrowMode)
+                        if(mode.equals("DR"))
                         {
-                            SpawnPoint(hit);
+                            SpawnPoint(hit, true);
                         }
-                        else
+                        else if(mode.equals("AR"))
                         {
-                            if(pointsOrPlaneSpawn)
-                            {
-                                {
-                                    SpawnArrow(hit, camera);
-                                }
-                            }
-                            else
-                            {
-//                        if(currentTrackable instanceof com.google.ar.core.Plane)
-//                                {
-                                SpawnArrow(hit, camera);
-//                                }
-                            }
+                            SpawnArrow(hit, camera);
                         }
 
                         break;
@@ -878,6 +983,39 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    private void handleRemoteTap(Frame frame, Camera camera)
+    {
+        synchronized (remoteSyncObject)
+        {
+            while (motionEventsRemote.size() > 0)
+            {
+                TASQAR_MotionEvent tasqar_motionEvent = motionEventsRemote.get(0);
+
+                String mode = tasqar_motionEvent.mode;
+
+                MotionEvent tap = tasqar_motionEvent.motionEvent;
+                motionEventsRemote.remove(0);
+
+                if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
+                {
+                    for (HitResult hit : frame.hitTest(tap))
+                    {
+                        if(mode.equals("DR"))
+                        {
+                            SpawnPoint(hit, false);
+                        }
+                        else if(mode.equals("AR"))
+                        {
+                            SpawnArrow(hit, camera);
+                        }
+
+                        break;
+
+                    }
+                }
+            }
+        }
+    }
 
     public  void TogglePointPlaneSpawn()
     {
@@ -891,9 +1029,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, hit.getHitPose()));
     }
 
-    private void SpawnPoint(HitResult hit)
+    private void SpawnPoint(HitResult hit, boolean local)
     {
-        pointRenderer.AddPoint(hit);
+        pointRenderer.AddPoint(hit, local);
     }
 
     public void SetLocalRendererMirror()
@@ -1329,13 +1467,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 uiHandler.mTempButton.TogglePointOrPlaneMode(false);
                             }
                         }
-                        else if (messageReceived.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
+                        else
                         {
-                            DecodeTapMessage(messageReceived);
-                        }
-                        else if (messageReceived.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
-                        {
-                            DecodeBreakMessage();
+                            synchronized (remoteSyncObject)
+                            {
+                                remoteMessages.add(messageReceived);
+                            }
                         }
                     }
                 });
