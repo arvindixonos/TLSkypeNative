@@ -14,6 +14,8 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraManager;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -441,10 +443,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             @Override
             public void onCameraSwitchDone(boolean frontCamera) {
 
-                if(!frontCamera && VideoCapturerAndroid.arCorePresent)
-                {
-                    if (!openingARCORE && !arcoreRunning)
+                if(!frontCamera && VideoCapturerAndroid.arCorePresent) {
+                    if (!openingARCORE && !arcoreRunning) {
                         StartARCORE();
+                    }
                 }
             }
 
