@@ -322,14 +322,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 //                    TurnOffOnDelay(toggleArrowMode, toggleArrowButton, 2000);
 //                    chatActivity.arrowMode = !chatActivity.arrowMode;
 //                });
-                toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
-                toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
-                toggleBackcamButton.setOnClickListener(v ->
-                {
-                    TurnOffOnDelay(toggleBackcamItem, toggleBackcamButton, 3000);
-                    mSwitchLayoutButton.callOnClick();
-                    mSwitchCamera.callOnClick();
-                });
+//                toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
+//                toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
+//                toggleBackcamButton.setOnClickListener(v ->
+//                {
+//                    TurnOffOnDelay(toggleBackcamItem, toggleBackcamButton, 3000);
+//                    mSwitchLayoutButton.callOnClick();
+//                    mSwitchCamera.callOnClick();
+//                });
 
             }
         };
@@ -435,22 +435,28 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             if(backCam)
             {
                 mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
+                Log.d(TAG, "Front");
                 backCam = false;
-                if(flashOn)
-                {
-                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
-                    flashOn = false;
-                }
+                mSwitchLayoutButton.callOnClick();
+                TurnOffOnDelay(mSwitchCamera, 3000);
+//                if(flashOn)
+//                {
+//                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
+//                    flashOn = false;
+//                }
             }
             else
             {
                 mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
+                Log.d(TAG, "Back");
                 backCam = true;
-                if(flashOn)
-                {
-                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
-                    flashOn = false;
-                }
+                mSwitchLayoutButton.callOnClick();
+                TurnOffOnDelay(mSwitchCamera, 3000);
+//                if(flashOn)
+//                {
+//                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
+//                    flashOn = false;
+//                }
             }
         });
 
@@ -460,7 +466,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
 
             mHistoryScreen.setVisibility(VISIBLE);
-            mFlashButton.setVisibility(GONE);
+            mSwitchCamera.setVisibility(GONE);
             mStartRecordingButton.setVisibility(GONE);
             mFloatingButtonsLayout.setVisibility(GONE);
             mEndCallButton.setVisibility(GONE);
@@ -749,6 +755,18 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }, delayTime);
     }
 
+    @SuppressLint("HandlerLeak")
+    private void TurnOffOnDelay (final FloatingActionButton selectedToggle, final int delayTime)
+    {
+        selectedToggle.setEnabled(false);
+
+        buttonActivateHandler = new Handler();
+        buttonActivateHandler.postDelayed(() ->
+        {
+            selectedToggle.setEnabled(true);
+        }, delayTime);
+    }
+
     void backKey ()
     {
         if(drawerOpen)
@@ -759,7 +777,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
             mHistoryScreen.setVisibility(GONE);
             mFloatingButtonsLayout.setVisibility(VISIBLE);
-            mFlashButton.setVisibility(VISIBLE);
+            mSwitchCamera.setVisibility(VISIBLE);
             mStartRecordingButton.setVisibility(VISIBLE);
             mEndCallButton.setVisibility(VISIBLE);
             mRenderHolder.setVisibility(VISIBLE);
@@ -901,7 +919,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mEndCall.setVisibility(GONE);
             mPlusButton.setVisibility(GONE);
             mSpawnButtonLayout.setVisibility(GONE);
-            mFlashButton.setVisibility(GONE);
+            mSwitchCamera.setVisibility(GONE);
             mStartRecordingButton.setVisibility(GONE);
         }
         else
@@ -912,7 +930,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             {
                 mEndCall.setVisibility(VISIBLE);
 
-                mFlashButton.setVisibility(VISIBLE);
+                mSwitchCamera.setVisibility(VISIBLE);
                 mStartRecordingButton.setVisibility(VISIBLE);
             }
         }
