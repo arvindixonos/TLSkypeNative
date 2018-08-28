@@ -6,6 +6,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class DatabaseHelper extends SQLiteOpenHelper
 {
@@ -100,6 +101,7 @@ class LoginDatabaseHelper extends SQLiteOpenHelper
     private static final String COL6 = "PASSWORD";
     private static final String COL7 = "HIERARCHY";
     private static final String COL8 = "ROLE";
+    private static final String COL9 = "PIN_MODE";
 
     public LoginDatabaseHelper(Context context)
     {
@@ -110,7 +112,7 @@ class LoginDatabaseHelper extends SQLiteOpenHelper
     public void onCreate(SQLiteDatabase db)
     {
         String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER /*PRIMARY KEY AUTOINCREMENT*/, " +
-                " USERID TEXT, NAME TEXT, EMAIL TEXT, NUMBER TEXT, PASSWORD TEXT, HIERARCHY TEXT, ROLE TEXT)";
+                " USERID TEXT, NAME TEXT, EMAIL TEXT, NUMBER TEXT, PASSWORD TEXT, HIERARCHY TEXT, ROLE TEXT, PIN_MODE TEXT)";
         db.execSQL(createTable);
     }
 
@@ -133,6 +135,7 @@ class LoginDatabaseHelper extends SQLiteOpenHelper
         contentValues.put(COL6, password);
         contentValues.put(COL7, hierarchy);
         contentValues.put(COL8, role);
+        contentValues.put(COL9, "DISABLED");
 
         long result  = db.insert(TABLE_NAME, null, contentValues);
 
@@ -153,7 +156,7 @@ class LoginDatabaseHelper extends SQLiteOpenHelper
         return data;
     }
 
-    public boolean updateData(String USERID, String name, String email, String number, String password, String hierarchy, String role)
+    public boolean updateData(String USERID, String name, String email, String number, String password, String hierarchy, String role, String pin)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
@@ -164,6 +167,7 @@ class LoginDatabaseHelper extends SQLiteOpenHelper
         contentValues.put(COL6, password);
         contentValues.put(COL7, hierarchy);
         contentValues.put(COL8, role);
+        contentValues.put(COL9, pin);
         db.update(TABLE_NAME, contentValues, "ID = ?", new String[] {"0"});
         return true;
     }
@@ -172,6 +176,14 @@ class LoginDatabaseHelper extends SQLiteOpenHelper
     {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete(TABLE_NAME, "ID = ?", new String[] {id});
+    }
+
+    public void AddSpecificData (String dataName, String dataValue)
+    {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(COL9, dataValue);
+        db.update(TABLE_NAME, contentValues, "ID=0", new String[] {});
     }
 
 }

@@ -3,6 +3,7 @@ package com.flashphoner.wcsexample.video_chat;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -413,4 +414,13 @@ class CircularImageView extends AppCompatImageButton
         return output;
     }
 
+}
+
+class SettingsConstraintLayout extends ConstraintLayout
+{
+
+    public SettingsConstraintLayout(Context context, AttributeSet attrs)
+    {
+        super(context, attrs);
+    }
 }

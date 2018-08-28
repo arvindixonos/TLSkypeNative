@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SettingsConstraintLayout">
+        <attr name="Title" format="string"/>
+        <attr name="Description" format="string"/>
+    </declare-styleable>
+</resources>

@@ -39,6 +39,7 @@ public class AppManager extends AppCompatActivity
 
     private static final int ALL_PERMISSIONS = 555;
     private     boolean  allPermissionsGiven = false;
+    private     boolean  profilePicPresent = false;
 
     private ArCoreApk.InstallStatus installStatus = ArCoreApk.InstallStatus.INSTALL_REQUESTED;
     private boolean installRequested = false;
@@ -210,7 +211,7 @@ public class AppManager extends AppCompatActivity
         if(count == 4) {
             if (allPermissionsGiven)
             {
-
+                SetupUserScreen(profilePicPresent);
             }
             else
             {
@@ -220,7 +221,14 @@ public class AppManager extends AppCompatActivity
         }
     }
 
-    public void SetupUserScreen (boolean profilePicPresent) {
+    public void SetupPasswordScreen (boolean picPresent)
+    {
+        profilePicPresent = picPresent;
+        setContentView(R.layout.activity_pin);
+    }
+
+    public void SetupUserScreen (boolean profilePicPresent)
+    {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this.getApplicationContext());
 
         if (availability == ArCoreApk.Availability.SUPPORTED_INSTALLED)
@@ -232,7 +240,23 @@ public class AppManager extends AppCompatActivity
             VideoCapturerAndroid.arCorePresent = false;
         }
 
-        setContentView(R.layout.activity_user);
+        setContentView(R.layout.drawer_callscreen);
+        if(loginUIHandler == null)
+        {
+            Log.d(TAG, "login Null");
+        }
+        else
+        {
+            loginUIHandler.SetPasswordToggle();
+        }
+
+        try {
+//            loginUIHandler.SetPasswordToggle();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
         final Button callUserButton = findViewById(R.id.buttonCall);
         callUserButton.setOnClickListener(new View.OnClickListener()
         {
