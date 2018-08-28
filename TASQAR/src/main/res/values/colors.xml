@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="redLight">#ffff4444</color>
-    <color name="blueDark">#ff0099cc</color>
+    <color name="blueDark">#0099cc</color>
     <color name="blueGlow">#29f2ef</color>
     <color name="blueBG">#07274b</color>
     <color name="FlashColor">#33494949</color>

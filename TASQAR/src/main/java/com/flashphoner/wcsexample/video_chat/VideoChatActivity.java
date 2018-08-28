@@ -115,7 +115,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
-    String roomName = "NEWFTP_1";
+    String roomName = "NEWFTP";
 //    UI references.
 
     private Thread ftpThread;

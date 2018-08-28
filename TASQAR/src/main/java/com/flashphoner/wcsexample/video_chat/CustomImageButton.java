@@ -2,6 +2,7 @@ package com.flashphoner.wcsexample.video_chat;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -90,6 +91,9 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
     private float xPos;
     private float yPos;
 
+    private boolean arrowMode = false;
+    private boolean p2pMode;
+
     private Context currentContext;
     public VideoChatActivity chatActivity;
 
@@ -162,35 +166,58 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
 
     public void InitialiseButtons ()
     {
-        mPointOrPlaneButton.setOnClickListener(v ->
-        {
-            TogglePointOrPlaneMode(true);
-        });
+//        mPointOrPlaneButton.setOnClickListener(v ->
+//        {
+//            TogglePointOrPlaneMode(true);
+//        });
 
         mDrawModeButton.setOnClickListener(v ->
         {
             ToggleDrawMode(true);
+            arrowMode = !arrowMode;
+            AdaptButtons();
         });
 
         mArrowModeButton.setOnClickListener(v ->
         {
             ToggleArrowMode(true);
+            arrowMode = !arrowMode;
+            AdaptButtons();
         });
 
-        mPointOrPlaneModeFloatingButton.setOnClickListener(v ->
-        {
-            TogglePointOrPlaneMode(true);
-        });
+//        mPointOrPlaneModeFloatingButton.setOnClickListener(v ->
+//        {
+//            TogglePointOrPlaneMode(true);
+//            mPointOrPlaneModeFloatingButton.setBackgroundColor(currentContext.getResources().getColor(R.color.redLight));
+//        });
 
         mDrawModeFloatingButton.setOnClickListener(v ->
         {
-            ToggleDrawMode(true);
+            ToggleArrowMode(true);
+            arrowMode = !arrowMode;
+            AdaptButtons();
         });
 
         mArrowModeFloatingButton.setOnClickListener(v ->
         {
             ToggleArrowMode(true);
+            arrowMode = !arrowMode;
+            AdaptButtons();
         });
+    }
+
+    private void AdaptButtons ()
+    {
+        if(arrowMode)
+        {
+            mArrowModeFloatingButton.setBackgroundTintList(ColorStateList.valueOf(currentContext.getResources().getColor(R.color.redLight)));
+            mDrawModeFloatingButton.setBackgroundTintList(ColorStateList.valueOf(currentContext.getResources().getColor(R.color.blueDark)));
+        }
+        else
+        {
+            mDrawModeFloatingButton.setBackgroundTintList(ColorStateList.valueOf(currentContext.getResources().getColor(R.color.redLight)));
+            mArrowModeFloatingButton.setBackgroundTintList(ColorStateList.valueOf(currentContext.getResources().getColor(R.color.blueDark)));
+        }
     }
 
     public void ToggleArrowMode (boolean isSender)
@@ -198,13 +225,13 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
         if(isSender)
         {
             Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
-            chatActivity.arrowMode = true;
+            chatActivity.arrowMode = !chatActivity.arrowMode;
 //            chatActivity.SendMessage("CTRL:-AR");
         }
         else
         {
             Toast.makeText(currentContext, "Arrow Mode", Toast.LENGTH_SHORT).show();
-            chatActivity.arrowMode = true;
+            chatActivity.arrowMode = !chatActivity.arrowMode;
         }
     }
 
