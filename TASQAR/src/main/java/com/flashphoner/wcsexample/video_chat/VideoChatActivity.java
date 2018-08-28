@@ -181,11 +181,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private final BackgroundRenderer backgroundRenderer = new BackgroundRenderer();
     private final PointRenderer      pointRenderer = new PointRenderer();
 
-    private final ObjectRenderer virtualObject = new ObjectRenderer();
-    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
-    private final float[] anchorMatrix = new float[16];
 
     public      boolean arrowMode = false;
 
@@ -211,21 +209,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private  Thread          remoteMessageHandler = null;
     private  ArrayList<String>    remoteMessages = new ArrayList<String>();
 
-    // Anchors created from taps used for object placing with a given color.
-    private static class ColoredAnchor
-    {
-        public final Anchor anchor;
-        public final float[] color;
-
-        public ColoredAnchor(Anchor a, float[] color4f, Pose finalPose) {
-            this.anchor = a;
-            this.color = color4f;
-            this.anchor.getPose().compose(finalPose);
-        }
-    }
-
-    private final ArrayList<ColoredAnchor> anchors = new ArrayList<>();
-
     private int mWidth;
     private int mHeight;
 
@@ -243,14 +226,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             pointRenderer.createOnGlThread(this, "models/grass.jpg");
             planeRenderer.createOnGlThread(/*context=*/ this, "models/trigrid.png");
             pointCloudRenderer.createOnGlThread(/*context=*/ this);
-
-            virtualObject.createOnGlThread(/*context=*/ this, "models/arrow_v2.obj", "models/arrow_tex.png");
-            virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
-
-            virtualObjectShadow.createOnGlThread(this, "models/arrow.obj", "models/andy_shadow.png");
-            virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
-            virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
-
         }
         catch (IOException e)
         {
@@ -360,7 +335,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             }
                             else if (localMessage.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
                             {
-                                DecodeLocalBreakMessage();
+                                String userName = localMessage.replace("BREAK: " , "");
+
+                                DecodeLocalBreakMessage(userName);
+                            }
+                            else if (localMessage.contains("UNDO: "))
+                            {
+                                String userName = localMessage.replace("UNDO: " , "");
+
+                                DecodeUndoMessage(userName);
                             }
                         }
                     }
@@ -394,7 +377,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             }
                             else if (remoteMessage.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
                             {
-                                DecodeRemoteBreakMessage();
+                                String userName = remoteMessage.replace("BREAK: " , "");
+
+                                DecodeRemoteBreakMessage(userName);
+                            }
+                            else if (remoteMessage.contains("UNDO: "))
+                            {
+                                String userName = remoteMessage.replace("UNDO: " , "");
+
+                                DecodeUndoMessage(userName);
                             }
                         }
                     }
@@ -409,6 +400,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
 
         remoteMessageHandler.start();
+    }
+
+    private void DecodeUndoMessage(String userName) {
+        pointRenderer.Undo(userName);
     }
 
     public Point GetScreeenSize()
@@ -490,7 +485,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             uiHandler = new MainUIHandler(Instance, false);
         }
         loginName = findViewById(R.id.ProfileName);
-        loginName.setText(Build.MODEL);
+
+        String loginNameText = Build.MODEL;
+        loginNameText = loginNameText.replace(" ", "");
+        loginName.setText(loginNameText);
 
         localRenderer.setMirror(true);
         remoteRenderer.setMirror(true);
@@ -654,8 +652,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
             }
 
-            DrawArrow(viewmtx, projmtx, colorCorrectionRgba);
-            pointRenderer.draw(viewmtx, projmtx);
+            pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -665,35 +662,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
 
     }
-
-    void DrawArrow (float[] viewmtx, float[] projmtx, final float[] colorCorrectionRgba)
-    {
-        float scaleFactor = 0.3f;
-        for (ColoredAnchor coloredAnchor : anchors)
-        {
-            if (coloredAnchor.anchor.getTrackingState() != TrackingState.TRACKING)
-            {
-                continue;
-            }
-            // Get the current pose of an Anchor in world space. The Anchor pose is updated
-            // during calls to session.update() as ARCore refines its estimate of the world.
-            coloredAnchor.anchor.getPose().toMatrix(anchorMatrix, 0);
-
-            float[] rotationQuaternion = coloredAnchor.anchor.getPose().getRotationQuaternion();
-
-            Rotation ourRotation = new Rotation(rotationQuaternion[0], rotationQuaternion[1], rotationQuaternion[2], rotationQuaternion[3], false);
-
-            double angle = ourRotation.getAngle();
-
-            Vector3D axis = ourRotation.getAxis();
-
-            // Update and draw the model and its shadow.
-            virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-            virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
-            virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, coloredAnchor.color);
-        }
-    }
-
 
     public void CleanUp()
     {
@@ -846,22 +814,29 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     Object localSyncObject = new Object();
     Object remoteSyncObject = new Object();
 
-    public void DecodeLocalBreakMessage()
+    public void DecodeLocalBreakMessage(String userName)
     {
         synchronized (localSyncObject)
         {
             motionEventsLocal.clear();
-            pointRenderer.AddBreak(true);
+            pointRenderer.AddBreak(userName);
         }
     }
 
-    public void DecodeRemoteBreakMessage()
+    public void DecodeRemoteBreakMessage(String userName)
     {
         synchronized (remoteSyncObject)
         {
             motionEventsRemote.clear();
-            pointRenderer.AddBreak(false);
+            pointRenderer.AddBreak(userName);
         }
+    }
+
+    public void UndoClicked()
+    {
+        SendMessage("UNDO: " + roomManager.getUsername());
+
+        pointRenderer.Undo(roomManager.getUsername());
     }
 
     class TASQAR_MotionEvent
@@ -938,7 +913,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         boolean local = event.userName.equals(roomManager.getUsername());
 
-        if (local) {
+        if (local)
+        {
             motionEventsLocal.add(event);
         }
         else
@@ -968,15 +944,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     {
                         if(mode.equals("DR"))
                         {
-                            SpawnPoint(hit, true);
+                            SpawnPoint(hit, tasqar_motionEvent.userName);
                         }
                         else if(mode.equals("AR"))
                         {
-                            SpawnArrow(hit, camera);
+                            SpawnArrow(hit, tasqar_motionEvent.userName);
                         }
 
                         break;
-
                     }
                 }
             }
@@ -1002,11 +977,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     {
                         if(mode.equals("DR"))
                         {
-                            SpawnPoint(hit, false);
+                            SpawnPoint(hit, tasqar_motionEvent.userName);
                         }
                         else if(mode.equals("AR"))
                         {
-                            SpawnArrow(hit, camera);
+                            SpawnArrow(hit, tasqar_motionEvent.userName);
                         }
 
                         break;
@@ -1022,16 +997,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         pointsOrPlaneSpawn = !pointsOrPlaneSpawn;
     }
 
-    private void SpawnArrow(HitResult hit, Camera camera)
+    private void SpawnArrow(HitResult hit, String userName)
     {
-        float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
-
-        anchors.add(new ColoredAnchor(hit.createAnchor(), objColor, hit.getHitPose()));
+        pointRenderer.AddPoint(hit, userName, 1);
     }
 
-    private void SpawnPoint(HitResult hit, boolean local)
+    private void SpawnPoint(HitResult hit, String userName)
     {
-        pointRenderer.AddPoint(hit, local);
+        pointRenderer.AddPoint(hit, userName, 0);
     }
 
     public void SetLocalRendererMirror()
@@ -1356,7 +1329,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         /**
                          * When one of the participants sends a text message, the received message is added to the messages log.
                          */
-//                        Log.d(TAG, "ON MESSAGE " + message.getText());
+                        Log.d(TAG, "ON MESSAGE " + message.getText());
 
                         String messageReceived = message.getText();
                         if(messageReceived.contains(":FUC-"))
@@ -1368,6 +1341,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 partialFile.delete();
                             return;
                         }
+
                         if(fileDownloading)
                         {
                             if(messageReceived.contains(":FUF"))
@@ -1573,7 +1547,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public  static  int uploadBlockSize = 10000;
     public void UploadFile(final String filePath)
     {
-
         friendName = "";
 
         if(fileUploading)
@@ -1953,20 +1926,27 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             stream = null;
         }
 
-        room.unpublish();
-        roomManager.disconnect();
+        if(room != null)
+        {
+            room.unpublish();
+            room = null;
+        }
 
-        room = null;
+        if(roomManager != null)
+        {
+            roomManager.disconnect();
+            roomManager = null;
+        }
 
         if(screenRecorder != null)
         {
             screenRecorder.StopRecording();
+            screenRecorder = null;
         }
     }
 
     private class ParticipantView
     {
-
         SurfaceViewRenderer surfaceViewRenderer;
         TextView login;
 
