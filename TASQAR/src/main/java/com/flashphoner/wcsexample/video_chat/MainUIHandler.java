@@ -263,7 +263,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-
         mTempButton = currentActivity.findViewById(R.id.tempButton);
         mTempButton.layoutHolder = currentActivity.findViewById(R.id.ConLayout);
         mTempButton.mArrowModeButton = currentActivity.findViewById(R.id.ArrowModeButton);

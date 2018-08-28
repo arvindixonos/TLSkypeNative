@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
-import android.util.Log;
 
 import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
@@ -13,6 +12,7 @@ import com.google.ar.core.Pose;
 import com.google.ar.core.TrackingState;
 
 import org.apache.commons.math3.complex.Quaternion;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.io.IOException;
@@ -20,18 +20,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 import processing.core.PVector;
-import shapes3d.EndCapContour;
-import shapes3d.Extrusion;
-import shapes3d.Mesh2DCore;
-import shapes3d.S3D;
-import shapes3d.utils.CS_ConstantScale;
-import shapes3d.utils.Contour;
-import shapes3d.utils.ContourScale;
-import shapes3d.utils.MeshSection;
-import shapes3d.utils.P_Bezier3D;
 
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
@@ -41,396 +34,7 @@ import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
 public class PointRenderer{
 
-    public class TASQAR_Anchor
-    {
-        public  Anchor  anchor;
 
-        public AnchorList   parentAnchorList;
-
-        public TrackingState previousAnchorTrackingState;
-
-        public  boolean     isPointVisibleToCamera = false;
-
-        public boolean      isHitCameraRay = false;
-
-        public TASQAR_Anchor(Anchor anchor, AnchorList parentAnchorList)
-        {
-            this.anchor = anchor;
-            this.parentAnchorList = parentAnchorList;
-            previousAnchorTrackingState = anchor.getTrackingState();
-        }
-
-        public void CheckDirty()
-        {
-            TrackingState currentTrackingState = anchor.getTrackingState();
-
-            if(currentTrackingState != previousAnchorTrackingState)
-            {
-                parentAnchorList.isDirty = true;
-
-                previousAnchorTrackingState = currentTrackingState;
-            }
-        }
-
-        public  float   CAM_RAY_CAST_DISTANCE_THRESHOLD = 0.3f;
-        public void CheckHitCameraRay(float[] camPosition, float[] camAxis, int anchorIndex, int numAnchors)
-        {
-            isHitCameraRay = false;
-
-            if(VideoChatActivity.getInstance() != null) {
-                List<HitResult> hitResults = VideoChatActivity.getInstance().frame.hitTest(camPosition, 0, camAxis, 0);
-
-                if (hitResults.size() == 0)
-                    return;
-
-                int hitCount = 0;
-                for (HitResult hitResult : hitResults) {
-                    float[] hitPosition = hitResult.getHitPose().getTranslation();
-
-                    float[] ourPosition = getPose().getTranslation();
-
-//                    Log.d(TAG, "DISTANCE IS " + PVector.dist(new PVector(ourPosition[0], ourPosition[1], ourPosition[2]),
-//                            new PVector(hitPosition[0], hitPosition[1], hitPosition[2])));
-
-                    if (PVector.dist(new PVector(ourPosition[0], ourPosition[1], ourPosition[2]),
-                            new PVector(hitPosition[0], hitPosition[1], hitPosition[2])) < CAM_RAY_CAST_DISTANCE_THRESHOLD) {
-                        hitCount += 1;
-                    }
-                }
-
-                if (hitResults.size() > 0)
-                {
-                    float percentHit = (float) hitCount / (float) hitResults.size();
-
-//                    Log.d(TAG, "LOCAL CAM HIT PER:" + anchorIndex + " " + percentHit * 100 + " " + numAnchors);
-
-                    isHitCameraRay = percentHit > 0.2f;
-                }
-            }
-        }
-
-        public Pose getPose() {
-            return anchor.getPose();
-        }
-
-        public void detach() {
-            anchor.detach();
-        }
-
-        public void UpdateAnchor() {
-
-            Pose ourPose = getPose();
-
-            float[] ourPosition = ourPose.getTranslation();
-
-            isPointVisibleToCamera = frustumVisibilityTester.isPointInFrustum(ourPosition[0], ourPosition[1], ourPosition[2]);
-
-            parentAnchorList.isDirty = true;
-        }
-    }
-
-    public static  int nextAnchorListID = 1;
-
-    public class AnchorList
-    {
-        public  int     anchorListID = 0;
-
-        public ArrayList<TASQAR_Anchor> anchors = new ArrayList<TASQAR_Anchor>();
-        public float[] vertices = null;
-        public float[] normals = null;
-
-        public float[] verticesStartCap = null;
-        public float[] normalsStartCap = null;
-
-        public float[] verticesEndCap = null;
-        public float[] normalsEndCap = null;
-
-        public  boolean     isDirty = true;
-        public  int         numAnchors = 0;
-
-        float[] modelMatrix = null;
-
-        public void updateModelMatrix(float[] modelMatrix, float scaleFactor) {
-            float[] scaleMatrix = new float[16];
-            Matrix.setIdentityM(scaleMatrix, 0);
-            scaleMatrix[0] = scaleFactor;
-            scaleMatrix[5] = scaleFactor;
-            scaleMatrix[10] = scaleFactor;
-            Matrix.multiplyMM(this.modelMatrix, 0, modelMatrix, 0, scaleMatrix, 0);
-        }
-
-        public void UpdateAllAnchors()
-        {
-            int numAnchors = anchors.size();
-
-            for(int i = 0; i < numAnchors; i++)
-            {
-                anchors.get(i).UpdateAnchor();
-            }
-        }
-
-        public void RemoveAllVertices()
-        {
-            vertices = null;
-            normals = null;
-            verticesEndCap = null;
-            normalsEndCap = null;
-            verticesStartCap = null;
-            normalsStartCap = null;
-            modelMatrix = null;
-        }
-
-        public void CheckDirty()
-        {
-            for(int i = 0; i < numAnchors; i++)
-            {
-                TASQAR_Anchor tasqar_anchor = anchors.get(i);
-                tasqar_anchor.CheckDirty();
-            }
-        }
-
-        public boolean isPointEqual(int index, float[] translation)
-        {
-            float[] translationFirst = anchors.get(index).getPose().getTranslation();
-
-            if( Math.abs(translationFirst[0] - translation[0]) > 0.2f ||
-                    Math.abs(translationFirst[1] - translation[1]) > 0.2f ||
-                    Math.abs(translationFirst[2] - translation[2]) > 0.2f )
-            {
-                return  true;
-            }
-
-            return  false;
-        }
-
-        public void AddAnchor(TASQAR_Anchor anchor)
-        {
-            anchors.add(anchor);
-
-            numAnchors = anchors.size();
-        }
-
-        public void calcVertices()
-        {
-            RemoveAllVertices();
-
-            UpdateAllAnchors();
-
-            ArrayList<PVector> listOfPoints = new ArrayList<>();
-
-            float[] currentCameraPosition = VideoChatActivity.getInstance().camera.getPose().getTranslation();
-            float[] currentCameraQuaternion = VideoChatActivity.getInstance().camera.getPose().getRotationQuaternion();
-            float[] currentCameraAxis = new float[]{currentCameraQuaternion[0], currentCameraQuaternion[1], currentCameraQuaternion[2]};
-            PVector vecCurrentCameraAxis = new PVector(currentCameraAxis[0], currentCameraAxis[1], currentCameraAxis[2]);
-            vecCurrentCameraAxis.normalize();
-
-            int numHitAnchors = 0;
-            int numVisibleAnchors = 0;
-            for (int i = 0; i < numAnchors; i++)
-            {
-//                Log.d(TAG, "Anchor Visiblity " + (anchors.get(i).isPointVisibleToCamera ? "YES" : "NO"));
-
-                if(anchors.get(i).isPointVisibleToCamera)// || anchors.get(i).previousAnchorTrackingState != TrackingState.TRACKING)
-                {
-                    numVisibleAnchors += 1;
-                }
-
-                PVector toAnchor = new PVector( anchors.get(i).getPose().tx() - currentCameraPosition[0],
-                        anchors.get(i).getPose().ty() - currentCameraPosition[1],
-                        anchors.get(i).getPose().tz() - currentCameraPosition[2]);
-                toAnchor.normalize();
-
-                currentCameraAxis = new float[]{toAnchor.x, toAnchor.y, toAnchor.z};
-
-                anchors.get(i).CheckHitCameraRay(currentCameraPosition, currentCameraAxis, i, numAnchors);
-
-                if(anchors.get(i).isHitCameraRay)
-                {
-                    numHitAnchors += 1;
-                }
-
-                Pose pose = anchors.get(i).getPose();
-                float[] originPoint = pose.getTranslation();
-                listOfPoints.add(new PVector(originPoint[0], originPoint[1], originPoint[2]));
-            }
-
-            float visibleAccPercentage = (float)numVisibleAnchors / (float)numAnchors;
-            float hitAccPercentage = (float)numHitAnchors / (float)numAnchors;
-
-//            Log.d(TAG, "HIT PERCENTAGE: " + hitAccPercentage * 100 + "%" + " VISIBLE PERCENTAGE: " + visibleAccPercentage * 100 + "%");
-
-            if(hitAccPercentage < 0.9f || visibleAccPercentage < 0.9f)
-            {
-                isDirty = false;
-                return;
-            }
-
-            PVector[] pointVectors = listOfPoints.toArray(new PVector[listOfPoints.size()]);
-
-            P_Bezier3D bezierCurve = new P_Bezier3D(pointVectors, pointVectors.length);
-
-            Contour contour = getSphericalContour();
-            ContourScale conScale = new CS_ConstantScale();
-            conScale.scale(1f);
-            contour.make_u_Coordinates();
-
-            Extrusion e = new Extrusion(null, bezierCurve, 50, contour, conScale);
-            e.drawMode(S3D.TEXTURE);
-
-            Mesh2DCore mesh2DCore = (Mesh2DCore)e;
-
-            MeshSection var1 = mesh2DCore.fullShape;
-
-            int numVertices = (var1.eNS - 2) * var1.eEW * 3;
-
-            vertices = new float[numVertices * 3];
-            normals = new float[numVertices * 3];
-
-            int pointCounter = 0;
-
-            for(int var4 = var1.sNS; var4 < var1.eNS - 2; var4++) {
-
-                for(int var5 = var1.sEW; var5 < var1.eEW; var5++) {
-                    PVector p1 = mesh2DCore.coord[var5][var4];
-                    PVector n1 = mesh2DCore.norm[var5][var4];
-                    vertices[pointCounter] = p1.x;
-                    vertices[pointCounter + 1] = p1.y;
-                    vertices[pointCounter + 2] = p1.z;
-                    normals[pointCounter] = n1.x;
-                    normals[pointCounter + 1] = n1.y;
-                    normals[pointCounter + 2] = n1.z;
-                    pointCounter += 3;
-
-                    PVector p2 = mesh2DCore.coord[var5][var4 + 1];
-                    PVector n2 = mesh2DCore.norm[var5][var4 + 1];
-                    vertices[pointCounter] = p2.x;
-                    vertices[pointCounter + 1] = p2.y;
-                    vertices[pointCounter + 2] = p2.z;
-                    normals[pointCounter] = n2.x;
-                    normals[pointCounter + 1] = n2.y;
-                    normals[pointCounter + 2] = n2.z;
-                    pointCounter += 3;
-
-                    PVector p3 = mesh2DCore.coord[var5][var4 + 2];
-                    PVector n3 = mesh2DCore.norm[var5][var4 + 2];
-                    vertices[pointCounter] = p3.x;
-                    vertices[pointCounter + 1] = p3.y;
-                    vertices[pointCounter + 2] = p3.z;
-                    normals[pointCounter] = n3.x;
-                    normals[pointCounter + 1] = n3.y;
-                    normals[pointCounter + 2] = n3.z;
-                    pointCounter += 3;
-                }
-            }
-
-            EndCapContour capContour = (EndCapContour)e.startEC;
-
-            verticesStartCap = new float[capContour.triangles.length * 9];
-            normalsStartCap = new float[capContour.triangles.length * 9];
-
-            for(int i = 0, j = 0; i < capContour.triangles.length; i += 3, j += 9) {
-                int v1 = capContour.triangles[i];
-                int var2 = capContour.triangles[i + 1];
-                int var3 = capContour.triangles[i + 2];
-
-                normalsStartCap[j] = capContour.n.x;
-                normalsStartCap[j + 1] = capContour.n.y;
-                normalsStartCap[j + 2] = capContour.n.z;
-                normalsStartCap[j + 3] = capContour.n.x;
-                normalsStartCap[j + 4] = capContour.n.y;
-                normalsStartCap[j + 5] = capContour.n.z;
-                normalsStartCap[j + 6] = capContour.n.x;
-                normalsStartCap[j + 7] = capContour.n.y;
-                normalsStartCap[j + 8] = capContour.n.z;
-
-                verticesStartCap[j] = capContour.edge[v1].x;
-                verticesStartCap[j + 1] = capContour.edge[v1].y;
-                verticesStartCap[j + 2] = capContour.edge[v1].z;
-                verticesStartCap[j + 3] = capContour.edge[var2].x;
-                verticesStartCap[j + 4] = capContour.edge[var2].y;
-                verticesStartCap[j + 5] = capContour.edge[var2].z;
-                verticesStartCap[j + 6] = capContour.edge[var3].x;
-                verticesStartCap[j + 7] = capContour.edge[var3].y;
-                verticesStartCap[j + 8] = capContour.edge[var3].z;
-            }
-
-            capContour = (EndCapContour)e.endEC;
-
-            verticesEndCap = new float[capContour.triangles.length * 9];
-            normalsEndCap = new float[capContour.triangles.length * 9];
-
-            for(int i = 0, j = 0; i < capContour.triangles.length; i += 3, j += 9) {
-                int v1 = capContour.triangles[i];
-                int var2 = capContour.triangles[i + 1];
-                int var3 = capContour.triangles[i + 2];
-
-                normalsEndCap[j] = capContour.n.x;
-                normalsEndCap[j + 1] = capContour.n.y;
-                normalsEndCap[j + 2] = capContour.n.z;
-                normalsEndCap[j + 3] = capContour.n.x;
-                normalsEndCap[j + 4] = capContour.n.y;
-                normalsEndCap[j + 5] = capContour.n.z;
-                normalsEndCap[j + 6] = capContour.n.x;
-                normalsEndCap[j + 7] = capContour.n.y;
-                normalsEndCap[j + 8] = capContour.n.z;
-
-                verticesEndCap[j] = capContour.edge[v1].x;
-                verticesEndCap[j + 1] = capContour.edge[v1].y;
-                verticesEndCap[j + 2] = capContour.edge[v1].z;
-                verticesEndCap[j + 3] = capContour.edge[var2].x;
-                verticesEndCap[j + 4] = capContour.edge[var2].y;
-                verticesEndCap[j + 5] = capContour.edge[var2].z;
-                verticesEndCap[j + 6] = capContour.edge[var3].x;
-                verticesEndCap[j + 7] = capContour.edge[var3].y;
-                verticesEndCap[j + 8] = capContour.edge[var3].z;
-            }
-
-            modelMatrix = new float[16];
-            float[] anchorMatrix = new float[16];
-            anchors.get(0).getPose().toMatrix(anchorMatrix, 0);
-
-            updateModelMatrix(anchorMatrix, 1.0f);
-
-            isDirty = false;
-        }
-
-        public  AnchorList()
-        {
-            anchorListID = nextAnchorListID;
-
-            nextAnchorListID += 1;
-
-            this.isDirty = true;
-        }
-
-        public void DetachAllAnchors()
-        {
-            numAnchors = anchors.size();
-
-            for(int i = 0; i < numAnchors; i++)
-            {
-                anchors.get(i).detach();
-            }
-
-            anchors.clear();
-
-            numAnchors = anchors.size();
-
-            vertices = null;
-            normals = null;
-        }
-    }
-
-    public void UpdateAllAnchors()
-    {
-        int numAnchorList = anchorsLists.size();
-
-        for(int i = 0; i < numAnchorList; i++)
-        {
-            AnchorList anchorList = anchorsLists.get(i);
-            anchorList.UpdateAllAnchors();
-        }
-    }
 
     private static final String VERTEX_SHADER_NAME = "shaders/object.vert";
     private static final String FRAGMENT_SHADER_NAME = "shaders/object.frag";
@@ -451,16 +55,13 @@ public class PointRenderer{
 
     private int colorUniform;
 
-    private ArrayList<AnchorList> anchorsLists = new ArrayList<AnchorList>();
-
-    private Pose previousPoseLocal = null;
-    private Pose previousPoseRemote = null;
-
-    private float[] firstTranslation = new float[3];
-    private boolean firstTranslationSet = false;
-
     private Thread makeExtrusionVerticesThread = null;
     private Thread updateAnchorsThread = null;
+
+    private final ObjectRenderer virtualObject = new ObjectRenderer();
+    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+
+    public  TASQAR_PoseInfoList poseInfoList = new TASQAR_PoseInfoList();
 
     public void DestroyAll()
     {
@@ -474,19 +75,14 @@ public class PointRenderer{
 
         updateAnchorsThread = null;
 
-        int numAnchorLists = anchorsLists.size();
-
-        for(int i = 0; i < numAnchorLists; i++)
-        {
-            anchorsLists.get(i).DetachAllAnchors();
-        }
+        poseInfoList.DestroyAll();
     }
 
     PointRenderer()
     {
         MakeExtrusionVerticesThreadLoop();
 
-        UpdateAchorsThreadLoop();
+        UpdateAnchorsThreadLoop();
     }
 
     public void createOnGlThread(Context context, String diffuseTextureAssetName) throws IOException
@@ -534,231 +130,34 @@ public class PointRenderer{
 //        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
 //        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 
-        textureBitmap.recycle();
+//        textureBitmap.recycle();
+
+        virtualObject.createOnGlThread(/*context=*/ context, "models/arrow_v2.obj", "models/arrow_tex.png");
+        virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
+
+        virtualObjectShadow.createOnGlThread(context, "models/arrow.obj", "models/andy_shadow.png");
+        virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
+        virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
     }
 
-    public void RemoveAllZeroAnchorsList()
+    public void AddBreak(String userName)
     {
-        int numAnchorsLists = anchorsLists.size();
-
-        for(int i = 0; i < numAnchorsLists; i++)
-        {
-            AnchorList anchorList = anchorsLists.get(i);
-
-            if(anchorList.numAnchors < 2)
-            {
-                anchorList.DetachAllAnchors();
-
-                anchorsLists.remove(i);
-
-                numAnchorsLists = anchorsLists.size();
-
-                i = 0;
-            }
-        }
+        poseInfoList.AddBreak(userName);
+        poseInfoList.RemoveAllZeroAnchorsList();
     }
 
-    public void AddBreak(boolean local)
+    public void AddPoint(HitResult hitResult, String userName, int anchorListType)
     {
-        if(local) {
-            previousPoseLocal = null;
-
-            if (currentAnchorListLocal != null)
-            anchorsLists.add(currentAnchorListLocal);
-
-            currentAnchorListLocal = null;
-        }
-        else
-        {
-            previousPoseRemote = null;
-
-            if (currentAnchorListRemote != null)
-                anchorsLists.add(currentAnchorListRemote);
-
-            currentAnchorListRemote = null;
-        }
-
-        RemoveAllZeroAnchorsList();
-    }
-
-    public void AddPoint(HitResult hitResult, boolean local)
-    {
-        Log.d(TAG, "ADDING POINT " + (local == true ? "LOCAL" : "REMOTE"));
-
-        Pose hitPose = hitResult.getHitPose();
-
-        Pose previousPose = local == true ? previousPoseLocal : previousPoseRemote;
-
-        if(previousPose != null)
-        {
-            float threshold = 0.01f;
-
-            float px = previousPose.tx();
-            float py = previousPose.ty();
-            float pz = previousPose.tz();
-
-            float hx = hitPose.tx();
-            float hy = hitPose.ty();
-            float hz = hitPose.tz();
-
-            Vector3D currentPoint = new Vector3D(hx, hy, hz);
-            Vector3D previousPoint = new Vector3D(px, py, pz);
-            float distance = (float) Vector3D.distance(currentPoint, previousPoint);
-
-            if(distance > threshold)
-            {
-                double controlPointHeight = 0.001;
-                Vector3D controlPoint = previousPoint.add(currentPoint).scalarMultiply(0.5);
-                controlPoint = new Vector3D(controlPoint.getX(), controlPoint.getY() + controlPointHeight, controlPoint.getZ());
-
-                int numPointsToAdd = (int) (distance / threshold);
-                int totalPoints = numPointsToAdd + 2;
-                float inc = 1.0f / totalPoints;
-
-                for (float t = 0.0f; t <= 1; t += inc)
-                {
-                    double newX = (1.0f - t) * (1.0f - t) * previousPoint.getX() + 2.0f * (1.0f - t) * t * controlPoint.getX() + t * t * currentPoint.getX();
-                    double newY = (1.0f - t) * (1.0f - t) * previousPoint.getY() + 2.0f * (1.0f - t) * t * controlPoint.getY() + t * t * currentPoint.getY();
-                    double newZ = (1.0f - t) * (1.0f - t) * previousPoint.getZ() + 2.0f * (1.0f - t) * t * controlPoint.getZ() + t * t * currentPoint.getZ();
-
-                    Pose newPose = new Pose(new float[]{(float) newX, (float) newY, (float) newZ}, new float[]{0, 0, 0, 0});
-                    AddAnchor(hitResult, newPose, local);
-                }
-            }
-            else
-            {
-                AddAnchor(hitResult, hitPose, local);
-            }
-        }
-        else
-        {
-            AddAnchor(hitResult, hitPose, local);
-        }
-
-        if(local)
-            previousPoseLocal = hitPose;
-        else
-            previousPoseRemote = hitPose;
-    }
-
-    public AnchorList currentAnchorListLocal = null;
-    public AnchorList currentAnchorListRemote = null;
-    public void AddAnchor(HitResult hitResult, Pose hitPose, boolean local)
-    {
-        if(local)
-        {
-            if(currentAnchorListLocal == null)
-            {
-                currentAnchorListLocal = new AnchorList();
-            }
-
-            Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
-            currentAnchorListLocal.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorListLocal));
-        }
-        else
-        {
-            if(currentAnchorListRemote == null)
-            {
-                currentAnchorListRemote = new AnchorList();
-            }
-
-            Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);
-            currentAnchorListRemote.AddAnchor(new TASQAR_Anchor(anchor, currentAnchorListRemote));
-        }
+        poseInfoList.AddPoint(hitResult, userName, anchorListType);
     }
 
     public static float clamp(float val, float min, float max) {
         return Math.max(min, Math.min(max, val));
     }
 
-    public class Building extends Contour {
-
-        public Building(PVector[] c) {
-            this.contour = c;
-        }
-    }
-
-    public Contour getSphericalContour() {
-
-        float scale = 0.005f;
-
-        int numPoints = 30;
-
-        PVector[] points = new PVector[numPoints];
-
-        float angleInc = (float) (2 * Math.PI / numPoints);
-
-        for(int i = 0; i < numPoints; i++)
-        {
-            points[i] = new PVector((float)Math.sin(i * angleInc), (float)Math.cos(i * angleInc));
-            points[i].mult(scale);
-        }
-
-        return new Building(points);
-    }
-
-//    FloatBuffer vertexBuffer = null;
-//    FloatBuffer normalBuffer = null;
-
-    boolean isWorldReferenceChanged()
-    {
-        if(anchorsLists.size() > 0)
-        {
-            AnchorList anchorsList = anchorsLists.get(0);
-
-            if (anchorsList.numAnchors > 0) {
-                boolean firstPointChanged = anchorsList.isPointEqual(0, firstTranslation);
-
-                if (firstPointChanged) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    void MakeExtrusionVerticesArrays()
-    {
-        int numAnchorsLists = anchorsLists.size();
-        for(int anchorsListCount = 0; anchorsListCount < numAnchorsLists; anchorsListCount++) {
-
-            AnchorList anchorList = anchorsLists.get(anchorsListCount);
-
-            anchorList.CheckDirty();
-
-            if (anchorList.isDirty)
-            {
-//                Log.d(TAG, "Calculating Vertices for " + anchorList.anchorListID);
-                anchorList.calcVertices();
-            }
-        }
-
-        if(numAnchorsLists > 0 && !firstTranslationSet)
-        {
-            AnchorList anchorList = anchorsLists.get(0);
-            TASQAR_Anchor tasqar_anchor = anchorList.anchors.get(0);
-
-            firstTranslationSet = true;
-            firstTranslation[0] = tasqar_anchor.getPose().tx();
-            firstTranslation[1] = tasqar_anchor.getPose().ty();
-            firstTranslation[2] = tasqar_anchor.getPose().tz();
-        }
-    }
-
-    public void DirtyAllAnchorLists() {
-
-        int numAnchorLists = anchorsLists.size();
-
-        for (int i = 0; i < numAnchorLists; i++) {
-            anchorsLists.get(i).isDirty = true;
-        }
-    }
-
-
-    public void UpdateAchorsThreadLoop()
+    public void UpdateAnchorsThreadLoop()
     {
         updateAnchorsThread = new Thread(new Runnable() {
             @Override
@@ -768,7 +167,6 @@ public class PointRenderer{
 
                 while (true)
                 {
-
                     try {
                         Thread.sleep(sleepTime);
                     } catch (InterruptedException e) {
@@ -780,8 +178,9 @@ public class PointRenderer{
                         {
                             if (isCameraMovedRotatedALot())
                             {
-                                UpdateAllAnchors();
+                                poseInfoList.UpdateAllAnchors(frustumVisibilityTester);
                             }
+
                             previousCameraPose = VideoChatActivity.getInstance().camera.getPose();
                         }
                     }
@@ -799,7 +198,7 @@ public class PointRenderer{
             public void run() {
                 while (true) {
 
-                    MakeExtrusionVerticesArrays();
+                    poseInfoList.MakeExtrusionVerticesArrays(frustumVisibilityTester);
 
                     try {
                         Thread.sleep(100);
@@ -857,7 +256,7 @@ public class PointRenderer{
             if(list.numAnchors < 3)
                 return;
 
-            list.calcVertices();
+            list.calcVertices(frustumVisibilityTester);
 
             float[] modelMatrix = list.modelMatrix;
 
@@ -892,22 +291,39 @@ public class PointRenderer{
         }
     }
 
+    void DrawArrow (Anchor anchor, float[] viewmtx, float[] projmtx, final float[] colorCorrectionRgba)
+    {
+        float scaleFactor = 0.3f;
+        if (anchor.getTrackingState() != TrackingState.TRACKING)
+        {
+            return;
+        }
+
+        float[] anchorMatrix = new float[16];
+
+        anchor.getPose().toMatrix(anchorMatrix, 0);
+
+        float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
+
+        virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
+        virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
+        virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, objColor);
+    }
+
 
     public Pose previousCameraPose = Pose.IDENTITY;
     public FrustumVisibilityTester frustumVisibilityTester = new FrustumVisibilityTester();
-    public void draw(float[] cameraView, float[] cameraPerspective) {
+    public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
 
         frustumVisibilityTester.calculateFrustum(cameraPerspective, cameraView);
 
-        if(firstTranslationSet && isWorldReferenceChanged())
+        if(poseInfoList.firstTranslationSet && poseInfoList.isWorldReferenceChanged())
         {
-//            Log.d(TAG, "WORLD REFERENCE CHANGED");
+            poseInfoList.firstTranslationSet = false;
 
-            firstTranslationSet = false;
+            poseInfoList.UpdateAllAnchors(frustumVisibilityTester);
 
-            UpdateAllAnchors();
-
-            DirtyAllAnchorLists();
+            poseInfoList.DirtyAllAnchorLists();
         }
 
         GLES20.glEnable(GLES20.GL_BLEND);
@@ -918,46 +334,65 @@ public class PointRenderer{
         GLES20.glEnableVertexAttribArray(positionAttribute);
         GLES20.glEnableVertexAttribArray(normalAttribute);
 
-        int numAnchorsLists = anchorsLists.size();
+        Set<String> poseInfoKeys = poseInfoList.GetKeySet();
+        Iterator<String> poseInfoKeysIterator = poseInfoKeys.iterator();
 
-        for(int anchorListCount = 0; anchorListCount < numAnchorsLists; anchorListCount++)
+        while (poseInfoKeysIterator.hasNext())
         {
-            AnchorList anchorList = anchorsLists.get(anchorListCount);
+            PoseInfo poseInfo = poseInfoList.GetUserPoseInfo(poseInfoKeysIterator.next());
 
-            float[] modelMatrix = anchorList.modelMatrix;
+            if(poseInfo.currentUserAnchorList != null)
+                DrawAnchorList(poseInfo.currentUserAnchorList, cameraView, cameraPerspective);
 
-            if(modelMatrix == null)
-                continue;
+            int numAnchorsLists = poseInfo.anchorsLists.size();
 
-            float[] modelViewMatrix = new float[16];
-            float[] modelViewProjectionMatrix = new float[16];
-            Matrix.setIdentityM(modelMatrix, 0);
-            Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
-            Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
-            GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+            for(int anchorListCount = 0; anchorListCount < numAnchorsLists; anchorListCount++)
+            {
+                AnchorList anchorList = poseInfo.anchorsLists.get(anchorListCount);
 
-            float[] vertices = anchorList.vertices;
-            float[] normals = anchorList.normals;
+                if(anchorList.anchorListType == 1)
+                {
+                    TASQAR_Anchor tasqar_anchor = anchorList.anchors.get(0);
 
-            if(vertices == null)
-                continue;
+                    DrawArrow(tasqar_anchor.anchor, cameraView, cameraPerspective, colorCorrectionRgba);
 
-            GLES20.glUniform3f(colorUniform, 0.2f, 0.9f, 0.3f);
-            DrawVertices(vertices, normals, GLES20.GL_TRIANGLE_STRIP);
+                    continue;
+                }
 
-            vertices = anchorList.verticesStartCap;
-            normals = anchorList.normalsStartCap;
-            GLES20.glUniform3f(colorUniform, 0.9f, 0.2f, 0.3f);
-            DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+                GLES20.glUseProgram(programName);
 
-            vertices = anchorList.verticesEndCap;
-            normals = anchorList.normalsEndCap;
-            GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
-            DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+                float[] modelMatrix = anchorList.modelMatrix;
+
+                if(modelMatrix == null)
+                    continue;
+
+                float[] modelViewMatrix = new float[16];
+                float[] modelViewProjectionMatrix = new float[16];
+                Matrix.setIdentityM(modelMatrix, 0);
+                Matrix.multiplyMM(modelViewMatrix, 0, cameraView, 0, modelMatrix, 0);
+                Matrix.multiplyMM(modelViewProjectionMatrix, 0, cameraPerspective, 0, modelViewMatrix, 0);
+                GLES20.glUniformMatrix4fv(modelViewProjectionUniform, 1, false, modelViewProjectionMatrix, 0);
+
+                float[] vertices = anchorList.vertices;
+                float[] normals = anchorList.normals;
+
+                if(vertices == null)
+                    continue;
+
+                GLES20.glUniform3f(colorUniform, 0.2f, 0.9f, 0.3f);
+                DrawVertices(vertices, normals, GLES20.GL_TRIANGLE_STRIP);
+
+                vertices = anchorList.verticesStartCap;
+                normals = anchorList.normalsStartCap;
+                GLES20.glUniform3f(colorUniform, 0.9f, 0.2f, 0.3f);
+                DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+
+                vertices = anchorList.verticesEndCap;
+                normals = anchorList.normalsEndCap;
+                GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
+                DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
+            }
         }
-
-        DrawAnchorList(currentAnchorListLocal, cameraView, cameraPerspective);
-        DrawAnchorList(currentAnchorListRemote, cameraView, cameraPerspective);
 
         GLES20.glDisableVertexAttribArray(positionAttribute);
         GLES20.glDisableVertexAttribArray(normalAttribute);
@@ -1004,5 +439,15 @@ public class PointRenderer{
 
     FloatBuffer allocateDirectFloatBuffer(int n) {
         return ByteBuffer.allocateDirect(n * Float.BYTES).order(ByteOrder.nativeOrder()).asFloatBuffer();
+    }
+
+    public void Undo(String username)
+    {
+        boolean undoResult = poseInfoList.Undo(username);
+
+        if(undoResult)
+        {
+            poseInfoList.DirtyAllAnchorLists();
+        }
     }
 }

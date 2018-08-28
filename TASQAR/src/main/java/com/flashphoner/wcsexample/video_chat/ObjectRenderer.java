@@ -362,15 +362,15 @@ public class ObjectRenderer {
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, indexCount, GLES20.GL_UNSIGNED_SHORT, 0);
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        if (blendMode != null) {
-            GLES20.glDisable(GLES20.GL_BLEND);
-            GLES20.glDepthMask(true);
-        }
-
-        // Disable vertex arrays
-        GLES20.glDisableVertexAttribArray(positionAttribute);
-        GLES20.glDisableVertexAttribArray(normalAttribute);
-        GLES20.glDisableVertexAttribArray(texCoordAttribute);
+//        if (blendMode != null) {
+//            GLES20.glDisable(GLES20.GL_BLEND);
+//            GLES20.glDepthMask(true);
+//        }
+//
+//        // Disable vertex arrays
+//        GLES20.glDisableVertexAttribArray(positionAttribute);
+//        GLES20.glDisableVertexAttribArray(normalAttribute);
+//        GLES20.glDisableVertexAttribArray(texCoordAttribute);
 
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 

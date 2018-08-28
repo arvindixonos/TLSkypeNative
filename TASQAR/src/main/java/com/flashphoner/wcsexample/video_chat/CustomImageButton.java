@@ -156,6 +156,8 @@ class TempButton extends AppCompatImageButton implements View.OnTouchListener
                     else
                     {
                         Toast.makeText(currentContext, "Undo", Toast.LENGTH_SHORT).show();
+
+                        VideoChatActivity.getInstance().UndoClicked();
                     }
                     break;
             }
