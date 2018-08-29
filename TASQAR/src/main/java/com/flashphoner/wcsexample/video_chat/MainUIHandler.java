@@ -127,6 +127,9 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     ImageView progessBar;
 
+    ImageButton mSettingsButton;
+    ImageButton mUndoButton;
+
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
 
@@ -134,7 +137,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     ConstraintLayout mFloatingButtonsLayout;
     ConstraintLayout mHistoryScreen;
-    ConstraintLayout mExtraButtons;
+    ConstraintLayout mSettingLayout;
 
     FloatingActionButton mEndCallButton;
     FloatingActionButton mPlusButton;
@@ -162,11 +165,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     TextView pointModeText;
     TextView timerText;
     TextView userNameText;
+    TextView arrowText;
+    TextView drawText;
 
     LinearLayout historyScreen;
 
     Button mButton;
-    TempButton mTempButton;
+    Button mArrowButton;
+    Button mDrawButton;
     Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
@@ -223,12 +229,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         progessBar = currentActivity.findViewById(R.id.ProgressBar);
 
+        mSettingsButton = currentActivity.findViewById(R.id.SettingButton);
+
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
         localRender = currentActivity.findViewById(R.id.CurrentRender);
 
         mFloatingButtonsLayout = currentActivity.findViewById(R.id.FloatingButtonsLayout);
         mHistoryScreen = currentActivity.findViewById(R.id.FileHistory);
-        mExtraButtons = currentActivity.findViewById(R.id.AddedButtons);
+        mSettingLayout = currentActivity.findViewById(R.id.SettingLayout);
 
         mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
         mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
@@ -239,7 +247,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
         mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
         mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
-        mFlashButton = currentActivity.findViewById(R.id.FlashButton);
+//        mFlashButton = currentActivity.findViewById(R.id.FlashButton);
 
         drawer = currentActivity.findViewById(R.id.drawer_layout);
 
@@ -248,6 +256,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         timerText = currentActivity.findViewById(R.id.timerText);
 
         mButton = currentActivity.findViewById(R.id.button);
+        mArrowButton = currentActivity.findViewById(R.id.ArrowButton);
+        mDrawButton = currentActivity.findViewById(R.id.DrawButton);
+        mUndoButton = currentActivity.findViewById(R.id.UndoButton);
+        arrowText = currentActivity.findViewById(R.id.ArrowText);
+        drawText = currentActivity.findViewById(R.id.DrawText);
 
         historyScreen = currentActivity.findViewById(R.id.FileHistoryLayout);
 
@@ -263,16 +276,52 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        mTempButton = currentActivity.findViewById(R.id.tempButton);
-        mTempButton.layoutHolder = currentActivity.findViewById(R.id.ConLayout);
-        mTempButton.mArrowModeButton = currentActivity.findViewById(R.id.ArrowModeButton);
-        mTempButton.mDrawModeButton = currentActivity.findViewById(R.id.DrawModeButton);
-        mTempButton.mPointOrPlaneButton = currentActivity.findViewById(R.id.PointOrPlaneButton);
-        mTempButton.mArrowModeFloatingButton = currentActivity.findViewById(R.id.ArrowModeFloatingButton);
-        mTempButton.mDrawModeFloatingButton = currentActivity.findViewById(R.id.DrawModeFloatingButton);
-        mTempButton.mPointOrPlaneModeFloatingButton = currentActivity.findViewById(R.id.PointOrPlaneFloatingButton);
-        mTempButton.chatActivity = chatActivity;
-        mTempButton.InitialiseButtons();
+        mUndoButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                chatActivity.UndoClicked();
+            }
+        });
+
+        mSettingsButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if(mSettingLayout.getVisibility() == View.VISIBLE)
+                {
+                    mSettingLayout.setVisibility(GONE);
+                    mSettingsButton.setImageTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.white)));
+                }
+                else
+                {
+                    mSettingLayout.setVisibility(VISIBLE);
+                    mSettingsButton.setImageTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.black)));
+                }
+            }
+        });
+
+        mDrawButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                chatActivity.arrowMode = !chatActivity.arrowMode;
+                AdaptToggleButtons(chatActivity.arrowMode);
+            }
+        });
+
+        mArrowButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                chatActivity.arrowMode = !chatActivity.arrowMode;
+                AdaptToggleButtons(chatActivity.arrowMode);
+            }
+        });
 
         //Set Photo and Name
 
@@ -350,83 +399,83 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
             isAboveEight = true;
         }
-        mFlashButton.setOnClickListener(new View.OnClickListener()
-        {
-            CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
-
-            @Override
-            public void onClick(View v)
-            {
-                if(!flashOn)
-                {
-                    try
-                    {
-                        if(backCam)
-                        {
-                            Camera.Parameters parameters = camera.getParameters();
-                            List<String> strs = parameters.getSupportedFlashModes();
-                            for (String str:strs)
-                            {
-                                Log.d(TAG, "Message string is " + str);
-                            }
-                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-                            camera.setParameters(parameters);
-                            camera.startPreview();
-
-                        }
-                        else
-                        {
-                            try
-                            {
-                                String cameraId = cameraManager.getCameraIdList()[0];
-                                cameraManager.setTorchMode(cameraId, true);
-                            }
-                            catch(CameraAccessException e)
-                            {
-                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                            }
-                        }
-                        mFlashButton.setImageResource(R.drawable.flash_off);
-                        flashOn = true;
-                    }
-                    catch (Exception e)
-                    {
-                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        if(backCam)
-                        {
-                            Camera.Parameters parameters = camera.getParameters();
-                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                            camera.setParameters(parameters);
-                            camera.startPreview();
-                        }
-                        else
-                        {
-                            try
-                            {
-                                String cameraId = cameraManager.getCameraIdList()[0];
-                                cameraManager.setTorchMode(cameraId, false);
-                            }
-                            catch(CameraAccessException e)
-                            {
-                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                            }
-                        }
-                        mFlashButton.setImageResource(R.drawable.flash_on);
-                        flashOn = false;
-                    }
-                    catch (Exception e)
-                    {
-                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                    }
-                }
-            }
-        });
+//        mFlashButton.setOnClickListener(new View.OnClickListener()
+//        {
+//            CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
+//
+//            @Override
+//            public void onClick(View v)
+//            {
+//                if(!flashOn)
+//                {
+//                    try
+//                    {
+//                        if(backCam)
+//                        {
+//                            Camera.Parameters parameters = camera.getParameters();
+//                            List<String> strs = parameters.getSupportedFlashModes();
+//                            for (String str:strs)
+//                            {
+//                                Log.d(TAG, "Message string is " + str);
+//                            }
+//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+//                            camera.setParameters(parameters);
+//                            camera.startPreview();
+//
+//                        }
+//                        else
+//                        {
+//                            try
+//                            {
+//                                String cameraId = cameraManager.getCameraIdList()[0];
+//                                cameraManager.setTorchMode(cameraId, true);
+//                            }
+//                            catch(CameraAccessException e)
+//                            {
+//                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                            }
+//                        }
+//                        mFlashButton.setImageResource(R.drawable.flash_off);
+//                        flashOn = true;
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                    }
+//                }
+//                else
+//                {
+//                    try
+//                    {
+//                        if(backCam)
+//                        {
+//                            Camera.Parameters parameters = camera.getParameters();
+//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+//                            camera.setParameters(parameters);
+//                            camera.startPreview();
+//                        }
+//                        else
+//                        {
+//                            try
+//                            {
+//                                String cameraId = cameraManager.getCameraIdList()[0];
+//                                cameraManager.setTorchMode(cameraId, false);
+//                            }
+//                            catch(CameraAccessException e)
+//                            {
+//                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                            }
+//                        }
+//                        mFlashButton.setImageResource(R.drawable.flash_on);
+//                        flashOn = false;
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                    }
+//                }
+//            }
+//        });
 
         mSwitchCamera.setOnClickListener(v ->
         {
@@ -471,7 +520,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mFloatingButtonsLayout.setVisibility(GONE);
             mEndCallButton.setVisibility(GONE);
             mRenderHolder.setVisibility(GONE);
-            mExtraButtons.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+            mSettingsButton.setVisibility(GONE);
 
             fileButtonHelper.GetData();
         });
@@ -642,6 +692,20 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         };
     }
 
+    private void AdaptToggleButtons (boolean arrowMode)
+    {
+        if(arrowMode)
+        {
+            arrowText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+            drawText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.disabled_text_light)));
+        }
+        else
+        {
+            arrowText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.disabled_text_light)));
+            drawText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+        }
+    }
+
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item)
@@ -779,7 +843,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mStartRecordingButton.setVisibility(VISIBLE);
             mEndCallButton.setVisibility(VISIBLE);
             mRenderHolder.setVisibility(VISIBLE);
-            mExtraButtons.setVisibility(VISIBLE);
+            mSettingLayout.setVisibility(VISIBLE);
+            mSettingsButton.setVisibility(VISIBLE);
         }
     }
 
@@ -1057,17 +1122,18 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
     //SU Variables
 
     //All Screens
-    private ConstraintLayout mLoginScreen;
+    private ConstraintLayout    mLoginScreen;
     private ConstraintLayout    mSignUpScreen;
     private ConstraintLayout    mDetailsScreen;
     private ConstraintLayout    mPasswordScreen;
     private ConstraintLayout    mST_SettingsScreen;
     //All Screens
 
+    private Thread  submitNewUserThread = null;
     private Thread  emailIDCheckThread = null;
-    private Thread submitNextThread = null;
-    private Thread getUserThread = null;
-    private Thread loginThread = null;
+    private Thread  submitNextThread = null;
+    private Thread  getUserThread = null;
+    private Thread  loginThread = null;
 
     private int lastFetchedUserID = -1;
     private String photoftpLink = "";
@@ -1543,7 +1609,6 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
         emailIDCheckThread.start();
     }
 
-    private Thread submitNewUserThread = null;
     private void SubmitNewUser(final int userID, final  String photoftpLink, final String name, final String emailId, final String phoneNumber, final String role, final String hierarchy)
     {
         if(submitNewUserThread != null && submitNewUserThread.isAlive())

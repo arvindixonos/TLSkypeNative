@@ -1428,18 +1428,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 FloatingActionButton mEndButton = findViewById(R.id.EndCallButton);
                                 mEndButton.callOnClick();
                             }
-                            else if(messageReceived.equals("AR"))
-                            {
-                                uiHandler.mTempButton.ToggleArrowMode(false);
-                            }
-                            else if(messageReceived.equals("DR"))
-                            {
-                                uiHandler.mTempButton.ToggleDrawMode(false);
-                            }
-                            else if(messageReceived.equals("PP"))
-                            {
-                                uiHandler.mTempButton.TogglePointOrPlaneMode(false);
-                            }
                         }
                         else
                         {

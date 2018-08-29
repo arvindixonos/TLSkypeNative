@@ -232,7 +232,6 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
         switch (event.getAction())
         {
             case MotionEvent.ACTION_DOWN:
-                VideoChatActivity.getInstance().uiHandler.mTempButton.Close();
                 int xPos = (int)event.getX();
                 int yPos = (int)event.getY();
                 int width = getWidth();
