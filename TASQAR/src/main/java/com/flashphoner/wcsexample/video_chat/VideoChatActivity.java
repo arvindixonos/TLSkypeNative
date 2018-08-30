@@ -340,22 +340,25 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                                 DecodeLocalBreakMessage(userName);
                             }
-                            else if (localMessage.contains("COLORCHANGE: ") && WebRTCMediaProvider.cameraID == 0)
-                            {
-                                localMessage = localMessage.replace("COLORCHANGE: " , "");
-                                String[] values = localMessage.split(" ");
-
-                                String userName = values[0];
-                                String colorValue = values[1];
-
-                                DecodeLocalColorChangeMessage(userName, colorValue);
-                            }
                             else if (localMessage.contains("UNDO: "))
                             {
                                 String userName = localMessage.replace("UNDO: " , "");
 
                                 DecodeUndoMessage(userName);
                             }
+
+                            if (localMessage.contains("COLORCHANGE: "))
+                            {
+                                localMessage = localMessage.replace("COLORCHANGE: " , "");
+
+                                String[] values = localMessage.split(" ");
+
+                                String userName = values[0];
+                                String colorValue = values[1] + " " + values[2] + " " + values[3] + " " + values[4];
+
+                                DecodeLocalColorChangeMessage(userName, colorValue);
+                            }
+
                         }
                     }
 
@@ -392,22 +395,24 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                                 DecodeRemoteBreakMessage(userName);
                             }
-                            else if (remoteMessage.contains("COLORCHANGE: ") && WebRTCMediaProvider.cameraID == 0)
-                            {
-                                remoteMessage = remoteMessage.replace("COLORCHANGE: " , "");
-                                String[] values = remoteMessage.split(" ");
-
-                                String userName = values[0];
-                                String colorValue = values[1];
-
-                                DecodeRemoteColorChangeMessage(userName, colorValue);
-                            }
                             else if (remoteMessage.contains("UNDO: "))
                             {
                                 String userName = remoteMessage.replace("UNDO: " , "");
 
                                 DecodeUndoMessage(userName);
                             }
+
+                            if (remoteMessage.contains("COLORCHANGE: "))
+                            {
+                                remoteMessage = remoteMessage.replace("COLORCHANGE: " , "");
+                                String[] values = remoteMessage.split(" ");
+
+                                String userName = values[0];
+                                String colorValue = values[1] + " " + values[2] + " " + values[3] + " " + values[4];
+
+                                DecodeRemoteColorChangeMessage(userName, colorValue);
+                            }
+
                         }
                     }
 
@@ -421,6 +426,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         });
 
         remoteMessageHandler.start();
+
+        SelectedOrange();
     }
 
     private void DecodeUndoMessage(String userName) {
@@ -673,7 +680,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 planeRenderer.drawPlanes(session.getAllTrackables(Plane.class), camera.getDisplayOrientedPose(), projmtx);
             }
 
-            pointRenderer.draw(viewmtx, projmtx, colorCorrectionRgba);
+            pointRenderer.draw(viewmtx, projmtx);
 
             byte[] ardata = GetScreenPixels();
             onPreviewFrame(ardata, null);
@@ -879,16 +886,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     class TASQAR_MotionEvent
     {
         public String userName = "";
-        public String currentColor = "";
         public String mode = "";
         public MotionEvent motionEvent;
 
-        public TASQAR_MotionEvent(String userName, String mode, float xVal, float yVal, String currentColor)
+        public TASQAR_MotionEvent(String userName, String mode, float xVal, float yVal)
         {
             this.mode = mode;
             this.motionEvent = MotionEvent.obtain(1, 1, MotionEvent.ACTION_DOWN, xVal, yVal, 0);
             this.userName = userName;
-            this.currentColor = currentColor;
         }
     }
 
@@ -908,9 +913,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         if(values.length > 5)
            userName = values[5];
 
-        String colorValue = values[6];
-
-        TASQAR_MotionEvent motionEvent = new TASQAR_MotionEvent(userName, mode, xVal, yVal, colorValue);
+        TASQAR_MotionEvent motionEvent = new TASQAR_MotionEvent(userName, mode, xVal, yVal);
         TapHandle(motionEvent, mode, width, height);
     }
 
@@ -928,27 +931,38 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void     SelectedRed()
     {
-        currentColor = new float[]{1.0f, 0.0f, 0.0f, 1.0f};
+        SetCurrentColor(new float[]{1.0f, 0.0f, 0.0f, 1.0f});
+    }
+
+    public  void SetCurrentColor(float[] color)
+    {
+        currentColor = color;
+
+        SendMessage("COLORCHANGE: " + roomManager.getUsername() + " "  + Arrays.toString(currentColor));
+
+        synchronized (localSyncObject) {
+            localMessages.add("COLORCHANGE: " + roomManager.getUsername() + " "  + Arrays.toString(currentColor));
+        }
     }
 
     public void     SelectedBlue()
     {
-        currentColor = new float[]{0.0f, 0.0f, 1.0f, 1.0f};
+        SetCurrentColor(new float[]{0.0f, 0.0f, 1.0f, 1.0f});
     }
 
     public void     SelectedGreen()
     {
-        currentColor = new float[]{0.0f, 1.0f, 0.0f, 1.0f};
+        SetCurrentColor(new float[]{0.0f, 1.0f, 0.0f, 1.0f});
     }
 
     public void     SelectedOrange()
     {
-        currentColor = new float[]{1.0f, 0.7f, 0.0f, 1.0f};
+        SetCurrentColor(new float[]{1.0f, 0.7f, 0.0f, 1.0f});
     }
 
     public void     SelectedYellow()
     {
-        currentColor = new float[]{1.0f, 1.0f, 0.0f, 1.0f};
+        SetCurrentColor( new float[]{1.0f, 1.0f, 0.0f, 1.0f});
     }
 
 
@@ -1073,17 +1087,17 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     private void SpawnArrow(HitResult hit, TASQAR_MotionEvent motionEvent)
     {
-        pointRenderer.AddPoint(hit, motionEvent.userName, motionEvent.currentColor, 1);
+        pointRenderer.AddPoint(hit, motionEvent.userName, 1);
     }
 
     private void SpawnBlinkingLight(HitResult hit, TASQAR_MotionEvent motionEvent)
     {
-        pointRenderer.AddPoint(hit, motionEvent.userName, motionEvent.currentColor, 2);
+        pointRenderer.AddPoint(hit, motionEvent.userName, 2);
     }
 
     private void SpawnPoint(HitResult hit, TASQAR_MotionEvent motionEvent)
     {
-        pointRenderer.AddPoint(hit, motionEvent.userName, motionEvent.currentColor, 0);
+        pointRenderer.AddPoint(hit, motionEvent.userName, 0);
     }
 
     public void SetLocalRendererMirror()
@@ -1357,6 +1371,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 uiHandler.StartTimer();
                             }
                         }
+
+                        SetCurrentColor(currentColor);
                     }
 
                     @Override
@@ -1367,6 +1383,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
+
+                        SetCurrentColor(currentColor);
                     }
 
                     @Override

@@ -69,7 +69,6 @@ public class ObjectRenderer {
     private int indexCount;
 
     private int program;
-    private final int[] textures = new int[1];
 
     // Shader location: model view projection matrix.
     private int modelViewUniform;
@@ -78,10 +77,6 @@ public class ObjectRenderer {
     // Shader location: object attributes.
     private int positionAttribute;
     private int normalAttribute;
-    private int texCoordAttribute;
-
-    // Shader location: texture sampler.
-    private int textureUniform;
 
     // Shader location: environment properties.
     private int lightingParametersUniform;
@@ -89,13 +84,10 @@ public class ObjectRenderer {
     // Shader location: material properties.
     private int materialParametersUniform;
 
-    // Shader location: color correction property
-    private int colorCorrectionParameterUniform;
-
     // Shader location: object color property (to change the primary color of the object).
     private int colorUniform;
 
-    private BlendMode blendMode = null;
+    private BlendMode blendMode = BlendMode.Grid;
 
     // Temporary matrices allocated here to reduce number of allocations for each frame.
     private final float[] modelMatrix = new float[16];
@@ -137,34 +129,12 @@ public class ObjectRenderer {
 
         positionAttribute = GLES20.glGetAttribLocation(program, "a_Position");
         normalAttribute = GLES20.glGetAttribLocation(program, "a_Normal");
-        texCoordAttribute = GLES20.glGetAttribLocation(program, "a_TexCoord");
-
-        textureUniform = GLES20.glGetUniformLocation(program, "u_Texture");
 
         lightingParametersUniform = GLES20.glGetUniformLocation(program, "u_LightingParameters");
         materialParametersUniform = GLES20.glGetUniformLocation(program, "u_MaterialParameters");
-        colorCorrectionParameterUniform = GLES20.glGetUniformLocation(program, "u_ColorCorrectionParameters");
         colorUniform = GLES20.glGetUniformLocation(program, "u_ObjColor");
 
         ShaderUtil.checkGLError(TAG, "Program parameters");
-
-        // Read the texture.
-        Bitmap textureBitmap = BitmapFactory.decodeStream(context.getAssets().open(diffuseTextureAssetName));
-
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glGenTextures(textures.length, textures, 0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
-
-        GLES20.glTexParameteri(
-                GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR_MIPMAP_LINEAR);
-        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
-        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, textureBitmap, 0);
-        GLES20.glGenerateMipmap(GLES20.GL_TEXTURE_2D);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
-
-        textureBitmap.recycle();
-
-        ShaderUtil.checkGLError(TAG, "Texture loading");
 
         // Read the obj file.
         InputStream objInputStream = context.getAssets().open(objAssetName);
@@ -272,26 +242,13 @@ public class ObjectRenderer {
         this.specularPower = specularPower;
     }
 
-    /**
-     * Draws the model.
-     *
-     * @param cameraView A 4x4 view matrix, in column-major order.
-     * @param cameraPerspective A 4x4 projection matrix, in column-major order.
-     * @param lightIntensity Illumination intensity. Combined with diffuse and specular material
-     *     properties.
-     * @see #setBlendMode(BlendMode)
-     * @see #updateModelMatrix(float[], float)
-     * @see #setMaterialProperties(float, float, float, float)
-     * @see android.opengl.Matrix
-     */
-    public void draw(float[] cameraView, float[] cameraPerspective, float[] colorCorrectionRgba) {
-        draw(cameraView, cameraPerspective, colorCorrectionRgba, DEFAULT_COLOR);
+    public void draw(float[] cameraView, float[] cameraPerspective) {
+        draw(cameraView, cameraPerspective, DEFAULT_COLOR);
     }
 
     public void draw(
             float[] cameraView,
             float[] cameraPerspective,
-            float[] colorCorrectionRgba,
             float[] objColor) {
 
         ShaderUtil.checkGLError(TAG, "Before draw");
@@ -312,7 +269,6 @@ public class ObjectRenderer {
                 viewLightDirection[1],
                 viewLightDirection[2],
                 1.f);
-        GLES20.glUniform4fv(colorCorrectionParameterUniform, 1, colorCorrectionRgba, 0);
 
         // Set the object color property.
         GLES20.glUniform4fv(colorUniform, 1, objColor, 0);
@@ -320,17 +276,12 @@ public class ObjectRenderer {
         // Set the object material properties.
         GLES20.glUniform4f(materialParametersUniform, ambient, diffuse, specular, specularPower);
 
-        // Attach the object texture.
-        GLES20.glActiveTexture(GLES20.GL_TEXTURE0);
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
-        GLES20.glUniform1i(textureUniform, 0);
 
         // Set the vertex attributes.
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, vertexBufferId);
 
         GLES20.glVertexAttribPointer(positionAttribute, COORDS_PER_VERTEX, GLES20.GL_FLOAT, false, 0, verticesBaseAddress);
         GLES20.glVertexAttribPointer(normalAttribute, 3, GLES20.GL_FLOAT, false, 0, normalsBaseAddress);
-        GLES20.glVertexAttribPointer(texCoordAttribute, 2, GLES20.GL_FLOAT, false, 0, texCoordsBaseAddress);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
@@ -341,7 +292,6 @@ public class ObjectRenderer {
         // Enable vertex arrays
         GLES20.glEnableVertexAttribArray(positionAttribute);
         GLES20.glEnableVertexAttribArray(normalAttribute);
-        GLES20.glEnableVertexAttribArray(texCoordAttribute);
 
         if (blendMode != null) {
             GLES20.glDepthMask(false);
@@ -362,17 +312,15 @@ public class ObjectRenderer {
         GLES20.glDrawElements(GLES20.GL_TRIANGLES, indexCount, GLES20.GL_UNSIGNED_SHORT, 0);
         GLES20.glBindBuffer(GLES20.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-//        if (blendMode != null) {
-//            GLES20.glDisable(GLES20.GL_BLEND);
-//            GLES20.glDepthMask(true);
-//        }
+        if (blendMode != null) {
+            GLES20.glDisable(GLES20.GL_BLEND);
+            GLES20.glDepthMask(true);
+        }
 //
 //        // Disable vertex arrays
 //        GLES20.glDisableVertexAttribArray(positionAttribute);
 //        GLES20.glDisableVertexAttribArray(normalAttribute);
 //        GLES20.glDisableVertexAttribArray(texCoordAttribute);
-
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 
         ShaderUtil.checkGLError(TAG, "After draw");
     }

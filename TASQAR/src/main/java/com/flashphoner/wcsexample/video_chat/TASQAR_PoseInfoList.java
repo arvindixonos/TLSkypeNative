@@ -21,7 +21,6 @@ public class TASQAR_PoseInfoList
     public float[] firstTranslation = new float[3];
     public boolean firstTranslationSet = false;
 
-
     private static float[] fromString(String string) {
         String[] strings = string.replace("[", "").replace("]", "").split(", ");
         float result[] = new float[strings.length];
@@ -44,6 +43,11 @@ public class TASQAR_PoseInfoList
 
         if(poseInfo != null)
         {
+            poseInfo.selectedColor = fromString(currentColor);
+        }
+        else
+        {
+            poseInfo = SetUserPoseInfo(userName, null);
             poseInfo.selectedColor = fromString(currentColor);
         }
     }
@@ -130,23 +134,26 @@ public class TASQAR_PoseInfoList
 
     public void AddBreak(String userName) {
         PoseInfo poseInfo = GetUserPoseInfo(userName);
+
+        if(poseInfo == null)
+            return;
+
         poseInfo.AddBreak();
         SetUserPoseInfo(userName, poseInfo);
     }
 
-    public void AddPoint(HitResult hitResult, String userName, String currentColor, int anchorListType)
+    public void AddPoint(HitResult hitResult, String userName, int anchorListType)
     {
         PoseInfo userPoseInfo = GetUserPoseInfo(userName);
 
         if(userPoseInfo == null)
         {
             userPoseInfo = SetUserPoseInfo(userName, null);
-            userPoseInfo.selectedColor = fromString(currentColor);
         }
 
         Pose hitPose = hitResult.getHitPose();
 
-        if(anchorListType == 1)
+        if(anchorListType == 1 || anchorListType == 2)
         {
             userPoseInfo = AddAnchor(hitResult, hitPose, userName, anchorListType);
             userPoseInfo.AddBreak();
@@ -313,6 +320,10 @@ public class TASQAR_PoseInfoList
     public boolean Undo(String userName) {
         synchronized (makeVerticesSyncObject) {
             PoseInfo poseInfo = GetUserPoseInfo(userName);
+
+            if(poseInfo == null)
+                return false;
+
             boolean undoResult = poseInfo.Undo();
             SetUserPoseInfo(userName, poseInfo);
 

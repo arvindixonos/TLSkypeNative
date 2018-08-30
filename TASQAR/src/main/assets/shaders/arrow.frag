@@ -15,15 +15,11 @@
 
 precision mediump float;
 
-uniform sampler2D u_Texture;
-
 uniform vec4 u_LightingParameters;
 uniform vec4 u_MaterialParameters;
-uniform vec4 u_ColorCorrectionParameters;
 
 varying vec3 v_ViewPosition;
 varying vec3 v_ViewNormal;
-varying vec2 v_TexCoord;
 uniform vec4 u_ObjColor;
 
 void main() {
@@ -34,8 +30,6 @@ void main() {
 
     // Unpack lighting and material parameters for better naming.
     vec3 viewLightDirection = u_LightingParameters.xyz;
-    vec3 colorShift = u_ColorCorrectionParameters.rgb;
-    float averagePixelIntensity = u_ColorCorrectionParameters.a;
 
     float materialAmbient = u_MaterialParameters.x;
     float materialDiffuse = u_MaterialParameters.y;
@@ -47,7 +41,7 @@ void main() {
     vec3 viewNormal = normalize(v_ViewNormal);
 
     // Flip the y-texture coordinate to address the texture from top-left.
-    vec4 objectColor = texture2D(u_Texture, vec2(v_TexCoord.x, 1.0 - v_TexCoord.y));
+    vec4 objectColor = u_ObjColor;
 
     // Apply color to grayscale image only if the alpha of u_ObjColor is
     // greater and equal to 255.0.
@@ -76,7 +70,6 @@ void main() {
     // Apply SRGB gamma before writing the fragment color.
     color.rgb = pow(color, vec3(kGamma));
     // Apply average pixel intensity and color shift
-    color *= colorShift * (averagePixelIntensity / kMiddleGrayGamma);
     gl_FragColor.rgb = color;
     gl_FragColor.a = objectColor.a;
 }

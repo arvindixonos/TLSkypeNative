@@ -80,7 +80,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/imageView13"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/call" />
+        app:srcCompat="@drawable/arrow_down" />
 
     <com.flashphoner.wcsexample.video_chat.CustomImageButton
         android:id="@+id/customImageButton"

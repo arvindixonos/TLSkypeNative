@@ -506,7 +506,7 @@
         android:scaleType="fitXY"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/three_dot_button" />
+        app:srcCompat="@drawable/arrow_down" />
 
     <ImageButton
         android:id="@+id/UndoButton"

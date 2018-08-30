@@ -82,6 +82,8 @@ public class AnchorList
 
                 }
             });
+
+            blinkingThread.start();
         }
     }
 
@@ -123,6 +125,7 @@ public class AnchorList
 
     public void CheckDirty()
     {
+        numAnchors = anchors.size();
         for(int i = 0; i < numAnchors; i++)
         {
             TASQAR_Anchor tasqar_anchor = anchors.get(i);
@@ -385,6 +388,7 @@ public class AnchorList
         if(blinkingThread != null)
         {
             blinkingThread.interrupt();
+            blinkingThread = null;
         }
     }
 }
