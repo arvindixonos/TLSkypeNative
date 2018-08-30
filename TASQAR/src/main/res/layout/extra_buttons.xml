@@ -8,10 +8,10 @@
 
     <ImageView
         android:id="@+id/imageView9"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="50dp"
+        android:layout_marginTop="10dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/undo" />
@@ -20,7 +20,7 @@
         android:id="@+id/ConLayout"
         android:layout_width="150dp"
         android:layout_height="4dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginStart="124dp"
         android:maxHeight="100dp"
         android:minHeight="4dp"
         app:layout_constraintStart_toStartOf="parent"
@@ -175,7 +175,7 @@
         android:id="@+id/tempButton"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginStart="108dp"
         android:layout_marginTop="8dp"
         android:background="@null"
         android:visibility="visible"

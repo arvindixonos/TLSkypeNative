@@ -476,23 +476,6 @@
         app:srcCompat="@drawable/flip_cam_front" />
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/FlashButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:clickable="true"
-        android:focusable="auto"
-        android:scaleX="0.85"
-        android:scaleY="0.85"
-        android:visibility="gone"
-        app:backgroundTint="@color/FlashColor"
-        app:elevation="0dp"
-        app:rippleColor="@android:color/holo_purple"
-        app:srcCompat="@drawable/flash_on"
-        tools:layout_editor_absoluteX="172dp"
-        tools:layout_editor_absoluteY="517dp" />
-
-    <android.support.design.widget.FloatingActionButton
         android:id="@+id/StartRecordingButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -513,12 +496,141 @@
         app:rippleColor="@android:color/holo_purple"
         app:srcCompat="@drawable/button_record" />
 
-    <include
-        android:id="@+id/AddedButtons"
-        layout="@layout/extra_buttons"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="visible" />
+    <ImageButton
+        android:id="@+id/SettingButton"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="13dp"
+        android:background="@null"
+        android:scaleType="fitXY"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/three_dot_button" />
+
+    <ImageButton
+        android:id="@+id/UndoButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="15dp"
+        android:layout_marginTop="8dp"
+        android:background="@null"
+        android:scaleType="fitXY"
+        app:layout_constraintStart_toEndOf="@+id/SettingButton"
+        app:layout_constraintTop_toTopOf="@+id/ProfileName"
+        app:srcCompat="@drawable/undo" />
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/SettingLayout"
+        android:layout_width="100dp"
+        android:layout_height="85dp"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="@+id/SettingButton"
+        app:layout_constraintTop_toBottomOf="@+id/SettingButton">
+
+        <ImageView
+            android:id="@+id/imageView11"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="@drawable/rounded_rectangle"
+            android:backgroundTint="@color/BlackTinted"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/imageView12"
+            android:layout_width="0dp"
+            android:layout_height="0.5dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@+id/imageView11"
+            app:layout_constraintStart_toStartOf="@+id/imageView11"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:color/background_light" />
+
+        <RelativeLayout
+            android:id="@+id/Button2"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            android:layout_marginTop="5dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/Button1">
+
+            <!--<ImageButton-->
+            <!--android:id="@+id/DrawModeButton"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:background="@drawable/rounded_rectangle"-->
+            <!--android:tint="@color/blueDark"-->
+            <!--app:srcCompat="@android:color/darker_gray" />-->
+
+            <Button
+                android:id="@+id/DrawButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/DrawText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:background="@drawable/rounded_rectangle"
+                android:backgroundTint="@color/blueDark"
+                android:paddingBottom="5dp"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingTop="5dp"
+                android:text="Draw Mode"
+                android:textColor="@android:color/black" />
+
+        </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/Button1"
+            android:layout_width="100dp"
+            android:layout_height="40dp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <!--<ImageButton-->
+            <!--android:id="@+id/ArrowModeButton"-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:background="@null"-->
+            <!--android:tint="@color/blueDark"-->
+            <!--app:srcCompat="@android:color/darker_gray" />-->
+
+            <Button
+                android:id="@+id/ArrowButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:visibility="visible" />
+
+            <TextView
+                android:id="@+id/ArrowText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:background="@drawable/rounded_rectangle"
+                android:backgroundTint="@color/disabled_text_light"
+                android:paddingBottom="5dp"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingTop="5dp"
+                android:text="Arrow Mode"
+                android:textColor="@android:color/black" />
+
+        </RelativeLayout>
+    </android.support.constraint.ConstraintLayout>
 
     <RelativeLayout
         android:layout_width="match_parent"

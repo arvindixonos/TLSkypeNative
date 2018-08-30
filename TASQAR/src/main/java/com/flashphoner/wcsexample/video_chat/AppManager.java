@@ -2,6 +2,7 @@ package com.flashphoner.wcsexample.video_chat;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -12,11 +13,14 @@ import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.ar.core.ArCoreApk;
@@ -37,13 +41,27 @@ public class AppManager extends AppCompatActivity
 {
     public static String TAG = "TLSKYPE";
 
+    public static AppManager Instance = null;
+
     private static final int ALL_PERMISSIONS = 555;
     private     boolean  allPermissionsGiven = false;
+    private     boolean  profilePicPresent = false;
+    private String password = "0546";
+    private String passwordFilling = "0000";
 
     private ArCoreApk.InstallStatus installStatus = ArCoreApk.InstallStatus.INSTALL_REQUESTED;
     private boolean installRequested = false;
 
     private LoginUIHandler loginUIHandler;
+
+    public static AppManager getInstance()
+    {
+        if(Instance == null)
+        {
+            return new AppManager();
+        }
+        return Instance;
+    }
 
     public void ShowToast(final String message, final Context applicationContext)
     {
@@ -118,6 +136,7 @@ public class AppManager extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        Instance = this;
 
         final Thread arCoreCheckThread = new Thread(() ->
         {
@@ -204,13 +223,27 @@ public class AppManager extends AppCompatActivity
     }
 
     private int count = 0;
-    public void ClickFunction (View v)
+    public void ClickFunction (char digit)
     {
+        char[] pwd = passwordFilling.toCharArray();
+        pwd[count] = digit;
+        passwordFilling = new String(pwd);
+        Log.d(TAG, passwordFilling);
+
         count += 1;
-        if(count == 4) {
+        if(count == 4)
+        {
             if (allPermissionsGiven)
             {
-
+                if(passwordFilling.equals(password))
+                {
+                    SetupUserScreen(profilePicPresent);
+                }
+                else
+                {
+                    Toast.makeText(this.getApplicationContext(), "Password Incorrect", Toast.LENGTH_LONG).show();
+                    count = 0;
+                }
             }
             else
             {
@@ -220,7 +253,19 @@ public class AppManager extends AppCompatActivity
         }
     }
 
-    public void SetupUserScreen (boolean profilePicPresent) {
+    public void ChangePIN(View v)
+    {
+//        AlertDialog.Builder mBuilder = new AlertDialog.Builder(AppManager.this);
+    }
+
+    public void SetupPasswordScreen (boolean picPresent)
+    {
+        profilePicPresent = picPresent;
+        setContentView(R.layout.activity_pin);
+    }
+
+    public void SetupUserScreen (boolean profilePicPresent)
+    {
         ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this.getApplicationContext());
 
         if (availability == ArCoreApk.Availability.SUPPORTED_INSTALLED)
@@ -232,7 +277,20 @@ public class AppManager extends AppCompatActivity
             VideoCapturerAndroid.arCorePresent = false;
         }
 
-        setContentView(R.layout.activity_user);
+        setContentView(R.layout.drawer_callscreen);
+        for (int i = 0; i <= 10; i++)
+        {
+            Sample();
+        }
+        if(loginUIHandler == null)
+        {
+            Log.d(TAG, "login Null");
+        }
+        else
+        {
+            loginUIHandler.SetPasswordToggle();
+        }
+
         final Button callUserButton = findViewById(R.id.buttonCall);
         callUserButton.setOnClickListener(new View.OnClickListener()
         {
@@ -242,6 +300,15 @@ public class AppManager extends AppCompatActivity
                 ChangeActivity(profilePicPresent);
             }
         });
+    }
+
+    public void Sample ()
+    {
+        LinearLayout parent = findViewById(R.id.ButtonInflater);
+        ViewGroup view = (ViewGroup) LayoutInflater.from(this).inflate(R.layout.history_element_button, null);
+        parent.addView(view);
+        HistoryButton historyButton = (HistoryButton) view;
+        historyButton.Initialise("Adish", "10-20-2018", "9:00", "Tech Support");
     }
 
     void ChangeActivity (boolean profilePicPresent)

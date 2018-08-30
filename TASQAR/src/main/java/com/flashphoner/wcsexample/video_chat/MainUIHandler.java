@@ -22,6 +22,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.internal.NavigationMenuItemView;
 import android.support.design.widget.FloatingActionButton;
@@ -38,6 +39,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -114,6 +116,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private TaskStackBuilder stackBuilder;
     private PendingIntent resultPendingIntent;
     private int notificationId = 1;
+    private int width;
     private String channelId = "channel-01";
     private String channelName = "Channel Name";
     private int importance = NotificationManager.IMPORTANCE_HIGH;
@@ -124,6 +127,9 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     ImageView progessBar;
 
+    ImageButton mSettingsButton;
+    ImageButton mUndoButton;
+
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
 
@@ -131,7 +137,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     ConstraintLayout mFloatingButtonsLayout;
     ConstraintLayout mHistoryScreen;
-    ConstraintLayout mExtraButtons;
+    ConstraintLayout mSettingLayout;
 
     FloatingActionButton mEndCallButton;
     FloatingActionButton mPlusButton;
@@ -159,11 +165,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     TextView pointModeText;
     TextView timerText;
     TextView userNameText;
+    TextView arrowText;
+    TextView drawText;
 
     LinearLayout historyScreen;
 
     Button mButton;
-    TempButton mTempButton;
+    Button mArrowButton;
+    Button mDrawButton;
     Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
@@ -173,7 +182,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     RelativeLayout.LayoutParams   fullScreenlayoutParams;
     RelativeLayout.LayoutParams   smallScreenlayoutParams;
     Rational aspectRatio;
-
 
     public enum CameraTorchMode
     {
@@ -221,12 +229,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         progessBar = currentActivity.findViewById(R.id.ProgressBar);
 
+        mSettingsButton = currentActivity.findViewById(R.id.SettingButton);
+
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
         localRender = currentActivity.findViewById(R.id.CurrentRender);
 
         mFloatingButtonsLayout = currentActivity.findViewById(R.id.FloatingButtonsLayout);
         mHistoryScreen = currentActivity.findViewById(R.id.FileHistory);
-        mExtraButtons = currentActivity.findViewById(R.id.AddedButtons);
+        mSettingLayout = currentActivity.findViewById(R.id.SettingLayout);
 
         mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
         mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
@@ -237,7 +247,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
         mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
         mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
-        mFlashButton = currentActivity.findViewById(R.id.FlashButton);
+//        mFlashButton = currentActivity.findViewById(R.id.FlashButton);
 
         drawer = currentActivity.findViewById(R.id.drawer_layout);
 
@@ -246,6 +256,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         timerText = currentActivity.findViewById(R.id.timerText);
 
         mButton = currentActivity.findViewById(R.id.button);
+        mArrowButton = currentActivity.findViewById(R.id.ArrowButton);
+        mDrawButton = currentActivity.findViewById(R.id.DrawButton);
+        mUndoButton = currentActivity.findViewById(R.id.UndoButton);
+        arrowText = currentActivity.findViewById(R.id.ArrowText);
+        drawText = currentActivity.findViewById(R.id.DrawText);
 
         historyScreen = currentActivity.findViewById(R.id.FileHistoryLayout);
 
@@ -261,16 +276,52 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        mTempButton = currentActivity.findViewById(R.id.tempButton);
-        mTempButton.layoutHolder = currentActivity.findViewById(R.id.ConLayout);
-        mTempButton.mArrowModeButton = currentActivity.findViewById(R.id.ArrowModeButton);
-        mTempButton.mDrawModeButton = currentActivity.findViewById(R.id.DrawModeButton);
-        mTempButton.mPointOrPlaneButton = currentActivity.findViewById(R.id.PointOrPlaneButton);
-        mTempButton.mArrowModeFloatingButton = currentActivity.findViewById(R.id.ArrowModeFloatingButton);
-        mTempButton.mDrawModeFloatingButton = currentActivity.findViewById(R.id.DrawModeFloatingButton);
-        mTempButton.mPointOrPlaneModeFloatingButton = currentActivity.findViewById(R.id.PointOrPlaneFloatingButton);
-        mTempButton.chatActivity = chatActivity;
-        mTempButton.InitialiseButtons();
+        mUndoButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                chatActivity.UndoClicked();
+            }
+        });
+
+        mSettingsButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                if(mSettingLayout.getVisibility() == View.VISIBLE)
+                {
+                    mSettingLayout.setVisibility(GONE);
+                    mSettingsButton.setImageTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.white)));
+                }
+                else
+                {
+                    mSettingLayout.setVisibility(VISIBLE);
+                    mSettingsButton.setImageTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.black)));
+                }
+            }
+        });
+
+        mDrawButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                chatActivity.arrowMode = !chatActivity.arrowMode;
+                AdaptToggleButtons(chatActivity.arrowMode);
+            }
+        });
+
+        mArrowButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                chatActivity.arrowMode = !chatActivity.arrowMode;
+                AdaptToggleButtons(chatActivity.arrowMode);
+            }
+        });
 
         //Set Photo and Name
 
@@ -348,83 +399,83 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
             isAboveEight = true;
         }
-        mFlashButton.setOnClickListener(new View.OnClickListener()
-        {
-            CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
-
-            @Override
-            public void onClick(View v)
-            {
-                if(!flashOn)
-                {
-                    try
-                    {
-                        if(backCam)
-                        {
-                            Camera.Parameters parameters = camera.getParameters();
-                            List<String> strs = parameters.getSupportedFlashModes();
-                            for (String str:strs)
-                            {
-                                Log.d(TAG, "Message string is " + str);
-                            }
-                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-                            camera.setParameters(parameters);
-                            camera.startPreview();
-
-                        }
-                        else
-                        {
-                            try
-                            {
-                                String cameraId = cameraManager.getCameraIdList()[0];
-                                cameraManager.setTorchMode(cameraId, true);
-                            }
-                            catch(CameraAccessException e)
-                            {
-                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                            }
-                        }
-                        mFlashButton.setImageResource(R.drawable.flash_off);
-                        flashOn = true;
-                    }
-                    catch (Exception e)
-                    {
-                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        if(backCam)
-                        {
-                            Camera.Parameters parameters = camera.getParameters();
-                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-                            camera.setParameters(parameters);
-                            camera.startPreview();
-                        }
-                        else
-                        {
-                            try
-                            {
-                                String cameraId = cameraManager.getCameraIdList()[0];
-                                cameraManager.setTorchMode(cameraId, false);
-                            }
-                            catch(CameraAccessException e)
-                            {
-                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                            }
-                        }
-                        mFlashButton.setImageResource(R.drawable.flash_on);
-                        flashOn = false;
-                    }
-                    catch (Exception e)
-                    {
-                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-                    }
-                }
-            }
-        });
+//        mFlashButton.setOnClickListener(new View.OnClickListener()
+//        {
+//            CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
+//
+//            @Override
+//            public void onClick(View v)
+//            {
+//                if(!flashOn)
+//                {
+//                    try
+//                    {
+//                        if(backCam)
+//                        {
+//                            Camera.Parameters parameters = camera.getParameters();
+//                            List<String> strs = parameters.getSupportedFlashModes();
+//                            for (String str:strs)
+//                            {
+//                                Log.d(TAG, "Message string is " + str);
+//                            }
+//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+//                            camera.setParameters(parameters);
+//                            camera.startPreview();
+//
+//                        }
+//                        else
+//                        {
+//                            try
+//                            {
+//                                String cameraId = cameraManager.getCameraIdList()[0];
+//                                cameraManager.setTorchMode(cameraId, true);
+//                            }
+//                            catch(CameraAccessException e)
+//                            {
+//                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                            }
+//                        }
+//                        mFlashButton.setImageResource(R.drawable.flash_off);
+//                        flashOn = true;
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                    }
+//                }
+//                else
+//                {
+//                    try
+//                    {
+//                        if(backCam)
+//                        {
+//                            Camera.Parameters parameters = camera.getParameters();
+//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+//                            camera.setParameters(parameters);
+//                            camera.startPreview();
+//                        }
+//                        else
+//                        {
+//                            try
+//                            {
+//                                String cameraId = cameraManager.getCameraIdList()[0];
+//                                cameraManager.setTorchMode(cameraId, false);
+//                            }
+//                            catch(CameraAccessException e)
+//                            {
+//                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                            }
+//                        }
+//                        mFlashButton.setImageResource(R.drawable.flash_on);
+//                        flashOn = false;
+//                    }
+//                    catch (Exception e)
+//                    {
+//                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
+//                    }
+//                }
+//            }
+//        });
 
         mSwitchCamera.setOnClickListener(v ->
         {
@@ -469,7 +520,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mFloatingButtonsLayout.setVisibility(GONE);
             mEndCallButton.setVisibility(GONE);
             mRenderHolder.setVisibility(GONE);
-            mExtraButtons.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+            mSettingsButton.setVisibility(GONE);
 
             fileButtonHelper.GetData();
         });
@@ -640,6 +692,20 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         };
     }
 
+    private void AdaptToggleButtons (boolean arrowMode)
+    {
+        if(arrowMode)
+        {
+            arrowText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+            drawText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.disabled_text_light)));
+        }
+        else
+        {
+            arrowText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.disabled_text_light)));
+            drawText.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
+        }
+    }
+
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item)
@@ -659,10 +725,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         return true;
     }
-    int count = 0;
-    int width;
 
-    public Bitmap GetUsetProfilePhoto ()
+    private Bitmap GetUsetProfilePhoto ()
     {
         LoginDatabaseHelper loginHelper = new LoginDatabaseHelper(currentActivity);
         Cursor data = loginHelper.showData();
@@ -779,7 +843,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mStartRecordingButton.setVisibility(VISIBLE);
             mEndCallButton.setVisibility(VISIBLE);
             mRenderHolder.setVisibility(VISIBLE);
-            mExtraButtons.setVisibility(VISIBLE);
+            mSettingLayout.setVisibility(VISIBLE);
+            mSettingsButton.setVisibility(VISIBLE);
         }
     }
 
@@ -845,7 +910,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }
     }
 
-    public void PreMinimise ()
+    private void PreMinimise ()
     {
         currentActivity.runOnUiThread(new Thread(new Runnable() {
             @Override
@@ -968,7 +1033,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         camera.startPreview();
     }
 
-    public int GetScreenWidth()
+    private int GetScreenWidth()
     {
         Display display = currentActivity.getWindowManager().getDefaultDisplay();
         Point size = new Point ();
@@ -993,24 +1058,30 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     }
 }
 
-class LoginUIHandler
+class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener, NavigationMenuItemView.OnClickListener
 {
-    private Activity currentActivity;
-    private static String TAG = "TLSKYPE";
-    private AppManager  manager;
-    private int         currentScreen;
+    private Activity            currentActivity;
+    private static String       TAG = "TLSKYPE";
+    private AppManager          manager;
+    private int                 currentScreen;
     private LoginDatabaseHelper loginDB;
-    private String[]    userData;
-    public boolean      profilePicPresent = false;
-    private String      ID;
+    private String[]            userData;
+    public  boolean             profilePicPresent = false;
+    private boolean             drawerOpen = false;
+    private boolean             pinMode = false;
+    private String              ID;
+
+    private DrawerLayout drawer;
 
     public  final static  String filePath = Environment.getExternalStorageDirectory().getPath() + "/TASQAR/ReceivedFiles/UserData/";
 
     private FloatingActionButton    SA_BackButton;
 
     //SI UI Elements
-    private EditText SI_PasswordField;
+    private EditText    SI_PasswordField;
     private EditText    SI_UserIDField;
+
+    private Switch      ST_PasswordToggle;
 
     private Button      SI_SubmitButton;
     private Button      SI_SignUpButton;
@@ -1051,17 +1122,21 @@ class LoginUIHandler
     //SU Variables
 
     //All Screens
-    private ConstraintLayout mLoginScreen;
+    private ConstraintLayout    mLoginScreen;
     private ConstraintLayout    mSignUpScreen;
     private ConstraintLayout    mDetailsScreen;
     private ConstraintLayout    mPasswordScreen;
+    private ConstraintLayout    mST_SettingsScreen;
     //All Screens
 
+    private Thread  submitNewUserThread = null;
     private Thread  emailIDCheckThread = null;
+    private Thread  submitNextThread = null;
+    private Thread  getUserThread = null;
+    private Thread  loginThread = null;
 
-    private Thread loginThread = null;
-    public int lastFetchedUserID = -1;
-    public String photoftpLink = "";
+    private int lastFetchedUserID = -1;
+    private String photoftpLink = "";
     private Handler mHandler = new Handler();
 
     public LoginUIHandler (Activity appContext, AppManager managerClass)
@@ -1209,15 +1284,18 @@ class LoginUIHandler
         SU_PhoneField.addTextChangedListener(new TextWatcher()
         {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after)
+            {
 
             }
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            public void onTextChanged(CharSequence s, int start, int before, int count)
+            {
                 currentActivity.runOnUiThread(new Runnable() {
                     @Override
-                    public void run() {
+                    public void run()
+                    {
 //                        SU_PhoneFieldImage.setVisibility(View.INVISIBLE);
                     }
                 });
@@ -1226,7 +1304,8 @@ class LoginUIHandler
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
+            public void afterTextChanged(Editable s)
+            {
 
             }
         });
@@ -1270,6 +1349,47 @@ class LoginUIHandler
                 .show());
     }
 
+    public void SetPasswordToggle ()
+    {
+        drawer = currentActivity.findViewById(R.id.CommonDrawer);
+        android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
+                (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        {
+            public void onDrawerClosed(View view)
+            {
+                super.onDrawerClosed(view);
+                drawerOpen = false;
+            }
+
+            public void onDrawerOpened(View drawerView)
+            {
+                super.onDrawerOpened(drawerView);
+                drawerOpen = true;
+            }
+        };
+
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = currentActivity.findViewById(R.id.call_nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        mST_SettingsScreen = currentActivity.findViewById(R.id.SettingsScreen);
+
+        ST_PasswordToggle = currentActivity.findViewById(R.id.ST_PasswordToggle);
+
+        ST_PasswordToggle.setChecked(pinMode);
+
+        ST_PasswordToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+        {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+            {
+
+            }
+        });
+    }
+
     void SignOut ()
     {
         loginDB.deleteData("0");
@@ -1292,21 +1412,29 @@ class LoginUIHandler
             return;
         }
         ID = data.getString(1);
+        String pin_Mode = data.getString(8);
+        pinMode = pin_Mode.equals("ENABLED");
+        Log.d(TAG, pinMode ? "ENABLED" : "DISABLED");
         String fileName = ID + "_PIC.jpg";
         File profilePic = new File(filePath + "/" + fileName);
         if(!profilePic.exists())
         {
-            Log.d(TAG, "File does not exist");
             DownloadFile(fileName);
         }
         else
         {
-            Log.d(TAG, "File exists");
-            manager.SetupUserScreen(profilePicPresent);
+            if(pinMode)
+            {
+                manager.SetupPasswordScreen(true);
+                return;
+            }
+
+            manager.SetupUserScreen(true);
+            SetPasswordToggle();
         }
     }
 
-    public void UploadFile(final String filePath, final InputStream inputStream)
+    private void UploadFile(final String filePath, final InputStream inputStream)
     {
 
         final FTPManager ftpManager = new FTPManager();
@@ -1388,6 +1516,7 @@ class LoginUIHandler
                         }
                         if(ftpManager.serverReply.contains("550"))
                         {
+                            Log.d(TAG, "No Image");
                             profilePicPresent = false;
                             String fileName = ID + "_PIC.jpg";
                             File profilePic = new File(filePath + "/" + fileName);
@@ -1395,11 +1524,17 @@ class LoginUIHandler
                             {
                                 profilePic.delete();
                             }
+                            if(pinMode)
+                            {
+                                manager.SetupPasswordScreen(profilePicPresent);
+                                return;
+                            }
                             manager.SetupUserScreen(profilePicPresent);
                             return;
                         }
                         else
                         {
+                            Log.d(TAG, "Image");
                             profilePicPresent = true;
                         }
                         currentActivity.runOnUiThread(new Runnable()
@@ -1416,7 +1551,7 @@ class LoginUIHandler
         }).start();
     }
 
-    public void isEmailPresent(final String emailId)
+    private void isEmailPresent(final String emailId)
     {
         if(emailIDCheckThread != null && emailIDCheckThread.isAlive())
         {
@@ -1474,8 +1609,7 @@ class LoginUIHandler
         emailIDCheckThread.start();
     }
 
-    Thread submitNewUserThread = null;
-    public void SubmitNewUser(final int userID, final  String photoftpLink, final String name, final String emailId, final String phoneNumber, final String role, final String hierarchy)
+    private void SubmitNewUser(final int userID, final  String photoftpLink, final String name, final String emailId, final String phoneNumber, final String role, final String hierarchy)
     {
         if(submitNewUserThread != null && submitNewUserThread.isAlive())
         {
@@ -1536,8 +1670,7 @@ class LoginUIHandler
         submitNewUserThread.start();
     }
 
-    Thread submitNextThread = null;
-    public void SubmitNext(final int userID, final String otp, final String password)
+    private void SubmitNext(final int userID, final String otp, final String password)
     {
 
         if(submitNextThread != null && submitNextThread.isAlive())
@@ -1596,7 +1729,7 @@ class LoginUIHandler
         submitNextThread.start();
     }
 
-    public void getNextUserId()
+    private void getNextUserId()
     {
         Thread networkThread = new Thread(new Runnable() {
             @Override
@@ -1636,7 +1769,7 @@ class LoginUIHandler
         networkThread.start();
     }
 
-    public void OnSubmitClicked()
+    private void OnSubmitClicked()
     {
         Log.d(TAG, "Working");
         String name = SU_NameField.getText().toString();
@@ -1663,7 +1796,7 @@ class LoginUIHandler
         }
     }
 
-    public void OnSubmitPasswordClicked()
+    private void OnSubmitPasswordClicked()
     {
         String otp = SU_OTPField.getText().toString();
         String password = SU_PasswordText.getText().toString();
@@ -1687,7 +1820,7 @@ class LoginUIHandler
         }
     }
 
-    void OpenOTPPasswordWindow()
+    private void OpenOTPPasswordWindow()
     {
         mDetailsScreen.setVisibility(View.GONE);
         mPasswordScreen.setVisibility(View.VISIBLE);
@@ -1821,7 +1954,7 @@ class LoginUIHandler
 //        });
     }
 
-    boolean isValidEmail(String email)
+    private boolean isValidEmail(String email)
     {
 
         Log.d(TAG, "IS CVALUD");
@@ -1837,7 +1970,7 @@ class LoginUIHandler
         return false;
     }
 
-    boolean isValidPassword(String password)
+    private boolean isValidPassword(String password)
     {
         String pattern = "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.{8,})(?=.*[!@#$%^&*])";//"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})"
 
@@ -1878,15 +2011,15 @@ class LoginUIHandler
                         }
                     }
                     loginDB.addData
-                            (
-                                    userData[0],                        //User ID
-                                    userData[1],                        //Name
-                                    SI_UserIDField.getText().toString(),//Email
-                                    userData[2],                        //Number
-                                    userData[3],                        //Password
-                                    userData[4],                        //Hierarchy
-                                    userData[5]                         //Role
-                            );
+                        (
+                            userData[0],                        //User ID
+                            userData[1],                        //Name
+                            SI_UserIDField.getText().toString(),//Email
+                            userData[2],                        //Number
+                            userData[3],                        //Password
+                            userData[4],                        //Hierarchy
+                            userData[5]                        //Role
+                        );
                     currentActivity.runOnUiThread(new Runnable()
                     {
                         @Override
@@ -1949,8 +2082,7 @@ class LoginUIHandler
         loginThread.start();
     }
 
-    Thread getUserThread = null;
-    public  void GetUserDetails(final String emailID)
+    private void GetUserDetails(final String emailID)
     {
         if (getUserThread != null && getUserThread.isAlive())
         {
@@ -1990,6 +2122,13 @@ class LoginUIHandler
 
     public void backKey ()
     {
+        if(mST_SettingsScreen.getVisibility() == VISIBLE)
+        {
+            mST_SettingsScreen.setVisibility(GONE);
+            loginDB.AddSpecificData("PIN_MODE", ST_PasswordToggle.isChecked() ? "ENABLED" : "DISABLED");
+            return;
+        }
+
         switch(currentScreen)
         {
             case 0:
@@ -2011,5 +2150,26 @@ class LoginUIHandler
                 currentScreen = 1;
                 break;
         }
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item)
+    {
+        int num = item.getItemId();
+        switch(num)
+        {
+            case R.id.nav_setting:
+                mST_SettingsScreen.setVisibility(VISIBLE);
+                drawer.closeDrawers();
+                break;
+        }
+
+        return true;
+    }
+
+    @Override
+    public void onClick(View v)
+    {
+
     }
 }
