@@ -9,6 +9,7 @@ import java.util.ArrayList;
 public class PoseInfo {
 
     public String   userName;
+    public float[]  selectedColor = new float[]{1.0f, 0.0f, 0.0f, 0.0f};
     public Pose previousPose = null;
     public AnchorList currentUserAnchorList = null;
     public ArrayList<AnchorList> anchorsLists = new ArrayList<AnchorList>();
@@ -53,7 +54,7 @@ public class PoseInfo {
         {
             AnchorList anchorList = anchorsLists.get(i);
 
-            if(anchorList.numAnchors < 2 && anchorList.anchorListType == 0)
+            if(anchorList.numAnchors < 2 && anchorList.getAnchorListType() == 0)
             {
                 anchorList.DetachAllAnchors();
 
@@ -71,7 +72,8 @@ public class PoseInfo {
         if(currentUserAnchorList == null)
         {
             currentUserAnchorList = new AnchorList();
-            currentUserAnchorList.anchorListType = anchorListType;
+            currentUserAnchorList.setAnchorListType(anchorListType);
+            currentUserAnchorList.setAnchorListColor(selectedColor);
         }
 
         Anchor anchor = hitResult.getTrackable().createAnchor(hitPose);

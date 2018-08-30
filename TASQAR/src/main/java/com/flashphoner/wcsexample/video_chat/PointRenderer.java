@@ -12,15 +12,11 @@ import com.google.ar.core.Pose;
 import com.google.ar.core.TrackingState;
 
 import org.apache.commons.math3.complex.Quaternion;
-import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
-import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -58,10 +54,16 @@ public class PointRenderer{
     private Thread makeExtrusionVerticesThread = null;
     private Thread updateAnchorsThread = null;
 
-    private final ObjectRenderer virtualObject = new ObjectRenderer();
-    private final ObjectRenderer virtualObjectShadow = new ObjectRenderer();
+    private final ObjectRenderer arrowObject = new ObjectRenderer();
+    private final ObjectRenderer blinkingLightObject = new ObjectRenderer();
+
 
     public  TASQAR_PoseInfoList poseInfoList = new TASQAR_PoseInfoList();
+
+    public void UpdateCurrentColor(String userName, String currentColor)
+    {
+        poseInfoList.UpdateCurrentColor(userName, currentColor);
+    }
 
     public void DestroyAll()
     {
@@ -132,12 +134,11 @@ public class PointRenderer{
 
 //        textureBitmap.recycle();
 
-        virtualObject.createOnGlThread(/*context=*/ context, "models/arrow_v2.obj", "models/arrow_tex.png");
-        virtualObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
+        arrowObject.createOnGlThread(/*context=*/ context, "models/arrow_v2.obj", "models/arrow_tex.png");
+        arrowObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-        virtualObjectShadow.createOnGlThread(context, "models/arrow.obj", "models/andy_shadow.png");
-        virtualObjectShadow.setBlendMode(ObjectRenderer.BlendMode.Shadow);
-        virtualObjectShadow.setMaterialProperties(1.0f, 0.0f, 0.0f, 1.0f);
+        blinkingLightObject.createOnGlThread(/*context=*/ context, "models/arrow_v2.obj", "models/arrow_tex.png");
+        blinkingLightObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
     }
@@ -148,9 +149,9 @@ public class PointRenderer{
         poseInfoList.RemoveAllZeroAnchorsList();
     }
 
-    public void AddPoint(HitResult hitResult, String userName, int anchorListType)
+    public void AddPoint(HitResult hitResult, String userName, String currentColor, int anchorListType)
     {
-        poseInfoList.AddPoint(hitResult, userName, anchorListType);
+        poseInfoList.AddPoint(hitResult, userName, currentColor, anchorListType);
     }
 
     public static float clamp(float val, float min, float max) {
@@ -291,7 +292,7 @@ public class PointRenderer{
         }
     }
 
-    void DrawArrow (Anchor anchor, float[] viewmtx, float[] projmtx, final float[] colorCorrectionRgba)
+    void DrawArrow (Anchor anchor, float[] viewmtx, float[] projmtx, final float[] colorCorrectionRgba, float[] objColor)
     {
         float scaleFactor = 0.3f;
         if (anchor.getTrackingState() != TrackingState.TRACKING)
@@ -303,13 +304,41 @@ public class PointRenderer{
 
         anchor.getPose().toMatrix(anchorMatrix, 0);
 
-        float[] objColor = new float[]{66.0f, 133.0f, 244.0f, 255.0f};
-
-        virtualObject.updateModelMatrix(anchorMatrix, scaleFactor);
-        virtualObjectShadow.updateModelMatrix(anchorMatrix, scaleFactor);
-        virtualObject.draw(viewmtx, projmtx, colorCorrectionRgba, objColor);
+        arrowObject.updateModelMatrix(anchorMatrix, scaleFactor);
+        arrowObject.draw(viewmtx, projmtx, colorCorrectionRgba, objColor);
     }
 
+    float lerp(float a, float b, float f)
+    {
+        return a + f * (b - a);
+    }
+
+    void DrawBlinkingLight (Anchor anchor, float[] viewmtx, float[] projmtx, final float[] colorCorrectionRgba, float scaleCounter)
+    {
+        float[] objColor = new float[4];
+
+        float[] redColor = new float[]{1.0f, 0.0f, 0.0f, 1.0f};
+        float[] orangeColor = new float[]{1.0f, 0.647f, 0.0f, 0.0f};
+
+        objColor[0] = lerp(redColor[0], orangeColor[0], scaleCounter);
+
+        if (anchor.getTrackingState() != TrackingState.TRACKING)
+        {
+            return;
+        }
+
+        float[] anchorMatrix = new float[16];
+
+        float minScale = 0f;
+        float maxScale = 1f;
+
+        float currentScale = lerp(minScale, maxScale, scaleCounter);
+
+        anchor.getPose().toMatrix(anchorMatrix, 0);
+
+        blinkingLightObject.updateModelMatrix(anchorMatrix, currentScale);
+        blinkingLightObject.draw(viewmtx, projmtx, colorCorrectionRgba, objColor);
+    }
 
     public Pose previousCameraPose = Pose.IDENTITY;
     public FrustumVisibilityTester frustumVisibilityTester = new FrustumVisibilityTester();
@@ -350,11 +379,19 @@ public class PointRenderer{
             {
                 AnchorList anchorList = poseInfo.anchorsLists.get(anchorListCount);
 
-                if(anchorList.anchorListType == 1)
+                if(anchorList.getAnchorListType() == 1)
                 {
                     TASQAR_Anchor tasqar_anchor = anchorList.anchors.get(0);
 
-                    DrawArrow(tasqar_anchor.anchor, cameraView, cameraPerspective, colorCorrectionRgba);
+                    DrawArrow(tasqar_anchor.anchor, cameraView, cameraPerspective, colorCorrectionRgba, anchorList.listColor);
+
+                    continue;
+                }
+                else if(anchorList.getAnchorListType() == 2)
+                {
+                    TASQAR_Anchor tasqar_anchor = anchorList.anchors.get(0);
+
+                    DrawBlinkingLight(tasqar_anchor.anchor, cameraView, cameraPerspective, colorCorrectionRgba, anchorList.scaleCounter);
 
                     continue;
                 }
@@ -379,17 +416,18 @@ public class PointRenderer{
                 if(vertices == null)
                     continue;
 
-                GLES20.glUniform3f(colorUniform, 0.2f, 0.9f, 0.3f);
+                float[] anchorListColor = anchorList.listColor;
+                GLES20.glUniform3f(colorUniform, anchorListColor[0], anchorListColor[1], anchorListColor[2]);
                 DrawVertices(vertices, normals, GLES20.GL_TRIANGLE_STRIP);
 
                 vertices = anchorList.verticesStartCap;
                 normals = anchorList.normalsStartCap;
-                GLES20.glUniform3f(colorUniform, 0.9f, 0.2f, 0.3f);
+                GLES20.glUniform3f(colorUniform, 0.1f, 0.8f, 0.2f);
                 DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
 
                 vertices = anchorList.verticesEndCap;
                 normals = anchorList.normalsEndCap;
-                GLES20.glUniform3f(colorUniform, 0.2f, 0.3f, 0.9f);
+                GLES20.glUniform3f(colorUniform, 0.8f, 0.1f, 0.2f);
                 DrawVertices(vertices, normals, GLES20.GL_TRIANGLES);
             }
         }

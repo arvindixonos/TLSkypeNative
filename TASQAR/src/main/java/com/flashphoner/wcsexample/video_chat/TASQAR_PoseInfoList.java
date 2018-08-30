@@ -21,19 +21,31 @@ public class TASQAR_PoseInfoList
     public float[] firstTranslation = new float[3];
     public boolean firstTranslationSet = false;
 
+
+    private static float[] fromString(String string) {
+        String[] strings = string.replace("[", "").replace("]", "").split(", ");
+        float result[] = new float[strings.length];
+        for (int i = 0; i < result.length; i++) {
+            result[i] = Float.parseFloat(strings[i]);
+        }
+        return result;
+    }
+
     public PoseInfo GetUserPoseInfo(String userName)
     {
-//        Log.d(VideoChatActivity.TAG, "GETTING " + userName);
-
         PoseInfo poseInfo = tasqar_poseInfos.get(userName);
 
-        if(poseInfo == null)
-        {
-//            Log.d(VideoChatActivity.TAG, "NO USER FOR " + userName);
-            poseInfo = SetUserPoseInfo(userName, null);
-        }
-
         return poseInfo;
+    }
+
+    public void UpdateCurrentColor(String userName, String currentColor)
+    {
+        PoseInfo poseInfo = GetUserPoseInfo(userName);
+
+        if(poseInfo != null)
+        {
+            poseInfo.selectedColor = fromString(currentColor);
+        }
     }
 
     public PoseInfo  SetUserPoseInfo(String userName, PoseInfo poseInfo)
@@ -74,7 +86,7 @@ public class TASQAR_PoseInfoList
             {
                 AnchorList anchorList = anchorsLists.get(j);
 
-                if(anchorList.anchorListType != 0)
+                if(anchorList.getAnchorListType() != 0)
                     continue;
 
                 anchorList.UpdateAllAnchors(frustumVisibilityTester);
@@ -122,15 +134,21 @@ public class TASQAR_PoseInfoList
         SetUserPoseInfo(userName, poseInfo);
     }
 
-    public void AddPoint(HitResult hitResult, String userName, int anchorListType)
+    public void AddPoint(HitResult hitResult, String userName, String currentColor, int anchorListType)
     {
         PoseInfo userPoseInfo = GetUserPoseInfo(userName);
+
+        if(userPoseInfo == null)
+        {
+            userPoseInfo = SetUserPoseInfo(userName, null);
+            userPoseInfo.selectedColor = fromString(currentColor);
+        }
+
         Pose hitPose = hitResult.getHitPose();
 
         if(anchorListType == 1)
         {
             userPoseInfo = AddAnchor(hitResult, hitPose, userName, anchorListType);
-            userPoseInfo.currentUserAnchorList.anchorListType = anchorListType;
             userPoseInfo.AddBreak();
             SetUserPoseInfo(userName, userPoseInfo);
             return;
@@ -240,7 +258,7 @@ public class TASQAR_PoseInfoList
                 {
                     AnchorList anchorList = poseInfo.anchorsLists.get(anchorsListCount);
 
-                    if(anchorList.anchorListType != 0)
+                    if(anchorList.getAnchorListType() != 0)
                         continue;
 
                     anchorList.CheckDirty();

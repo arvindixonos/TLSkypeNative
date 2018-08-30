@@ -91,6 +91,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -339,6 +340,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                                 DecodeLocalBreakMessage(userName);
                             }
+                            else if (localMessage.contains("COLORCHANGE: ") && WebRTCMediaProvider.cameraID == 0)
+                            {
+                                localMessage = localMessage.replace("COLORCHANGE: " , "");
+                                String[] values = localMessage.split(" ");
+
+                                String userName = values[0];
+                                String colorValue = values[1];
+
+                                DecodeLocalColorChangeMessage(userName, colorValue);
+                            }
                             else if (localMessage.contains("UNDO: "))
                             {
                                 String userName = localMessage.replace("UNDO: " , "");
@@ -380,6 +391,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                 String userName = remoteMessage.replace("BREAK: " , "");
 
                                 DecodeRemoteBreakMessage(userName);
+                            }
+                            else if (remoteMessage.contains("COLORCHANGE: ") && WebRTCMediaProvider.cameraID == 0)
+                            {
+                                remoteMessage = remoteMessage.replace("COLORCHANGE: " , "");
+                                String[] values = remoteMessage.split(" ");
+
+                                String userName = values[0];
+                                String colorValue = values[1];
+
+                                DecodeRemoteColorChangeMessage(userName, colorValue);
                             }
                             else if (remoteMessage.contains("UNDO: "))
                             {
@@ -823,12 +844,28 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    public void DecodeLocalColorChangeMessage(String userName, String newColor)
+    {
+        synchronized (localSyncObject)
+        {
+            pointRenderer.UpdateCurrentColor(userName, newColor);
+        }
+    }
+
     public void DecodeRemoteBreakMessage(String userName)
     {
         synchronized (remoteSyncObject)
         {
             motionEventsRemote.clear();
             pointRenderer.AddBreak(userName);
+        }
+    }
+
+    public void DecodeRemoteColorChangeMessage(String userName, String newColor)
+    {
+        synchronized (remoteSyncObject)
+        {
+            pointRenderer.UpdateCurrentColor(userName, newColor);
         }
     }
 
@@ -842,14 +879,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     class TASQAR_MotionEvent
     {
         public String userName = "";
+        public String currentColor = "";
         public String mode = "";
         public MotionEvent motionEvent;
 
-        public TASQAR_MotionEvent(String userName, String mode, float xVal, float yVal)
+        public TASQAR_MotionEvent(String userName, String mode, float xVal, float yVal, String currentColor)
         {
             this.mode = mode;
-            this.motionEvent = MotionEvent.obtain(1, 1, MotionEvent.ACTION_DOWN, xVal, yVal, 0);;
+            this.motionEvent = MotionEvent.obtain(1, 1, MotionEvent.ACTION_DOWN, xVal, yVal, 0);
             this.userName = userName;
+            this.currentColor = currentColor;
         }
     }
 
@@ -869,7 +908,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         if(values.length > 5)
            userName = values[5];
 
-        TASQAR_MotionEvent motionEvent = new TASQAR_MotionEvent(userName, mode, xVal, yVal);
+        String colorValue = values[6];
+
+        TASQAR_MotionEvent motionEvent = new TASQAR_MotionEvent(userName, mode, xVal, yVal, colorValue);
         TapHandle(motionEvent, mode, width, height);
     }
 
@@ -883,18 +924,48 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    public float[]      currentColor = new float[]{1.0f, 0.0f, 0.0f, 1.0f};
+
+    public void     SelectedRed()
+    {
+        currentColor = new float[]{1.0f, 0.0f, 0.0f, 1.0f};
+    }
+
+    public void     SelectedBlue()
+    {
+        currentColor = new float[]{0.0f, 0.0f, 1.0f, 1.0f};
+    }
+
+    public void     SelectedGreen()
+    {
+        currentColor = new float[]{0.0f, 1.0f, 0.0f, 1.0f};
+    }
+
+    public void     SelectedOrange()
+    {
+        currentColor = new float[]{1.0f, 0.7f, 0.0f, 1.0f};
+    }
+
+    public void     SelectedYellow()
+    {
+        currentColor = new float[]{1.0f, 1.0f, 0.0f, 1.0f};
+    }
+
+
     public void TapSend(int x, int y, int width, int height)
     {
         if(arrowMode) {
-            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername());
+            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
+
+
             synchronized (localSyncObject) {
-                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername());
+                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
             }
         }
         else {
-            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername());
+            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
             synchronized (localSyncObject) {
-                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername());
+                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername() + " " + currentColor.toString() + " " + Arrays.toString(currentColor));
             }
         }
     }
@@ -944,11 +1015,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     {
                         if(mode.equals("DR"))
                         {
-                            SpawnPoint(hit, tasqar_motionEvent.userName);
+                            SpawnPoint(hit, tasqar_motionEvent);
                         }
                         else if(mode.equals("AR"))
                         {
-                            SpawnArrow(hit, tasqar_motionEvent.userName);
+                            //SpawnArrow(hit, tasqar_motionEvent.userName);
+
+                            SpawnBlinkingLight(hit, tasqar_motionEvent);
                         }
 
                         break;
@@ -977,11 +1050,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                     {
                         if(mode.equals("DR"))
                         {
-                            SpawnPoint(hit, tasqar_motionEvent.userName);
+                            SpawnPoint(hit, tasqar_motionEvent);
                         }
                         else if(mode.equals("AR"))
                         {
-                            SpawnArrow(hit, tasqar_motionEvent.userName);
+                            SpawnBlinkingLight(hit, tasqar_motionEvent);
+                            //SpawnArrow(hit, tasqar_motionEvent.userName);
                         }
 
                         break;
@@ -997,14 +1071,19 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         pointsOrPlaneSpawn = !pointsOrPlaneSpawn;
     }
 
-    private void SpawnArrow(HitResult hit, String userName)
+    private void SpawnArrow(HitResult hit, TASQAR_MotionEvent motionEvent)
     {
-        pointRenderer.AddPoint(hit, userName, 1);
+        pointRenderer.AddPoint(hit, motionEvent.userName, motionEvent.currentColor, 1);
     }
 
-    private void SpawnPoint(HitResult hit, String userName)
+    private void SpawnBlinkingLight(HitResult hit, TASQAR_MotionEvent motionEvent)
     {
-        pointRenderer.AddPoint(hit, userName, 0);
+        pointRenderer.AddPoint(hit, motionEvent.userName, motionEvent.currentColor, 2);
+    }
+
+    private void SpawnPoint(HitResult hit, TASQAR_MotionEvent motionEvent)
+    {
+        pointRenderer.AddPoint(hit, motionEvent.userName, motionEvent.currentColor, 0);
     }
 
     public void SetLocalRendererMirror()

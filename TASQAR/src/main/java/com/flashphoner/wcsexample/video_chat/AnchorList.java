@@ -19,7 +19,7 @@ import shapes3d.utils.P_Bezier3D;
 
 public class AnchorList
 {
-    public  int     anchorListType = 0;
+    private   int     anchorListType = 0;
 
     public ArrayList<TASQAR_Anchor> anchors = new ArrayList<TASQAR_Anchor>();
     public float[] vertices = null;
@@ -35,6 +35,61 @@ public class AnchorList
     public  int         numAnchors = 0;
 
     float[] modelMatrix = null;
+
+    public  Thread      blinkingThread = null;
+
+    public  float[]     listColor = new float[]{1.0f, 1.0f, 1.0f, 1.0f};
+
+    public float       scaleCounter = 0f;
+
+    public  void    setAnchorListColor(float[] newColor)
+    {
+        listColor = newColor;
+    }
+
+    public void setAnchorListType(int type)
+    {
+        anchorListType = type;
+
+        if(type == 2)
+        {
+            scaleCounter = 0f;
+
+            if(blinkingThread != null)
+            {
+                blinkingThread.interrupt();
+                blinkingThread = null;
+            }
+
+            blinkingThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    while (true)
+                    {
+                        scaleCounter += 0.01f;
+
+                        if(scaleCounter > 1f)
+                        {
+                            scaleCounter = 0f;
+                        }
+
+                        try {
+                            Thread.sleep(10);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                }
+            });
+        }
+    }
+
+    public int getAnchorListType()
+    {
+        return  anchorListType;
+    }
+
 
     public void updateModelMatrix(float[] modelMatrix, float scaleFactor) {
         float[] scaleMatrix = new float[16];
@@ -326,5 +381,10 @@ public class AnchorList
 
         vertices = null;
         normals = null;
+
+        if(blinkingThread != null)
+        {
+            blinkingThread.interrupt();
+        }
     }
 }
