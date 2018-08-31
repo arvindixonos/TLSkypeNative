@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.Matrix;
+import android.provider.MediaStore;
+import android.renderscript.Matrix4f;
 import android.util.Log;
 
 import com.google.ar.core.Anchor;
@@ -13,6 +15,7 @@ import com.google.ar.core.Pose;
 import com.google.ar.core.TrackingState;
 
 import org.apache.commons.math3.complex.Quaternion;
+import org.apache.commons.math3.linear.MatrixUtils;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -303,7 +306,10 @@ public class PointRenderer{
 
         float[] anchorMatrix = new float[16];
 
-        anchor.getPose().toMatrix(anchorMatrix, 0);
+        Pose anchorPose = anchor.getPose();
+        Pose newPose = new Pose(anchorPose.getTranslation(), new float[]{0.0f, 0.0f, 0.0f, 1.0f});
+
+        newPose.toMatrix(anchorMatrix, 0);
 
         arrowObject.updateModelMatrix(anchorMatrix, scaleFactor);
         arrowObject.draw(viewmtx, projmtx, objColor);
@@ -338,7 +344,12 @@ public class PointRenderer{
 
         float currentScale = lerp(minScale, maxScale, scaleCounter);
 
-        anchor.getPose().toMatrix(anchorMatrix, 0);
+        Pose displayOrientedPose = VideoChatActivity.getInstance().camera.getDisplayOrientedPose();
+        Pose anchorPose = anchor.getPose();
+
+        Pose cameraFacingPose = new Pose(anchorPose.getTranslation(), displayOrientedPose.getRotationQuaternion());
+
+        cameraFacingPose.toMatrix(anchorMatrix, 0);
 
         blinkingLightObject.updateModelMatrix(anchorMatrix, currentScale);
         blinkingLightObject.draw(viewmtx, projmtx, objColor);
