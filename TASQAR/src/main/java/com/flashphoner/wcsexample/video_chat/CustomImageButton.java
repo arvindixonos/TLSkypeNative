@@ -184,26 +184,41 @@ class HistoryButton extends ConstraintLayout
 {
     private static String TAG = "UI_TEST";
 
+    public String userID;
+
     public TextView nameField;
     public TextView dateField;
     public TextView durationField;
     public TextView roleField;
+    public FloatingActionButton callButton;
 
     public HistoryButton(Context context, AttributeSet attrs)
     {
         super(context, attrs);
     }
 
-    public void Initialise (String name, String date, String duration, String role)
+    public void Initialise (String ID, String name, String date, String duration, String role)
     {
+        userID = ID;
+
         nameField = (TextView) this.getChildAt(1);
         dateField = (TextView) this.getChildAt(2);
         durationField = (TextView) this.getChildAt(3);
         roleField = (TextView) this.getChildAt(4);
+        callButton = (FloatingActionButton) this.getChildAt(5);
 
         roleField.setText(role);
         nameField.setText(name);
         durationField.setText(duration);
         dateField.setText(date);
+
+        callButton.setOnClickListener(new OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                AppManager.Instance.ChangeActivity(userID);
+            }
+        });
     }
 }

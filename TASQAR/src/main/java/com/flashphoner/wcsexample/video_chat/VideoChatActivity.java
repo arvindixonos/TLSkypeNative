@@ -533,24 +533,30 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         cameraSwitchHandler = new VideoCapturerAndroid.CameraSwitchHandler()
         {
             @Override
-            public void onCameraSwitchDone(boolean frontCamera) {
+            public void onCameraSwitchDone(boolean frontCamera)
+            {
 
-                if(!frontCamera && VideoCapturerAndroid.arCorePresent) {
-                    if (!openingARCORE && !arcoreRunning) {
+                if(!frontCamera && VideoCapturerAndroid.arCorePresent)
+                {
+                    if (!openingARCORE && !arcoreRunning)
+                    {
                         StartARCORE();
                     }
                 }
             }
 
             @Override
-            public void onCameraSwitchError(String s) {
+            public void onCameraSwitchError(String s)
+            {
 
             }
         };
 
-        mPlaneOrPointButton.setOnClickListener(new OnClickListener() {
+        mPlaneOrPointButton.setOnClickListener(new OnClickListener()
+        {
             @Override
-            public void onClick(View v) {
+            public void onClick(View v)
+            {
                 TogglePointPlaneSpawn();
             }
         });
@@ -569,21 +575,28 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         .withStartFile(null)
 //                        .withResources(R.string.title_choose_any_file, R.string.title_choose, R.string.dialog_cancel)
 //                        .withFileIconsRes(false, R.mipmap.ic_my_file, R.mipmap.ic_my_folder)
-                        .withAdapterSetter(new ChooserDialog.AdapterSetter() {
+                        .withAdapterSetter(new ChooserDialog.AdapterSetter()
+                        {
                             @Override
-                            public void apply(DirAdapter adapter) {
+                            public void apply(DirAdapter adapter)
+                            {
                                 //
                             }
                         })
-                        .withChosenListener(new ChooserDialog.Result() {
+                        .withChosenListener(new ChooserDialog.Result()
+                        {
                             @Override
-                            public void onChoosePath(String path, File pathFile) {
+                            public void onChoosePath(String path, File pathFile)
+                            {
                                 Toast.makeText(ctx, "FILE: " + path, Toast.LENGTH_SHORT).show();
-                                try {
+                                try
+                                {
                                     fileReadStream = new FileInputStream(pathFile);
                                     UploadFile(path);
 
-                                } catch (FileNotFoundException e) {
+                                }
+                                catch (FileNotFoundException e)
+                                {
                                     e.printStackTrace();
                                 }
                                 catch (RuntimeException e)
@@ -597,7 +610,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
         });
 
-//        uiHandler.ToggleVideoView();
         Connect();
 
         mConnectButton.setOnClickListener(new OnClickListener()

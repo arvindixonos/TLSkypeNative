@@ -1183,6 +1183,10 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
 
         TryLogin();
 
+        if(SA_BackButton == null)
+        {
+            return;
+        }
         SA_BackButton.setOnClickListener(new View.OnClickListener()
         {
             @Override
@@ -2018,7 +2022,8 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
                             userData[2],                        //Number
                             userData[3],                        //Password
                             userData[4],                        //Hierarchy
-                            userData[5]                        //Role
+                            userData[5],                        //Role
+                            "0000"
                         );
                     currentActivity.runOnUiThread(new Runnable()
                     {
