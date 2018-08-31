@@ -6,21 +6,30 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
+import android.support.design.internal.NavigationMenuItemView;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Switch;
 import android.widget.Toast;
 
 import com.google.ar.core.ArCoreApk;
@@ -36,8 +45,9 @@ import org.webrtc.VideoCapturerAndroid;
 import java.util.Random;
 
 import static android.provider.AlarmClock.EXTRA_MESSAGE;
+import static android.view.View.VISIBLE;
 
-public class AppManager extends AppCompatActivity
+public class AppManager extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener, NavigationMenuItemView.OnClickListener
 {
     public static String TAG = "TLSKYPE";
 
@@ -46,13 +56,25 @@ public class AppManager extends AppCompatActivity
     private static final int ALL_PERMISSIONS = 555;
     private     boolean  allPermissionsGiven = false;
     private     boolean  profilePicPresent = false;
-    private String password = "0546";
+    private     boolean  drawerOpen = false;
+    private     boolean  pinMode = false;
+    private String password = "0000";
     private String passwordFilling = "0000";
 
     private ArCoreApk.InstallStatus installStatus = ArCoreApk.InstallStatus.INSTALL_REQUESTED;
     private boolean installRequested = false;
 
     private LoginUIHandler loginUIHandler;
+
+    //lobby Elements
+    private CallHistoryDatabaseHelper callHistoryDatabaseHelper;
+    private ConstraintLayout mST_SettingsScreen;
+    private DrawerLayout drawer;
+    private Switch ST_PasswordToggle;
+    private LoginDatabaseHelper loginDB;
+
+    public  String userID;
+    //lobby Elements
 
     public static AppManager getInstance()
     {
@@ -144,6 +166,11 @@ public class AppManager extends AppCompatActivity
 
             CheckArCoreAvailablity();
         });
+
+        callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
+        loginDB = new LoginDatabaseHelper(getApplicationContext());
+        Cursor data = loginDB.showData();
+        data.moveToFirst();
 
 //        if (session == null)
 //        {
@@ -253,13 +280,40 @@ public class AppManager extends AppCompatActivity
         }
     }
 
+
     public void ChangePIN(View v)
     {
-//        AlertDialog.Builder mBuilder = new AlertDialog.Builder(AppManager.this);
+        Log.d(TAG, "CHANGE PIN");
+        AlertDialog.Builder mBuilder = new AlertDialog.Builder(AppManager.this);
+        View view = getLayoutInflater().inflate(R.layout.get_pin, null);
+
+        EditText PINText = view.findViewById(R.id.editText);
+        Button submitButton = view.findViewById(R.id.submitButton);
+
+        mBuilder.setView(view);
+        AlertDialog dialog = mBuilder.create();
+        dialog.show();
+
+        submitButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View view)
+            {
+                password = PINText.getText().toString();
+                loginDB = new LoginDatabaseHelper(getApplicationContext());
+                loginDB.AddPINData(password);
+                dialog.dismiss();
+            }
+        });
     }
+
 
     public void SetupPasswordScreen (boolean picPresent)
     {
+        loginDB = new LoginDatabaseHelper(getApplicationContext());
+        Cursor data = loginDB.showData();
+        data.moveToFirst();
+        password = data.getString(9);
         profilePicPresent = picPresent;
         setContentView(R.layout.activity_pin);
     }
@@ -278,13 +332,20 @@ public class AppManager extends AppCompatActivity
         }
 
         setContentView(R.layout.drawer_callscreen);
-        for (int i = 0; i <= 10; i++)
+        Cursor data = callHistoryDatabaseHelper.showData();
+        if(data.getCount() > 0)
         {
-            Sample();
+            data.moveToFirst();
+            do
+            {
+                SpawnHistoryButton(data.getString(1), data.getString(2), data.getString(3), data.getString(4), data.getString(5));
+            }while(data.moveToNext());
         }
+
         if(loginUIHandler == null)
         {
-            Log.d(TAG, "login Null");
+            mST_SettingsScreen = findViewById(R.id.SettingsScreen);
+            SetPasswordToggle();
         }
         else
         {
@@ -297,21 +358,65 @@ public class AppManager extends AppCompatActivity
             @Override
             public void onClick(View v)
             {
-                ChangeActivity(profilePicPresent);
+                ChangeActivity("participantID");
             }
         });
     }
 
-    public void Sample ()
+    public void SetPasswordToggle ()
+    {
+        drawer = findViewById(R.id.CommonDrawer);
+        android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
+                (this, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
+        {
+            public void onDrawerClosed(View view)
+            {
+                super.onDrawerClosed(view);
+                drawerOpen = false;
+            }
+
+            public void onDrawerOpened(View drawerView)
+            {
+                super.onDrawerOpened(drawerView);
+                drawerOpen = true;
+            }
+        };
+
+        drawer.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = findViewById(R.id.call_nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
+
+        mST_SettingsScreen = findViewById(R.id.SettingsScreen);
+
+        ST_PasswordToggle = findViewById(R.id.ST_PasswordToggle);
+        Cursor data = loginDB.showData();
+        data.moveToFirst();
+        String pinMode = data.getString(8);
+        ST_PasswordToggle.setChecked(pinMode.equals("ENABLED"));
+
+        ST_PasswordToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+        {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+            {
+
+            }
+        });
+    }
+
+
+    public void SpawnHistoryButton (String userID, String name, String role, String date, String duration)
     {
         LinearLayout parent = findViewById(R.id.ButtonInflater);
         ViewGroup view = (ViewGroup) LayoutInflater.from(this).inflate(R.layout.history_element_button, null);
         parent.addView(view);
         HistoryButton historyButton = (HistoryButton) view;
-        historyButton.Initialise("Adish", "10-20-2018", "9:00", "Tech Support");
+        historyButton.Initialise(userID, name, date, duration, role);
     }
 
-    void ChangeActivity (boolean profilePicPresent)
+    void ChangeActivity (String participantID)
     {
         Intent intent = new Intent(this, VideoChatActivity.class);
         if(profilePicPresent)
@@ -322,6 +427,8 @@ public class AppManager extends AppCompatActivity
         {
             intent.putExtra("PIC", "ABSENT");
         }
+        intent.putExtra("ROOMNAME", userID + "_CALL_" + participantID);
+        intent.putExtra("USERID", userID);
         this.finish();
         startActivity(intent);
     }
@@ -335,6 +442,18 @@ public class AppManager extends AppCompatActivity
     @Override
     public void onBackPressed()
     {
+        if(mST_SettingsScreen != null)
+        {
+            if (mST_SettingsScreen.getVisibility() == VISIBLE)
+            {
+                loginDB.AddSpecificData("PIN_MODE", ST_PasswordToggle.isChecked() ? "ENABLED" : "DISABLED");
+                Log.d(TAG, "BACKPRESSED" + ST_PasswordToggle.isChecked());
+                mST_SettingsScreen.setVisibility(View.GONE);
+
+                return;
+            }
+        }
+
         if(session != null) {
             session.pause();
         }
@@ -343,6 +462,25 @@ public class AppManager extends AppCompatActivity
             loginUIHandler.backKey();
         else
             System.exit(0);
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(@NonNull MenuItem item)
+    {
+        int num = item.getItemId();
+        switch(num)
+        {
+            case R.id.nav_setting:
+                mST_SettingsScreen.setVisibility(VISIBLE);
+                drawer.closeDrawers();
+                break;
+        }
+        return true;
+    }
+
+    @Override
+    public void onClick(View view) {
+
     }
 //    MySurfaceView mySurfaceView;
 //
