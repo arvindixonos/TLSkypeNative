@@ -16,9 +16,12 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.OrientationEventListener;
 import android.view.View;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+
+import org.webrtc.MediaStream;
 
 import java.io.File;
 import java.io.IOException;
