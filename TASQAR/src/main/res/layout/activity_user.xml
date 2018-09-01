@@ -40,6 +40,22 @@
             android:layout_width="match_parent"
             android:layout_height="90dp">
 
+            <Button
+                android:id="@+id/CallHistoryButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentTop="true"
+                android:text="History" />
+
+            <Button
+                android:id="@+id/OnlineButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentTop="true"
+                android:text="Online" />
+
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -51,7 +67,8 @@
                     android:layout_height="match_parent"
                     android:layout_margin="5dp"
                     android:background="@android:color/darker_gray"
-                    android:text="Call Support" />
+                    android:text="Call Support"
+                    android:visibility="gone" />
 
             </RelativeLayout>
 
@@ -66,6 +83,7 @@
                     android:layout_height="wrap_content"
                     android:background="#00669900"
                     android:scaleType="fitCenter"
+                    android:visibility="gone"
                     app:srcCompat="@drawable/call_expert_1" />
             </RelativeLayout>
 
@@ -100,8 +118,27 @@
         app:layout_constraintTop_toTopOf="@+id/toolbar" />
 
     <ScrollView
+        android:id="@+id/HistoryButtonInflater"
         android:layout_width="match_parent"
-        android:layout_height="394dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="88dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/toolbar">
+
+        <LinearLayout
+            android:id="@+id/HistoryInflater"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <ScrollView
+        android:id="@+id/OnlineButtonInflater"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
@@ -111,7 +148,7 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
         <LinearLayout
-            android:id="@+id/ButtonInflater"
+            android:id="@+id/OnlineInflater"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">

@@ -23,22 +23,22 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="22dp"
         android:text="Caller Name"
         android:textColor="@color/black"
-        app:layout_constraintStart_toEndOf="@+id/customImageButton"
-        app:layout_constraintTop_toTopOf="@+id/customImageButton" />
+        app:layout_constraintStart_toEndOf="@+id/circularImageView"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/textView26"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="22dp"
         android:layout_marginStart="8dp"
         android:text="Call Date"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toBottomOf="@+id/customImageButton"
-        app:layout_constraintStart_toEndOf="@+id/customImageButton" />
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/circularImageView" />
 
     <TextView
         android:id="@+id/textView27"
@@ -80,10 +80,10 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/imageView13"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/arrow_down" />
+        app:srcCompat="@drawable/baseline_call_white_24dp" />
 
-    <com.flashphoner.wcsexample.video_chat.CustomImageButton
-        android:id="@+id/customImageButton"
+    <com.flashphoner.wcsexample.video_chat.CircularImageView
+        android:id="@+id/circularImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
@@ -94,4 +94,5 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/call_expert_1" />
+
 </com.flashphoner.wcsexample.video_chat.HistoryButton>

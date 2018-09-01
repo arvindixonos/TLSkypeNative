@@ -722,8 +722,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                 drawer.closeDrawers();
                 break;
         }
-
-        return true;
+        return false;
     }
 
     private Bitmap GetUsetProfilePhoto ()
@@ -1176,9 +1175,6 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
 
         SU_NextButton = currentActivity.findViewById(R.id.SU_NextButton);
 
-//        SU_NameFieldImage = currentActivity.findViewById(R.id.SU_NameErrorImage);
-//        SU_EmailFieldImage = currentActivity.findViewById(R.id.SU_EmailErrorImage);
-//        SU_PhoneFieldImage = currentActivity.findViewById(R.id.SU_PhoneErrorImage);
         //SU Screen
 
         TryLogin();
@@ -2061,9 +2057,9 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
 
                 Node node = list.item(0);
                 String value = node.getNodeValue();
+                Log.d(TAG, "RUNNING" + node.getNodeValue());
 
                 boolean submitted = Integer.parseInt(value) == 1;
-
 
 
                 if (submitted)
@@ -2076,7 +2072,7 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
                         }
                     });
                 else
-                    Log.e(TAG, "NotDone");
+                    Toast.makeText(currentActivity, "Incorrect Credentials", Toast.LENGTH_LONG).show();
 
 
             } catch (IOException | ParserConfigurationException | SAXException e) {
@@ -2169,7 +2165,7 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
                 break;
         }
 
-        return true;
+        return false;
     }
 
     @Override

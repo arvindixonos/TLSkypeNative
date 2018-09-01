@@ -18,6 +18,7 @@ import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -29,9 +30,22 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.Toast;
 
+import com.flashphoner.fpwcsapi.Flashphoner;
+import com.flashphoner.fpwcsapi.bean.Connection;
+import com.flashphoner.fpwcsapi.bean.Data;
+import com.flashphoner.fpwcsapi.room.Message;
+import com.flashphoner.fpwcsapi.room.Participant;
+import com.flashphoner.fpwcsapi.room.Room;
+import com.flashphoner.fpwcsapi.room.RoomEvent;
+import com.flashphoner.fpwcsapi.room.RoomManager;
+import com.flashphoner.fpwcsapi.room.RoomManagerEvent;
+import com.flashphoner.fpwcsapi.room.RoomManagerOptions;
+import com.flashphoner.fpwcsapi.room.RoomOptions;
+import com.flashphoner.fpwcsapi.session.RestAppCommunicator;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Session;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
@@ -40,9 +54,25 @@ import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 import org.webrtc.VideoCapturerAndroid;
+import org.xml.sax.SAXException;
 
+import java.io.IOException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
 import java.util.Random;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import static android.provider.AlarmClock.EXTRA_MESSAGE;
 import static android.view.View.VISIBLE;
@@ -66,15 +96,23 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
     private LoginUIHandler loginUIHandler;
 
-    //lobby Elements
-    private CallHistoryDatabaseHelper callHistoryDatabaseHelper;
-    private ConstraintLayout mST_SettingsScreen;
-    private DrawerLayout drawer;
-    private Switch ST_PasswordToggle;
-    private LoginDatabaseHelper loginDB;
+    //lobby UI Elements
+    private CallHistoryDatabaseHelper   callHistoryDatabaseHelper;
+    private ConstraintLayout            mST_SettingsScreen;
+    private DrawerLayout                drawer;
+    private Switch                      ST_PasswordToggle;
+    private LoginDatabaseHelper         loginDB;
 
     public  String userID;
-    //lobby Elements
+    //lobby UI Elements
+
+    //lobby Functional Elements
+    private RoomManager roomManager;
+    private Room        room;
+    private Thread  getUserThread = null;
+
+    private String wcsURL = "ws://123.176.34.172:8080";
+    //lobby Functional Elements
 
     public static AppManager getInstance()
     {
@@ -169,36 +207,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
         callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
         loginDB = new LoginDatabaseHelper(getApplicationContext());
-        Cursor data = loginDB.showData();
-        data.moveToFirst();
-
-//        if (session == null)
-//        {
-//            Exception exception = null;
-//            String message = null;
-//            try {
-//                // Create the session.
-//                session = new Session(/* context= */ getApplicationContext());
-//            } catch (UnavailableApkTooOldException e) {
-//                message = "Please update ARCore";
-//                exception = e;
-//            } catch (UnavailableSdkTooOldException e) {
-//                message = "Please update this app";
-//                exception = e;
-//            } catch (UnavailableArcoreNotInstalledException e) {
-//                message = "Failed to create AR session";
-//                exception = e;
-//
-//                arCoreCheckThread.start();
-//            }
-//            catch (Exception e) {
-//
-//                VideoCapturerAndroid.arCorePresent = false;
-//
-//                message = "Please update this app";
-//                exception = e;
-//            }
-//        }
 
         if( ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED &&
@@ -247,6 +255,89 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 }
                 break;
         }
+    }
+
+    public void SetupLobby ()
+    {
+        if(loginDB == null)
+            loginDB = new LoginDatabaseHelper(getApplicationContext());
+
+        Cursor data = loginDB.showData();
+        data.moveToFirst();
+        userID = "User_" + data.getString(3);
+
+        RoomManagerOptions roomManagerOptions = new RoomManagerOptions(wcsURL, userID);
+        roomManager = Flashphoner.createRoomManager(roomManagerOptions);
+
+        roomManager.on(new RoomManagerEvent()
+        {
+            @Override
+            public void onConnected(Connection connection)
+            {
+                Log.d(TAG, "Connected " + userID);
+                RoomOptions roomOptions = new RoomOptions();
+                roomOptions.setName("TLLobby");
+                room = roomManager.join(roomOptions);
+
+                room.on(new RoomEvent()
+                {
+                    @Override
+                    public void onState(Room room)
+                    {
+                        Log.d(TAG, "RoomName : " + room.getName() + " onState");
+                        if(room.getParticipants().size() == 0)
+                        {
+                            Log.d(TAG, "A ForeScout");
+                        }
+                        else
+                        {
+                            ListOnlineUsers();
+                        }
+                    }
+
+                    @Override
+                    public void onJoined(Participant participant)
+                    {
+                        Log.d(TAG, "Joined : " + participant.getName());
+                        ListOnlineUsers();
+                    }
+
+                    @Override
+                    public void onLeft(Participant participant)
+                    {
+                        Log.d(TAG, "Left : " + participant.getName());
+                        ListOnlineUsers();
+                    }
+
+                    @Override
+                    public void onPublished(Participant participant)
+                    {
+
+                    }
+
+                    @Override
+                    public void onFailed(Room room, String s)
+                    {
+
+                    }
+
+                    @Override
+                    public void onMessage(Message message)
+                    {
+                        Log.d(TAG, "RemoteMessage : " + message.getText());
+                        String msg = message.getText();
+                        msg = msg.replace("CALL:-", "");
+                        ChangeActivity(msg.split("_CALL_")[0], false);
+                    }
+                });
+            }
+
+            @Override
+            public void onDisconnection(Connection connection)
+            {
+
+            }
+        });
     }
 
     private int count = 0;
@@ -332,15 +423,8 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         }
 
         setContentView(R.layout.drawer_callscreen);
-        Cursor data = callHistoryDatabaseHelper.showData();
-        if(data.getCount() > 0)
-        {
-            data.moveToFirst();
-            do
-            {
-                SpawnHistoryButton(data.getString(1), data.getString(2), data.getString(3), data.getString(4), data.getString(5));
-            }while(data.moveToNext());
-        }
+        SetupButtons();
+//        ListCallHistory();
 
         if(loginUIHandler == null)
         {
@@ -358,9 +442,62 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             @Override
             public void onClick(View v)
             {
-                ChangeActivity("participantID");
+                ChangeActivity("participant", true);
             }
         });
+
+        SetupLobby();
+    }
+
+    Button mHistoryButton;
+    Button mOnlineButton;
+    ScrollView mHistorylayout;
+    ScrollView mOnlineLayout;
+    private void SetupButtons()
+    {
+        mHistoryButton = findViewById(R.id.CallHistoryButton);
+        mOnlineButton = findViewById(R.id.OnlineButton);
+        mHistorylayout = findViewById(R.id.HistoryButtonInflater);
+        mOnlineLayout = findViewById(R.id.OnlineButtonInflater);
+
+        mHistoryButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                mHistorylayout.setVisibility(VISIBLE);
+                mOnlineLayout.setVisibility(View.GONE);
+                ListCallHistory();
+            }
+        });
+
+        mOnlineButton.setOnClickListener(new View.OnClickListener()
+        {
+            @Override
+            public void onClick(View v)
+            {
+                mHistorylayout.setVisibility(View.GONE);
+                mOnlineLayout.setVisibility(VISIBLE);
+                ListOnlineUsers();
+            }
+        });
+    }
+
+    private void ListCallHistory ()
+    {
+        LinearLayout parent = findViewById(R.id.HistoryInflater);
+        parent.removeAllViewsInLayout();
+
+        Cursor data = callHistoryDatabaseHelper.showData();
+        if(data.getCount() > 0)
+        {
+            data.moveToLast();
+            do
+            {
+                SpawnUserButton(data.getString(1), data.getString(3), data.getString(4), data.getString(5), data.getString(6), data.getString(2), true);
+            }
+            while(data.moveToPrevious());
+        }
     }
 
     public void SetPasswordToggle ()
@@ -406,18 +543,38 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         });
     }
 
-
-    public void SpawnHistoryButton (String userID, String name, String role, String date, String duration)
+    public void SpawnUserButton (String userID, String name, String role, String date, String duration, String email, boolean isHistory)
     {
-        LinearLayout parent = findViewById(R.id.ButtonInflater);
+        LinearLayout parent;
+
+        if(isHistory)
+            parent = findViewById(R.id.HistoryInflater);
+        else
+            parent = findViewById(R.id.OnlineInflater);
+
         ViewGroup view = (ViewGroup) LayoutInflater.from(this).inflate(R.layout.history_element_button, null);
         parent.addView(view);
         HistoryButton historyButton = (HistoryButton) view;
-        historyButton.Initialise(userID, name, date, duration, role);
+        historyButton.Initialise(userID, name, date, duration, role, email);
     }
 
-    void ChangeActivity (String participantID)
+    void ChangeActivity (String participantID, boolean isSender)
     {
+        if(isSender)
+            participantID = "User_" + participantID;
+        String roomName;
+        if(isSender)
+        {
+            roomName = userID + "_CALL_" + participantID;
+        }
+        else
+        {
+            roomName = participantID + "_CALL_" + userID;
+        }
+
+        if(isSender)
+            SendMessageToPerson(participantID, roomName);
+
         Intent intent = new Intent(this, VideoChatActivity.class);
         if(profilePicPresent)
         {
@@ -427,10 +584,22 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         {
             intent.putExtra("PIC", "ABSENT");
         }
-        intent.putExtra("ROOMNAME", userID + "_CALL_" + participantID);
-        intent.putExtra("USERID", userID);
+        intent.putExtra("ROOMNAME", roomName);
         this.finish();
         startActivity(intent);
+    }
+
+    private void SendMessageToPerson (String particpantName, String Message)
+    {
+        for (Participant participant:room.getParticipants())
+        {
+            Log.d(TAG, particpantName);
+            if(participant.getName().equals(particpantName))
+            {
+                Log.d(TAG, "Found participant");
+                participant.sendMessage("CALL:-" + Message);
+            }
+        }
     }
 
     public void ShowToast(String message)
@@ -475,106 +644,112 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 drawer.closeDrawers();
                 break;
         }
-        return true;
+
+        return false;
     }
 
     @Override
-    public void onClick(View view) {
+    public void onClick(View view)
+    {
 
     }
-//    MySurfaceView mySurfaceView;
-//
-//    /** Called when the activity is first created. */
-//    @Override
-//    public void onCreate(Bundle savedInstanceState)
-//    {
-//        super.onCreate(savedInstanceState);
-//        mySurfaceView = new MySurfaceView(this);
-//        setContentView(mySurfaceView);
-//    }
-//
-//    @Override
-//    protected void onResume()
-//    {
-//        // TODO Auto-generated method stub
-//        super.onResume();
-//        mySurfaceView.onResumeMySurfaceView();
-//    }
-//
-//    @Override
-//    protected void onPause()
-//    {
-//        // TODO Auto-generated method stub
-//        super.onPause();
-//        mySurfaceView.onPauseMySurfaceView();
-//    }
-//
-//    class MySurfaceView extends SurfaceView implements Runnable{
-//
-//        Thread thread = null;
-//        SurfaceHolder surfaceHolder;
-//        volatile boolean running = false;
-//
-//        private Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
-//        Random random;
-//
-//        public MySurfaceView(Context context)
-//        {
-//            super(context);
-//            // TODO Auto-generated constructor stub
-//            surfaceHolder = getHolder();
-//            random = new Random();
-//        }
-//
-//        public void onResumeMySurfaceView()
-//        {
-//            running = true;
-//            thread = new Thread(this);
-//            thread.start();
-//        }
-//
-//        public void onPauseMySurfaceView()
-//        {
-//            boolean retry = true;
-//            running = false;
-//            while(retry){
-//                try {
-//                    thread.join();
-//                    retry = false;
-//                } catch (InterruptedException e) {
-//                    // TODO Auto-generated catch block
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//
-//        @Override
-//        public void run()
-//        {
-//            // TODO Auto-generated method stub
-//            while(running)
-//            {
-//                if(surfaceHolder.getSurface().isValid())
-//                {
-//                    Canvas canvas = surfaceHolder.lockCanvas();
-//                    //... actual drawing on canvas
-//
-//                    paint.setStyle(Paint.Style.STROKE);
-//                    paint.setStrokeWidth(10);
-//
-//                    int w = canvas.getWidth();
-//                    int h = canvas.getHeight();
-//                    int x = random.nextInt(w-1);
-//                    int y = random.nextInt(h-1);
-//                    int r = random.nextInt(255);
-//                    int g = random.nextInt(255);
-//                    int b = random.nextInt(255);
-//                    paint.setColor(0xff000000 + (r << 16) + (g << 8) + b);
-//                    canvas.drawPoint(x, y, paint);
-//
-//                    surfaceHolder.unlockCanvasAndPost(canvas);
-//                }
-//            }
-//        }
-//    }
+
+    private void GetUserDetails(final String emailID)
+    {
+        if (getUserThread != null && getUserThread.isAlive())
+        {
+            getUserThread.interrupt();
+            getUserThread = null;
+        }
+
+        getUserThread = new Thread(() ->
+        {
+            URL url = null;
+            try
+            {
+                url = new URL("http://13.127.231.176/Tasqar/TasqarWebService.asmx/UserData?emailID=" + emailID);
+                URLConnection con = url.openConnection();
+                DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+                Document doc = docBuilder.parse(con.getInputStream());
+
+                Log.d(TAG, "Document : " + doc.getElementsByTagName("string").item(0));
+
+                Node userIDNode = doc.getElementsByTagName("string").item(0);
+                NodeList list = userIDNode.getChildNodes();
+                Node node = list.item(0);
+                String value = node.getNodeValue();
+
+                if(!value.equals(""))
+                {
+                    final String[] userData = value.split(";");
+                    runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            AssembleUser(userData, emailID);
+                        }
+                    });
+                }
+            } catch (IOException | ParserConfigurationException | SAXException e) {
+                e.printStackTrace();
+            }
+        });
+        getUserThread.start();
+    }
+
+    public void onDestroy()
+    {
+        super.onDestroy();
+        room.leave(null);
+        roomManager.disconnect();
+    }
+
+    private void ListOnlineUsers ()
+    {
+        LinearLayout parent = findViewById(R.id.OnlineInflater);
+        parent.removeAllViewsInLayout();
+        Thread listUserThread = new Thread(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                Collection<Participant> participants = room.getParticipants();
+                for (Participant participant : participants)
+                {
+                    GetUserDetails(participant.getName().replace("User_", ""));
+
+                    while(getUserThread.isAlive())
+                    {
+                        try
+                        {
+                            Thread.sleep(10);
+                        }
+                        catch (InterruptedException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            }
+        });
+
+        listUserThread.start();
+
+    }
+
+    private void AssembleUser (String[] serverData, String email)
+    {
+        SpawnUserButton (serverData[0], serverData[1], serverData[5], "", "",email, false);
+    }
+
+    public String GetDate()
+    {
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-YYYY_hh-mm-ss");
+
+        return dateFormat.format(date);
+    }
 }

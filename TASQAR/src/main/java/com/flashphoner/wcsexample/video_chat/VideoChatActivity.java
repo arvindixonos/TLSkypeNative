@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.ImageFormat;
 import android.graphics.PixelFormat;
@@ -430,7 +431,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         SelectedOrange();
     }
 
-    private void DecodeUndoMessage(String userName) {
+    private void DecodeUndoMessage(String userName)
+    {
         pointRenderer.Undo(userName);
     }
 
@@ -504,6 +506,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         currentActivityIntent = getIntent();
         String Message = currentActivityIntent.getStringExtra("PIC");
+        roomName = currentActivityIntent.getStringExtra("ROOMNAME");
+        Log.d(TAG, "RoomName" + roomName);
         if(Message.equals("PRESENT"))
         {
             uiHandler = new MainUIHandler(Instance, true);
@@ -1536,6 +1540,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             {
                                 FloatingActionButton mEndButton = findViewById(R.id.EndCallButton);
                                 mEndButton.callOnClick();
+//                                Log.d(TAG, "TIMER TEXT" + uiHandler.timerText.getText().toString());
+//                                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
+//                                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), Integer.toString(callHistoryDatabaseHelper.showData().getCount()));
                             }
                         }
                         else
@@ -1554,6 +1561,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
+                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
+                Cursor data = callHistoryDatabaseHelper.showData();
+                data.moveToLast();
+                String ID = data.getString(0);
+                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), ID);
                 uiHandler.StopTimer();
                 stream = null;
             }

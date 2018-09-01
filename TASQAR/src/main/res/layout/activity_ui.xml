@@ -498,15 +498,15 @@
 
     <ImageButton
         android:id="@+id/SettingButton"
-        android:layout_width="25dp"
-        android:layout_height="25dp"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:layout_marginStart="15dp"
-        android:layout_marginTop="13dp"
+        android:layout_marginTop="11dp"
         android:background="@null"
         android:scaleType="fitXY"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/arrow_down" />
+        app:srcCompat="@drawable/three_dot_button" />
 
     <ImageButton
         android:id="@+id/UndoButton"
@@ -518,7 +518,7 @@
         android:scaleType="fitXY"
         app:layout_constraintStart_toEndOf="@+id/SettingButton"
         app:layout_constraintTop_toTopOf="@+id/ProfileName"
-        app:srcCompat="@drawable/undo" />
+        app:srcCompat="@drawable/undo_button" />
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/SettingLayout"

@@ -1,9 +1,11 @@
 package com.flashphoner.wcsexample.video_chat;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.content.res.TypedArray;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -16,6 +18,9 @@ import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.NinePatchDrawable;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
@@ -37,6 +42,13 @@ import android.widget.Toast;
 
 import org.webrtc.DataChannel;
 
+import java.io.File;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+import static com.flashphoner.wcsexample.video_chat.LoginUIHandler.filePath;
 import static com.flashphoner.wcsexample.video_chat.VideoChatActivity.TAG;
 
 public class CustomImageButton extends AppCompatImageButton implements View.OnTouchListener
@@ -185,40 +197,152 @@ class HistoryButton extends ConstraintLayout
     private static String TAG = "UI_TEST";
 
     public String userID;
+    public String emailID;
 
+    public CircularImageView profilePic;
     public TextView nameField;
     public TextView dateField;
     public TextView durationField;
     public TextView roleField;
     public FloatingActionButton callButton;
 
+    private Context currentContext;
+    private Handler mHandler = new Handler();
+    private boolean profilePicPresent;
+
     public HistoryButton(Context context, AttributeSet attrs)
     {
         super(context, attrs);
+        currentContext = context;
     }
 
-    public void Initialise (String ID, String name, String date, String duration, String role)
+    public void Initialise (String ID, String name, String date, String duration, String role, String email_ID)
     {
         userID = ID;
+        emailID = email_ID;
 
         nameField = (TextView) this.getChildAt(1);
         dateField = (TextView) this.getChildAt(2);
         durationField = (TextView) this.getChildAt(3);
         roleField = (TextView) this.getChildAt(4);
         callButton = (FloatingActionButton) this.getChildAt(5);
+        profilePic = (CircularImageView) getChildAt(6);
 
         roleField.setText(role);
         nameField.setText(name);
         durationField.setText(duration);
         dateField.setText(date);
 
+        if(!new File(LoginUIHandler.filePath + "/" + userID + "_PIC.jpg").exists())
+            DownloadFile(userID + "_PIC.jpg");
+        else {
+            Log.d(TAG, "PIC There");
+            AssignProfilePIC();
+        }
+
         callButton.setOnClickListener(new OnClickListener()
         {
             @Override
             public void onClick(View view)
             {
-                AppManager.Instance.ChangeActivity(userID);
+//                Log.d(TAG, "Email :" + email_ID);
+                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(currentContext);
+                callHistoryDatabaseHelper.addData(ID, email_ID, name, role, GetDate(), "01:36");
+                AppManager.getInstance().ChangeActivity(email_ID, true);
+
             }
         });
+    }
+
+    public String GetDate()
+    {
+        Calendar calendar = Calendar.getInstance();
+        Date date = calendar.getTime();
+        DateFormat dateFormat = new SimpleDateFormat("dd-MM-YYYY_hh-mm-ss");
+
+        return dateFormat.format(date);
+    }
+    private void DownloadFile (final String fileName)
+    {
+        final FTPManager ftpManager = new FTPManager();
+        ftpManager.uploadORdownload = 0;
+        ftpManager.applicationContext = currentContext.getApplicationContext();
+        ftpManager.filePath = Environment.getExternalStorageDirectory().getPath() + "/TASQAR/ReceivedFiles/UserData/";
+        ftpManager.fileName = fileName;
+
+        new Thread(new Runnable()
+        {
+            @Override
+            public void run() {
+
+                Looper looper = mHandler.getLooper();
+                looper.prepare();
+                mHandler.post(new Runnable()
+                {
+                    @Override
+                    public void run()
+                    {
+                        ftpManager.execute();
+                        while (!ftpManager.transferSuccess && !ftpManager.serverReply.contains("550"))
+                        {
+                            try
+                            {
+                                Thread.sleep(10);
+                            }
+                            catch (InterruptedException e)
+                            {
+                                e.printStackTrace();
+                            }
+                        }
+                        if(ftpManager.serverReply.contains("550"))
+                        {
+                            Log.d(TAG, "No Image");
+                            profilePicPresent = false;
+                            String fileName = userID + "_PIC.jpg";
+                            File profilePic = new File(filePath + "/" + fileName);
+                            if(profilePic.exists())
+                            {
+                                profilePic.delete();
+                            }
+                            return;
+                        }
+                        else
+                        {
+                            profilePicPresent = true;
+                        }
+                        Log.d(TAG, "Calling Assign Profile PIC");
+                        ((Activity)currentContext).runOnUiThread(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                Log.d(TAG, "Calling Assign Profile PIC");
+                                AssignProfilePIC();
+                            }
+                        });
+                    }
+                });
+            }
+        }).start();
+    }
+
+    private void AssignProfilePIC ()
+    {
+        Log.d(TAG, "Assign Profile PIC");
+        if(profilePicPresent)
+        {
+            Log.d(TAG, "Assign Profile PIC 2");
+            profilePic.setImageBitmap(GetUserProfilePhoto(userID));
+        }
+    }
+
+    private Bitmap GetUserProfilePhoto (String userID)
+    {
+        String imageName = userID + "_PIC.jpg";
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        Log.d(TAG, LoginUIHandler.filePath + " : " + imageName);
+        return BitmapFactory.decodeFile(LoginUIHandler.filePath + "/" + imageName, options);
     }
 }

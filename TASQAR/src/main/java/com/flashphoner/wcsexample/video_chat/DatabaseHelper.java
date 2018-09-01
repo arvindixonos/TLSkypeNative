@@ -204,6 +204,7 @@ class CallHistoryDatabaseHelper extends SQLiteOpenHelper
     {
         USER_ID,
         NAME,
+        EMAIL,
         ROLE,
         DATE,
         DURATION
@@ -213,10 +214,11 @@ class CallHistoryDatabaseHelper extends SQLiteOpenHelper
     private static final String TABLE_NAME = "call_history_db";
     private static final String COL1 = "ID";
     private static final String COL2 = "USER_ID";
-    private static final String COL3 = "NAME";
-    private static final String COL4 = "ROLE";
-    private static final String COL5 = "DATE";
-    private static final String COL6 = "DURATION";
+    private static final String COL3 = "EMAIL";
+    private static final String COL4 = "NAME";
+    private static final String COL5 = "ROLE";
+    private static final String COL6 = "DATE";
+    private static final String COL7 = "DURATION";
 
     public CallHistoryDatabaseHelper(Context context)
     {
@@ -227,7 +229,7 @@ class CallHistoryDatabaseHelper extends SQLiteOpenHelper
     public void onCreate(SQLiteDatabase db)
     {
         String createTable = "CREATE TABLE " + TABLE_NAME + " (ID INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                " USER_ID TEXT, NAME TEXT, ROLE TEXT, DATE TEXT, DURATION TEXT)";
+                " USER_ID TEXT, EMAIL TEXT, NAME TEXT, ROLE TEXT, DATE TEXT, DURATION TEXT)";
         db.execSQL(createTable);
     }
 
@@ -238,15 +240,16 @@ class CallHistoryDatabaseHelper extends SQLiteOpenHelper
         onCreate(db);
     }
 
-    public boolean addData(String userID, String name, String role, String date, String duration)
+    public boolean addData(String userID, String email,  String name, String role, String date, String duration)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL2, userID);
-        contentValues.put(COL3, name);
-        contentValues.put(COL4, role);
-        contentValues.put(COL5, date);
-        contentValues.put(COL6, duration);
+        contentValues.put(COL3, email);
+        contentValues.put(COL4, name);
+        contentValues.put(COL5, role);
+        contentValues.put(COL6, date);
+        contentValues.put(COL7, duration);
 
         long result  = db.insert(TABLE_NAME, null, contentValues);
 
@@ -267,16 +270,17 @@ class CallHistoryDatabaseHelper extends SQLiteOpenHelper
         return data;
     }
 
-    public boolean updateData(String id, String userID, String name, String role, String date, String duration)
+    public boolean updateData(String id, String userID, String email, String name, String role, String date, String duration)
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
         contentValues.put(COL1, id);
         contentValues.put(COL2, userID);
-        contentValues.put(COL3, name);
-        contentValues.put(COL4, role);
-        contentValues.put(COL5, date);
-        contentValues.put(COL6, duration);
+        contentValues.put(COL3, email);
+        contentValues.put(COL4, name);
+        contentValues.put(COL5, role);
+        contentValues.put(COL6, date);
+        contentValues.put(COL7, duration);
 
         db.update(TABLE_NAME, contentValues, "ID = ?", new String[] {id});
         return true;
@@ -292,25 +296,27 @@ class CallHistoryDatabaseHelper extends SQLiteOpenHelper
     {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues contentValues = new ContentValues();
-//        contentValues.put(COL9, dataValue);
         switch(dataType)
         {
             case USER_ID:
                 contentValues.put(COL2, dataValue);
                 break;
-            case NAME:
+            case EMAIL:
                 contentValues.put(COL3, dataValue);
                 break;
-            case ROLE:
+            case NAME:
                 contentValues.put(COL4, dataValue);
                 break;
-            case DATE:
+            case ROLE:
                 contentValues.put(COL5, dataValue);
                 break;
-            case DURATION:
+            case DATE:
                 contentValues.put(COL6, dataValue);
                 break;
+            case DURATION:
+                contentValues.put(COL7, dataValue);
+                break;
         }
-        db.update(TABLE_NAME, contentValues, "USER_ID=" + "\'" + userID + "\'", new String[] {});
+        db.update(TABLE_NAME, contentValues, "ID=" + "\'" + userID + "\'", new String[] {});
     }
 }
