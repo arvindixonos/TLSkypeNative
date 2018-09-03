@@ -1,6 +1,7 @@
 package com.flashphoner.wcsexample.video_chat;
 
 import android.opengl.Matrix;
+import android.util.Log;
 
 import com.google.ar.core.Pose;
 
@@ -125,11 +126,18 @@ public class AnchorList
 
     public void CheckDirty()
     {
-        numAnchors = anchors.size();
-        for(int i = 0; i < numAnchors; i++)
+        try
         {
-            TASQAR_Anchor tasqar_anchor = anchors.get(i);
-            tasqar_anchor.CheckDirty();
+            numAnchors = anchors.size();
+            for(int i = 0; i < numAnchors; i++)
+            {
+                TASQAR_Anchor tasqar_anchor = anchors.get(i);
+                tasqar_anchor.CheckDirty();
+            }
+        }
+        catch (Exception ex)
+        {
+
         }
     }
 

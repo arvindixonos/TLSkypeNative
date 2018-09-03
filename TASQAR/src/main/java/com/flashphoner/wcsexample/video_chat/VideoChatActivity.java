@@ -15,6 +15,10 @@ import android.graphics.PixelFormat;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
@@ -60,6 +64,7 @@ import com.flashphoner.fpwcsapi.session.Stream;
 import com.flashphoner.fpwcsapi.webrtc.MediaDevice;
 import com.flashphoner.fpwcsapi.webrtc.WebRTCMediaProvider;
 
+import com.flashphoner.wcsexample.video_chat.MainUIHandler.SelectedElement;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.Camera;
 import com.google.ar.core.Frame;
@@ -98,6 +103,8 @@ import java.util.concurrent.TimeUnit;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
+
+import static com.flashphoner.wcsexample.video_chat.MainUIHandler.SelectedElement.*;
 
 
 /**
@@ -305,6 +312,94 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
+        SensorManager sensorManager = (SensorManager) this.getSystemService(Context.SENSOR_SERVICE);
+        sensorManager.registerListener(new SensorEventListener() {
+            int orientation=-1;;
+
+            @Override
+            public void onSensorChanged(SensorEvent event)
+            {
+                float x = event.values[0];
+                float y = event.values[1];
+                float z = event.values[2];
+
+                if(x < 6.5 && x > -6.5)
+                {
+                    if(orientation != 1)
+                    {
+                        Log.d(TAG, "Portrait");
+                        uiHandler.isLandscape = false;
+                        uiHandler.isReversed = false;
+                        uiHandler.ReOrient();
+                    }
+                    orientation = 1;
+                }
+                else
+                {
+                    if(x > 0)
+                    {
+                        if(orientation != 0)
+                        {
+                            Log.d(TAG, "Landscape");
+                            uiHandler.isLandscape = true;
+                            uiHandler.isReversed = false;
+                            uiHandler.ReOrient();
+                        }
+                        orientation = 0;
+                    }
+                    else
+                    {
+                        if(orientation != 2)
+                        {
+                            Log.d(TAG, "Landscape Reversed");
+                            uiHandler.isLandscape = true;
+                            uiHandler.isReversed = true;
+                            uiHandler.ReOrient();
+                        }
+                        orientation = 2;
+                    }
+                }
+//                if (event.values[0]<6.5 && event.values[0]>-6.5 && event.values[2] < 6.5 && event.values[2] > -6.5)
+//                {
+//                    if(event.values[0] > 0  && orientation!=1)
+//                    {
+//                        Log.d(TAG, "Portrait Reversed");
+//                        uiHandler.isReversed = true;
+//                    }
+//                    else if(event.values[0] <= 0  && orientation!=1)
+//                    {
+//                        Log.d(TAG, "Portrait");
+//                        uiHandler.isReversed = false;
+//                    }
+//                    orientation = 1;
+//                    uiHandler.isLandscape = false;
+//                    uiHandler.ReOrient();
+//                }
+//                else if (event.values[1]<6.5 && event.values[1]>-6.5 && event.values[2] < 6.5 && event.values[2] > -6.5)
+//                {
+//                    if(event.values[1] > 0 && orientation != 0)
+//                    {
+//                        Log.d(TAG, "Landscape");
+//                        uiHandler.isReversed = true;
+//                    }
+//                    else if(event.values[1] <= 0 && orientation != 0)
+//                    {
+//                        Log.d(TAG, "Landscape Reversed");
+//                        uiHandler.isReversed = false;
+//                    }
+//                    orientation = 0;
+//                    uiHandler.isLandscape = true;
+//                    uiHandler.ReOrient();
+//                }
+            }
+
+            @Override
+            public void onAccuracyChanged(Sensor sensor, int accuracy) {
+                // TODO Auto-generated method stub
+
+            }
+        }, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_GAME);
+
         if (ActivityCompat.checkSelfPermission(VideoChatActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED)
         {
@@ -428,7 +523,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         remoteMessageHandler.start();
 
-        SelectedOrange();
     }
 
     private void DecodeUndoMessage(String userName)
@@ -507,6 +601,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         currentActivityIntent = getIntent();
         String Message = currentActivityIntent.getStringExtra("PIC");
         roomName = currentActivityIntent.getStringExtra("ROOMNAME");
+        String arCore = currentActivityIntent.getStringExtra("ARCORE");
+        VideoCapturerAndroid.arCorePresent = arCore.equals("PRESENT");
         Log.d(TAG, "RoomName" + roomName);
         if(Message.equals("PRESENT"))
         {
@@ -984,19 +1080,24 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void TapSend(int x, int y, int width, int height)
     {
-        if(arrowMode) {
-            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
-
-
-            synchronized (localSyncObject) {
-                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "AR" + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
-            }
+        String drawType = "";
+        switch (uiHandler.selectedElement)
+        {
+            case ARROW:
+                drawType = "AR";
+                break;
+            case BLINKER:
+                drawType = "BL";
+                break;
+            case LINE:
+                drawType = "DR";
+                break;
         }
-        else {
-            SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
-            synchronized (localSyncObject) {
-                localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + "DR" + " " + roomManager.getUsername() + " " + currentColor.toString() + " " + Arrays.toString(currentColor));
-            }
+
+        SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + drawType + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
+        synchronized (localSyncObject)
+        {
+            localMessages.add("TAP: " + x + " " + y + " " + width + " " + height + " " + drawType + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
         }
     }
 
@@ -1049,9 +1150,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         }
                         else if(mode.equals("AR"))
                         {
-                            //SpawnArrow(hit, tasqar_motionEvent.userName);
-
-                            SpawnBlinkingLight(hit, tasqar_motionEvent);
+                            Log.d(TAG, "ACTION " + tap.getAction());
+//                            if(tap.getAction() == MotionEvent.ACTION_UP)
+                                SpawnArrow(hit, tasqar_motionEvent);
+                        }
+                        else if(mode.equals("BL"))
+                        {
+//                            if(tap.getAction() == MotionEvent.ACTION_UP)
+                                SpawnBlinkingLight(hit, tasqar_motionEvent);
                         }
 
                         break;
@@ -1084,12 +1190,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         }
                         else if(mode.equals("AR"))
                         {
-                            SpawnBlinkingLight(hit, tasqar_motionEvent);
-                            //SpawnArrow(hit, tasqar_motionEvent.userName);
+                            SpawnArrow(hit, tasqar_motionEvent);
                         }
-
+                        else if(mode.equals("BL"))
+                        {
+                            SpawnBlinkingLight(hit, tasqar_motionEvent);
+                        }
                         break;
-
                     }
                 }
             }
@@ -1145,10 +1252,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         {
             if(VideoCapturerAndroid.arCorePresent)
                 StopARCORE();
-
             WebRTCMediaProvider.cameraID = 1;
         }
 
+        Log.d(TAG, VideoCapturerAndroid.arCorePresent ? "Present" : "Absent");
         SetLocalRendererMirror();
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
@@ -1210,6 +1317,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                     if (session == null) {
                                         Exception exception = null;
                                         String message = null;
+
                                         try {
                                             session = new Session(/* context= */ getApplicationContext());
                                         } catch (UnavailableApkTooOldException e) {
@@ -1384,7 +1492,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                             if(participantPublishing)
                             {
+                                SelectedOrange();
                                 uiHandler.StartTimer();
+                            }
+                            else
+                            {
+
                             }
                         }
 
@@ -1396,6 +1509,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         Log.d(TAG, "ON JOINED " + participant.getName());
                         uiHandler.StartTimer();
+                        SelectedBlue();
                         /**
                          * When a new participant joins the room, a player view is assigned to that participant.
                          */
@@ -1540,9 +1654,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             {
                                 FloatingActionButton mEndButton = findViewById(R.id.EndCallButton);
                                 mEndButton.callOnClick();
-//                                Log.d(TAG, "TIMER TEXT" + uiHandler.timerText.getText().toString());
-//                                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
-//                                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), Integer.toString(callHistoryDatabaseHelper.showData().getCount()));
                             }
                         }
                         else
@@ -1561,11 +1672,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             {
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
+
                 CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
                 Cursor data = callHistoryDatabaseHelper.showData();
                 data.moveToLast();
-                String ID = data.getString(0);
-                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), ID);
+
+                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), data.getString(0));
                 uiHandler.StopTimer();
                 stream = null;
             }
@@ -1577,7 +1689,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         if (room == null)
             return;
 
-        for (Participant participant : room.getParticipants()) {
+        for (Participant participant : room.getParticipants())
+        {
             participant.sendMessage(message);
         }
     }
@@ -2072,6 +2185,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
         super.onConfigurationChanged(newConfig);
         adjustFullScreen(newConfig);
+
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
+        } else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT){
+            Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override

@@ -441,10 +441,10 @@
         android:scaleX="1.2"
         android:scaleY="1.2"
         app:backgroundTint="@android:color/holo_red_dark"
-        app:srcCompat="@drawable/call_end"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent" />
+        app:layout_constraintRight_toRightOf="parent"
+        app:srcCompat="@drawable/call_end" />
 
     <include
         android:id="@+id/FileHistory"
@@ -496,140 +496,198 @@
         app:rippleColor="@android:color/holo_purple"
         app:srcCompat="@drawable/button_record" />
 
-    <ImageButton
+    <android.support.design.widget.FloatingActionButton
         android:id="@+id/SettingButton"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="11dp"
-        android:background="@null"
-        android:scaleType="fitXY"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/three_dot_button" />
-
-    <ImageButton
-        android:id="@+id/UndoButton"
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_marginStart="15dp"
         android:layout_marginTop="8dp"
-        android:background="@null"
-        android:scaleType="fitXY"
-        app:layout_constraintStart_toEndOf="@+id/SettingButton"
-        app:layout_constraintTop_toTopOf="@+id/ProfileName"
-        app:srcCompat="@drawable/undo_button" />
+        android:clickable="true"
+        app:backgroundTint="@android:color/transparent"
+        app:elevation="0dp"
+        app:fabSize="mini"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:rippleColor="@color/white"
+        app:srcCompat="@drawable/three_dot_buttonnew" />
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/ColorPickerLayout"
+        android:layout_width="36dp"
+        android:layout_height="162dp"
+        android:layout_marginStart="8dp"
+        android:visibility="gone"
+        app:layout_constraintStart_toEndOf="@+id/SettingLayout"
+        app:layout_constraintTop_toBottomOf="@+id/SettingButton">
+
+        <ImageButton
+            android:id="@+id/ColorRed"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:tint="@color/FullRed"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@drawable/button_record" />
+
+        <ImageButton
+            android:id="@+id/ColorBlue"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:tint="@color/EXCEL"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ColorRed"
+            app:srcCompat="@drawable/button_record" />
+
+        <ImageButton
+            android:id="@+id/ColorGreen"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:tint="@color/green"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ColorBlue"
+            app:srcCompat="@drawable/button_record" />
+
+        <ImageButton
+            android:id="@+id/ColorYellow"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:tint="@color/YellowBright"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ColorGreen"
+            app:srcCompat="@drawable/button_record" />
+
+        <ImageButton
+            android:id="@+id/ColorViolet"
+            android:layout_width="0dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            android:tint="@color/Violet"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_bias="0.0"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/ColorYellow"
+            app:srcCompat="@drawable/button_record" />
+    </android.support.constraint.ConstraintLayout>
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/SettingLayout"
-        android:layout_width="100dp"
-        android:layout_height="85dp"
-        android:layout_marginTop="8dp"
+        android:layout_width="40dp"
+        android:layout_height="wrap_content"
         android:visibility="gone"
         app:layout_constraintStart_toStartOf="@+id/SettingButton"
         app:layout_constraintTop_toBottomOf="@+id/SettingButton">
 
         <ImageView
-            android:id="@+id/imageView11"
+            android:id="@+id/MenuBG"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:background="@drawable/rounded_rectangle"
             android:backgroundTint="@color/BlackTinted"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/imageView12"
+        <ImageButton
+            android:id="@+id/UndoButton"
             android:layout_width="0dp"
-            android:layout_height="0.5dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="@+id/imageView11"
-            app:layout_constraintStart_toStartOf="@+id/imageView11"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@android:color/background_light" />
+            app:srcCompat="@drawable/undo_button" />
 
-        <RelativeLayout
-            android:id="@+id/Button2"
-            android:layout_width="100dp"
-            android:layout_height="40dp"
-            android:layout_marginTop="5dp"
+        <ImageButton
+            android:id="@+id/ArrowButton"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/Button1">
+            app:layout_constraintTop_toBottomOf="@+id/UndoButton"
+            app:srcCompat="@drawable/arrow_diagonal" />
 
-            <!--<ImageButton-->
-            <!--android:id="@+id/DrawModeButton"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:background="@drawable/rounded_rectangle"-->
-            <!--android:tint="@color/blueDark"-->
-            <!--app:srcCompat="@android:color/darker_gray" />-->
-
-            <Button
-                android:id="@+id/DrawButton"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:visibility="visible" />
-
-            <TextView
-                android:id="@+id/DrawText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:background="@drawable/rounded_rectangle"
-                android:backgroundTint="@color/blueDark"
-                android:paddingBottom="5dp"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:paddingTop="5dp"
-                android:text="Draw Mode"
-                android:textColor="@android:color/black" />
-
-        </RelativeLayout>
-
-        <RelativeLayout
-            android:id="@+id/Button1"
-            android:layout_width="100dp"
-            android:layout_height="40dp"
+        <ImageButton
+            android:id="@+id/DrawButton"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:tint="@color/EXCEL"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@+id/ArrowButton"
+            app:srcCompat="@drawable/baseline_gesture_white_18dp" />
 
-            <!--<ImageButton-->
-            <!--android:id="@+id/ArrowModeButton"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="match_parent"-->
-            <!--android:background="@null"-->
-            <!--android:tint="@color/blueDark"-->
-            <!--app:srcCompat="@android:color/darker_gray" />-->
+        <ImageButton
+            android:id="@+id/BlinkButton"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/DrawButton"
+            app:srcCompat="@drawable/button_record" />
 
-            <Button
-                android:id="@+id/ArrowButton"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:visibility="visible" />
+        <ImageButton
+            android:id="@+id/CameraRenderButton"
+            android:layout_width="0dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="4dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginTop="4dp"
+            android:background="@null"
+            android:scaleType="fitXY"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/BlinkButton"
+            app:srcCompat="@drawable/user" />
 
-            <TextView
-                android:id="@+id/ArrowText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:background="@drawable/rounded_rectangle"
-                android:backgroundTint="@color/disabled_text_light"
-                android:paddingBottom="5dp"
-                android:paddingLeft="5dp"
-                android:paddingRight="5dp"
-                android:paddingTop="5dp"
-                android:text="Arrow Mode"
-                android:textColor="@android:color/black" />
-
-        </RelativeLayout>
     </android.support.constraint.ConstraintLayout>
 
     <RelativeLayout

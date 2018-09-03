@@ -137,10 +137,10 @@ public class PointRenderer{
 
 //        textureBitmap.recycle();
 
-        arrowObject.createOnGlThread(/*context=*/ context, "models/arrow_v2.obj", "models/arrow_tex.png");
+        arrowObject.createOnGlThread(/*context=*/ context, "models/arrow_v3.obj", "models/arrow_tex.png");
         arrowObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
-        blinkingLightObject.createOnGlThread(/*context=*/ context, "models/circle.obj", "models/arrow_tex.png");
+        blinkingLightObject.createOnGlThread(/*context=*/ context, "models/circle_v2.obj", "models/arrow_tex.png");
         blinkingLightObject.setMaterialProperties(0.0f, 2.0f, 0.5f, 6.0f);
 
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
@@ -324,8 +324,8 @@ public class PointRenderer{
     {
         float[] objColor = new float[4];
 
-        float[] redColor = new float[]{1.0f, 0.0f, 0.0f, 1.0f};
-        float[] orangeColor = new float[]{1.0f, 0.647f, 0.0f, 0.0f};
+        float[] redColor = new float[]{0.0f, 0.0f, 1.0f, 1.0f};
+        float[] orangeColor = new float[]{0.0f, 0.647f, 1.0f, 0.0f};
 
         objColor[0] = lerp(redColor[0], orangeColor[0], scaleCounter);
         objColor[1] = lerp(redColor[1], orangeColor[1], scaleCounter);

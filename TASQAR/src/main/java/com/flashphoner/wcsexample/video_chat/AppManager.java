@@ -204,6 +204,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
             CheckArCoreAvailablity();
         });
+        arCoreCheckThread.start();
 
         callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
         loginDB = new LoginDatabaseHelper(getApplicationContext());
@@ -446,6 +447,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             }
         });
 
+//        ChangeActivity("part", false);
         SetupLobby();
     }
 
@@ -585,6 +587,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             intent.putExtra("PIC", "ABSENT");
         }
         intent.putExtra("ROOMNAME", roomName);
+        intent.putExtra("ARCORE", VideoCapturerAndroid.arCorePresent ? "PRESENT" : "ABSENT");
         this.finish();
         startActivity(intent);
     }
@@ -702,8 +705,11 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     public void onDestroy()
     {
         super.onDestroy();
-        room.leave(null);
-        roomManager.disconnect();
+        if(room != null)
+            room.leave(null);
+
+        if(roomManager != null)
+            roomManager.disconnect();
     }
 
     private void ListOnlineUsers ()

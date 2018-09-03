@@ -83,61 +83,72 @@ import static android.view.View.VISIBLE;
 
 public class MainUIHandler implements NavigationView.OnNavigationItemSelectedListener, NavigationMenuItemView.OnClickListener
 {
-    private boolean     drawMode;
-    private boolean     switched;
-    private boolean     minimisedSwitched;
-    private boolean     videoView = false;
-    private boolean     backCam = false;
-    private boolean     recording;
-    private boolean     pointMode = false;
-    private boolean     isAboveEight;
-    private boolean     timerRunning = false;
-    private boolean     flashOn;
-    private boolean     drawerOpen = false;
-    private Activity    currentActivity;
-    private static  String TAG = "UI_TEST";
-    private VideoChatActivity chatActivity;
-    private Handler     timerHandler;
-    private Handler     buttonActivateHandler;
-    private Runnable    timerRunnable;
-    private long        startTime;
-    public CameraTorchMode cameraTorchMode;
-    public  boolean      startTransfer = false;
-    private ActionBarDrawerToggle mDrawerToggle;
-    public boolean      profilePicPresent = false;
-
-    public Camera      camera;
-    public FileButtonHelper    fileButtonHelper;
+    private     boolean                 drawMode;
+    private     boolean                 switched;
+    private     boolean                 minimisedSwitched;
+    private     boolean                 videoView = false;
+    private     boolean                 backCam = false;
+    private     boolean                 recording;
+    private     boolean                 pointMode = false;
+    private     boolean                 isAboveEight;
+    private     boolean                 timerRunning = false;
+    private     boolean                 flashOn;
+    private     boolean                 drawerOpen = false;
+    public      boolean                 isLandscape;
+    public      boolean                 isReversed;
+    private     Activity                currentActivity;
+    private     static  String          TAG = "UI_TEST";
+    private     VideoChatActivity       chatActivity;
+    private     Handler                 timerHandler;
+    private     Handler                 buttonActivateHandler;
+    private     Runnable                timerRunnable;
+    private     long                    startTime;
+    private     CameraTorchMode         cameraTorchMode;
+    public      SelectedElement         selectedElement = SelectedElement.LINE;
+    private     SelectedColor           selectedColor = SelectedColor.BLUE;
+    public      boolean                 startTransfer = false;
+    private     ActionBarDrawerToggle   mDrawerToggle;
+    private     boolean                 profilePicPresent = false;
+    public      Camera                  camera;
+    public      FileButtonHelper        fileButtonHelper;
 
     //Notification Variables
-    private NotificationManager notificationManager;
-    private NotificationChannel mChannel;
-    private NotificationCompat.Builder mBuilder;
-    private TaskStackBuilder stackBuilder;
-    private PendingIntent resultPendingIntent;
-    private int notificationId = 1;
-    private int width;
-    private String channelId = "channel-01";
-    private String channelName = "Channel Name";
-    private int importance = NotificationManager.IMPORTANCE_HIGH;
-    private String userName = "";
+    private     NotificationManager         notificationManager;
+    private     NotificationChannel         mChannel;
+    private     NotificationCompat.Builder  mBuilder;
+    private     TaskStackBuilder            stackBuilder;
+    private     PendingIntent               resultPendingIntent;
+    private     int                         notificationId = 1;
+    private     int                         width;
+    private     String                      channelId = "channel-01";
+    private     String                      channelName = "Channel Name";
+    private     int                         importance = NotificationManager.IMPORTANCE_HIGH;
+    private     String                      userName = "";
     //Notification Variables
 
-    DrawerLayout    drawerLayout;
-
-    ImageView progessBar;
+    ImageView progressBar;
 
     ImageButton mSettingsButton;
     ImageButton mUndoButton;
+    ImageButton mArrowButton;
+    ImageButton mDrawButton;
+    ImageButton mBlinkButton;
+    ImageButton mCameraRenderButton;
+
+    ImageButton mRedColorButton;
+    ImageButton mBlueButton;
+    ImageButton mGreenButton;
+    ImageButton mYellowButton;
+    ImageButton mVioletButton;
 
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
 
     CircularImageView   profilePhoto;
 
-    ConstraintLayout mFloatingButtonsLayout;
     ConstraintLayout mHistoryScreen;
     ConstraintLayout mSettingLayout;
+    ConstraintLayout mColorPickerLayout;
 
     FloatingActionButton mEndCallButton;
     FloatingActionButton mPlusButton;
@@ -148,16 +159,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     FloatingActionButton mPointToPlaneButton;
     FloatingActionButton mHistoryButton;
     FloatingActionButton mFlashButton;
-
-    RelativeLayout switchLayoutItem;
-    RelativeLayout togglePointItem;
-    RelativeLayout toggleBackcamItem;
-    RelativeLayout toggleArrowMode;
-
-    Switch  switchLayoutButton;
-    Switch  togglePointButton;
-    Switch  toggleBackcamButton;
-    Switch  toggleArrowButton;
 
     DrawerLayout drawer;
 
@@ -171,8 +172,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     LinearLayout historyScreen;
 
     Button mButton;
-    Button mArrowButton;
-    Button mDrawButton;
     Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
@@ -190,6 +189,22 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         TO_TURN_ON
     }
 
+    public enum SelectedElement
+    {
+        ARROW,
+        LINE,
+        BLINKER
+    }
+
+    public enum SelectedColor
+    {
+        RED,
+        BLUE,
+        GREEN,
+        YELLOW,
+        VIOLET
+    }
+
     @Override
     public void onClick(View v)
     {
@@ -199,44 +214,33 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     public MainUIHandler (Activity activity, boolean picPresent)
     {
         profilePicPresent = picPresent;
-//        WCSAudioManager wcsAudioManager = WCSAudioManager.create(getApplicationContext(), deviceStateChangedListener);
-//        deviceStateChangedListener = new Runnable() {
-//            @Override
-//            public void run()
-//            {
-//                Log.d(TAG, "device state changed");
-//            }
-//        };
-//        boolean earPiece = false;
-//        wcsAudioManager.init();
-//        Log.d(TAG, "onCreate");
-//        Set<WCSAudioManager.AudioDevice> devices = wcsAudioManager.getAudioDevices();
-//        for (WCSAudioManager.AudioDevice aud: devices)
-//        {
-//            if(aud.name().contains("EARPIECE"))
-//            {
-//                earPiece = true;
-//                Log.d(TAG, "EARpiece detected");
-//                wcsAudioManager.setAudioDevice(aud);
-//            }
-//            Log.d(TAG, aud.name());
-//        }
         currentActivity = activity;
 
         width = GetScreenWidth();
 
         chatActivity = VideoChatActivity.getInstance();
 
-        progessBar = currentActivity.findViewById(R.id.ProgressBar);
+        progressBar = currentActivity.findViewById(R.id.ProgressBar);
 
         mSettingsButton = currentActivity.findViewById(R.id.SettingButton);
+        mUndoButton = currentActivity.findViewById(R.id.UndoButton);
+        mArrowButton = currentActivity.findViewById(R.id.ArrowButton);
+        mDrawButton = currentActivity.findViewById(R.id.DrawButton);
+        mBlinkButton = currentActivity.findViewById(R.id.BlinkButton);
+        mCameraRenderButton = currentActivity.findViewById(R.id.CameraRenderButton);
+
+        mRedColorButton = currentActivity.findViewById(R.id.ColorRed);
+        mBlueButton = currentActivity.findViewById(R.id.ColorBlue);
+        mGreenButton = currentActivity.findViewById(R.id.ColorGreen);
+        mYellowButton = currentActivity.findViewById(R.id.ColorYellow);
+        mVioletButton = currentActivity.findViewById(R.id.ColorViolet);
 
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
         localRender = currentActivity.findViewById(R.id.CurrentRender);
 
-        mFloatingButtonsLayout = currentActivity.findViewById(R.id.FloatingButtonsLayout);
         mHistoryScreen = currentActivity.findViewById(R.id.FileHistory);
         mSettingLayout = currentActivity.findViewById(R.id.SettingLayout);
+        mColorPickerLayout = currentActivity.findViewById(R.id.ColorPickerLayout);
 
         mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
         mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
@@ -247,7 +251,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
         mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
         mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
-//        mFlashButton = currentActivity.findViewById(R.id.FlashButton);
 
         drawer = currentActivity.findViewById(R.id.drawer_layout);
 
@@ -256,11 +259,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         timerText = currentActivity.findViewById(R.id.timerText);
 
         mButton = currentActivity.findViewById(R.id.button);
-        mArrowButton = currentActivity.findViewById(R.id.ArrowButton);
-        mDrawButton = currentActivity.findViewById(R.id.DrawButton);
-        mUndoButton = currentActivity.findViewById(R.id.UndoButton);
-        arrowText = currentActivity.findViewById(R.id.ArrowText);
-        drawText = currentActivity.findViewById(R.id.DrawText);
 
         historyScreen = currentActivity.findViewById(R.id.FileHistoryLayout);
 
@@ -275,53 +273,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
 
         currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
-        mUndoButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                chatActivity.UndoClicked();
-            }
-        });
-
-        mSettingsButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                if(mSettingLayout.getVisibility() == View.VISIBLE)
-                {
-                    mSettingLayout.setVisibility(GONE);
-                    mSettingsButton.setImageTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.white)));
-                }
-                else
-                {
-                    mSettingLayout.setVisibility(VISIBLE);
-                    mSettingsButton.setImageTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.black)));
-                }
-            }
-        });
-
-        mDrawButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                chatActivity.arrowMode = !chatActivity.arrowMode;
-                AdaptToggleButtons(chatActivity.arrowMode);
-            }
-        });
-
-        mArrowButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                chatActivity.arrowMode = !chatActivity.arrowMode;
-                AdaptToggleButtons(chatActivity.arrowMode);
-            }
-        });
 
         //Set Photo and Name
 
@@ -350,36 +301,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             {
                 super.onDrawerOpened(drawerView);
                 drawerOpen = true;
-//                switchLayoutItem = currentActivity.findViewById(R.id.app_bar_switch);
-//                switchLayoutButton = (Switch) switchLayoutItem.getChildAt(0);
-//                switchLayoutButton.setOnClickListener(v ->
-//                {
-//                    TurnOffOnDelay(switchLayoutItem, switchLayoutButton);
-//                    mSwitchLayoutButton.callOnClick();
-//                });
-//                togglePointItem = currentActivity.findViewById(R.id.point2plane);
-//                togglePointButton = (Switch) togglePointItem.getChildAt(0);
-//                togglePointButton.setOnClickListener(v ->
-//                {
-//                    TurnOffOnDelay(togglePointItem, togglePointButton, 2000);
-//                    mPointToPlaneButton.callOnClick();
-//                });
-//                toggleArrowMode = currentActivity.findViewById(R.id.arrow_mode);
-//                toggleArrowButton = (Switch) toggleArrowMode.getChildAt(0);
-//                toggleArrowButton.setOnClickListener(v ->
-//                {
-//                    TurnOffOnDelay(toggleArrowMode, toggleArrowButton, 2000);
-//                    chatActivity.arrowMode = !chatActivity.arrowMode;
-//                });
-//                toggleBackcamItem = currentActivity.findViewById(R.id.back_cam_switch);
-//                toggleBackcamButton = (Switch) toggleBackcamItem.getChildAt(0);
-//                toggleBackcamButton.setOnClickListener(v ->
-//                {
-//                    TurnOffOnDelay(toggleBackcamItem, toggleBackcamButton, 3000);
-//                    mSwitchLayoutButton.callOnClick();
-//                    mSwitchCamera.callOnClick();
-//                });
-
             }
         };
 
@@ -399,83 +320,101 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
             isAboveEight = true;
         }
-//        mFlashButton.setOnClickListener(new View.OnClickListener()
-//        {
-//            CameraManager cameraManager = (CameraManager) currentActivity.getSystemService(Context.CAMERA_SERVICE);
-//
-//            @Override
-//            public void onClick(View v)
-//            {
-//                if(!flashOn)
-//                {
-//                    try
-//                    {
-//                        if(backCam)
-//                        {
-//                            Camera.Parameters parameters = camera.getParameters();
-//                            List<String> strs = parameters.getSupportedFlashModes();
-//                            for (String str:strs)
-//                            {
-//                                Log.d(TAG, "Message string is " + str);
-//                            }
-//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
-//                            camera.setParameters(parameters);
-//                            camera.startPreview();
-//
-//                        }
-//                        else
-//                        {
-//                            try
-//                            {
-//                                String cameraId = cameraManager.getCameraIdList()[0];
-//                                cameraManager.setTorchMode(cameraId, true);
-//                            }
-//                            catch(CameraAccessException e)
-//                            {
-//                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-//                            }
-//                        }
-//                        mFlashButton.setImageResource(R.drawable.flash_off);
-//                        flashOn = true;
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-//                    }
-//                }
-//                else
-//                {
-//                    try
-//                    {
-//                        if(backCam)
-//                        {
-//                            Camera.Parameters parameters = camera.getParameters();
-//                            parameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
-//                            camera.setParameters(parameters);
-//                            camera.startPreview();
-//                        }
-//                        else
-//                        {
-//                            try
-//                            {
-//                                String cameraId = cameraManager.getCameraIdList()[0];
-//                                cameraManager.setTorchMode(cameraId, false);
-//                            }
-//                            catch(CameraAccessException e)
-//                            {
-//                                VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-//                            }
-//                        }
-//                        mFlashButton.setImageResource(R.drawable.flash_on);
-//                        flashOn = false;
-//                    }
-//                    catch (Exception e)
-//                    {
-//                        VideoChatActivity.ShowToast(e.getMessage(), currentActivity);
-//                    }
-//                }
-//            }
-//        });
+
+        mSettingsButton.setOnClickListener(v ->
+        {
+            if(mSettingLayout.getVisibility() == GONE)
+            {
+                mSettingLayout.setVisibility(VISIBLE);
+            }
+            else
+            {
+                mSettingLayout.setVisibility(GONE);
+                mColorPickerLayout.setVisibility(GONE);
+                ChangeSettingButtonSelectedColor();
+            }
+        });
+
+        mUndoButton.setOnClickListener(v -> chatActivity.UndoClicked());
+
+        mArrowButton.setOnClickListener(v ->
+        {
+            chatActivity.arrowMode = true;
+            selectedElement = SelectedElement.ARROW;
+            mColorPickerLayout.setVisibility(VISIBLE);
+            mArrowButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
+        });
+
+        mDrawButton.setOnClickListener(v ->
+        {
+            chatActivity.arrowMode = false;
+            selectedElement = SelectedElement.LINE;
+            mColorPickerLayout.setVisibility(VISIBLE);
+            mDrawButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
+        });
+
+        mBlinkButton.setOnClickListener(v ->
+        {
+            chatActivity.arrowMode = true;
+            selectedElement = SelectedElement.BLINKER;
+            mSettingLayout.setVisibility(GONE);
+            mColorPickerLayout.setVisibility(GONE);
+        });
+
+        mCameraRenderButton.setOnClickListener(v ->
+        {
+            AdjustSwitchCam();
+        });
+
+        mRedColorButton.setOnClickListener(v ->
+        {
+            selectedColor = SelectedColor.RED;
+            chatActivity.SetCurrentColor(new float[] {1.0f, 0.0f, 0.0f, 1.0f});
+            mColorPickerLayout.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+
+            ChangeSettingButtonSelectedColor();
+        });
+
+        mBlueButton.setOnClickListener(v ->
+        {
+            selectedColor = SelectedColor.BLUE;
+            chatActivity.SetCurrentColor(new float[] {0.0f, 0.0f, 1.0f, 1.0f});
+            mColorPickerLayout.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+
+            ChangeSettingButtonSelectedColor();
+        });
+
+        mGreenButton.setOnClickListener(v ->
+        {
+            selectedColor = SelectedColor.GREEN;
+            chatActivity.SetCurrentColor(new float[] {0.0f, 1.0f, 0.0f, 1.0f});
+            mColorPickerLayout.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+
+            ChangeSettingButtonSelectedColor();
+        });
+
+        mYellowButton.setOnClickListener(v ->
+        {
+            selectedColor = SelectedColor.YELLOW;
+            chatActivity.SetCurrentColor(new float[] {1.0f, 1.0f, 0.0f, 1.0f});
+            mColorPickerLayout.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+
+            ChangeSettingButtonSelectedColor();
+        });
+
+        mVioletButton.setOnClickListener(v ->
+        {
+            selectedColor = SelectedColor.VIOLET;
+            chatActivity.SetCurrentColor(new float[] {0.325f, 0.278f, 0.639f, 1.0f});
+            mColorPickerLayout.setVisibility(GONE);
+            mSettingLayout.setVisibility(GONE);
+
+            ChangeSettingButtonSelectedColor();
+        });
 
         mSwitchCamera.setOnClickListener(v ->
         {
@@ -488,11 +427,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                 backCam = false;
                 mSwitchLayoutButton.callOnClick();
                 TurnOffOnDelay(mSwitchCamera, 3000);
-//                if(flashOn)
-//                {
-//                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
-//                    flashOn = false;
-//                }
+                AdjustSwitchCam();
             }
             else
             {
@@ -501,11 +436,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                 backCam = true;
                 mSwitchLayoutButton.callOnClick();
                 TurnOffOnDelay(mSwitchCamera, 3000);
-//                if(flashOn)
-//                {
-//                    cameraTorchMode = CameraTorchMode.TO_TURN_ON;
-//                    flashOn = false;
-//                }
+                AdjustSwitchCam();
             }
         });
 
@@ -517,11 +448,9 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mHistoryScreen.setVisibility(VISIBLE);
             mSwitchCamera.setVisibility(GONE);
             mStartRecordingButton.setVisibility(GONE);
-            mFloatingButtonsLayout.setVisibility(GONE);
             mEndCallButton.setVisibility(GONE);
             mRenderHolder.setVisibility(GONE);
             mSettingLayout.setVisibility(GONE);
-            mSettingsButton.setVisibility(GONE);
 
             fileButtonHelper.GetData();
         });
@@ -576,17 +505,13 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             }
         });
 
-        mEndCallButton.setOnClickListener(new View.OnClickListener()
+        mEndCallButton.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
-            {
-                ToggleVideoView();
-                chatActivity.CleanUp();
-                chatActivity.SendMessage("CTRL:-DC");
-                chatActivity.Disconnect();
-                ChangeActivity();
-            }
+            ToggleVideoView();
+            chatActivity.CleanUp();
+            chatActivity.SendMessage("CTRL:-DC");
+            chatActivity.Disconnect();
+            ChangeActivity();
         });
 
         mButton.setOnClickListener(v ->
@@ -692,6 +617,120 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         };
     }
 
+    public void ReOrient ()
+    {
+        if(isLandscape)
+        {
+            if(!isReversed)
+            {
+                mEndCallButton.setRotation(90);
+                mSwitchCamera.setRotation(90);
+                mStartRecordingButton.setRotation(90);
+                mSettingsButton.setRotation(90);
+                mUndoButton.setRotation(90);
+                mArrowButton.setRotation(90);
+                mDrawButton.setRotation(90);
+                mBlinkButton.setRotation(90);
+                mCameraRenderButton.setRotation(90);
+            }
+            else
+            {
+                mEndCallButton.setRotation(-90);
+                mSwitchCamera.setRotation(-90);
+                mStartRecordingButton.setRotation(-90);
+                mSettingsButton.setRotation(-90);
+                mUndoButton.setRotation(-90);
+                mArrowButton.setRotation(-90);
+                mDrawButton.setRotation(-90);
+                mBlinkButton.setRotation(-90);
+                mCameraRenderButton.setRotation(-90);
+            }
+        }
+        else
+        {
+            if(!isReversed)
+            {
+                mEndCallButton.setRotation(0);
+                mSwitchCamera.setRotation(0);
+                mStartRecordingButton.setRotation(0);
+                mSettingsButton.setRotation(0);
+                mUndoButton.setRotation(0);
+                mArrowButton.setRotation(0);
+                mDrawButton.setRotation(0);
+                mBlinkButton.setRotation(0);
+                mCameraRenderButton.setRotation(0);
+            }
+            else
+            {
+                mEndCallButton.setRotation(180);
+                mSwitchCamera.setRotation(180);
+                mStartRecordingButton.setRotation(180);
+                mSettingsButton.setRotation(180);
+                mUndoButton.setRotation(180);
+                mArrowButton.setRotation(180);
+                mDrawButton.setRotation(180);
+                mBlinkButton.setRotation(180);
+                mCameraRenderButton.setRotation(180);
+            }
+        }
+    }
+
+    private void AdjustSwitchCam ()
+    {
+        if(!backCam)
+        {
+            if (localRender.getVisibility() == GONE)
+            {
+                localRender.setVisibility(VISIBLE);
+            }
+            else
+            {
+                localRender.setVisibility(GONE);
+            }
+        }
+    }
+
+    private void ChangeSettingButtonSelectedColor()
+    {
+        int colorValue = 0;
+        int white = currentActivity.getResources().getColor(R.color.white);
+        switch(selectedColor)
+        {
+            case RED:
+                colorValue = currentActivity.getResources().getColor(R.color.FullRed);
+                break;
+            case GREEN:
+                colorValue = currentActivity.getResources().getColor(R.color.green);
+                break;
+            case BLUE:
+                colorValue = currentActivity.getResources().getColor(R.color.EXCEL);
+                break;
+            case YELLOW:
+                colorValue = currentActivity.getResources().getColor(R.color.YellowBright);
+                break;
+            case VIOLET:
+                colorValue = currentActivity.getResources().getColor(R.color.Violet);
+                break;
+        }
+
+        mArrowButton.setColorFilter(white);
+        mDrawButton.setColorFilter(white);
+        mBlinkButton.setColorFilter(white);
+
+        switch (selectedElement)
+        {
+            case ARROW:
+                mArrowButton.setColorFilter(colorValue);
+                break;
+            case LINE:
+                mDrawButton.setColorFilter(colorValue);
+                break;
+            case BLINKER:
+
+                break;
+        }
+    }
+
     private void AdaptToggleButtons (boolean arrowMode)
     {
         if(arrowMode)
@@ -792,12 +831,12 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             @Override
             public void run()
             {
-                ViewGroup.LayoutParams layoutParams = progessBar.getLayoutParams();
+                ViewGroup.LayoutParams layoutParams = progressBar.getLayoutParams();
 
                 layoutParams.width = (int) ((scale * width));
 
-                progessBar.setLayoutParams(layoutParams);
-                progessBar.invalidate();
+                progressBar.setLayoutParams(layoutParams);
+                progressBar.invalidate();
             }
         });
     }
@@ -837,13 +876,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         if(mHistoryScreen.getVisibility() == VISIBLE)
         {
             mHistoryScreen.setVisibility(GONE);
-            mFloatingButtonsLayout.setVisibility(VISIBLE);
             mSwitchCamera.setVisibility(VISIBLE);
             mStartRecordingButton.setVisibility(VISIBLE);
             mEndCallButton.setVisibility(VISIBLE);
             mRenderHolder.setVisibility(VISIBLE);
             mSettingLayout.setVisibility(VISIBLE);
-            mSettingsButton.setVisibility(VISIBLE);
         }
     }
 
@@ -2072,7 +2109,16 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
                         }
                     });
                 else
-                    Toast.makeText(currentActivity, "Incorrect Credentials", Toast.LENGTH_LONG).show();
+                {
+                    currentActivity.runOnUiThread(new Runnable()
+                    {
+                        @Override
+                        public void run()
+                        {
+                            Toast.makeText(currentActivity, "Incorrect Credentials", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                }
 
 
             } catch (IOException | ParserConfigurationException | SAXException e) {
