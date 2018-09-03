@@ -198,6 +198,8 @@ class HistoryButton extends ConstraintLayout
 
     public String userID;
     public String emailID;
+    public String participantName;
+    public String userRole;
 
     public CircularImageView profilePic;
     public TextView nameField;
@@ -220,6 +222,8 @@ class HistoryButton extends ConstraintLayout
     {
         userID = ID;
         emailID = email_ID;
+        participantName = name;
+        userRole = role;
 
         nameField = (TextView) this.getChildAt(1);
         dateField = (TextView) this.getChildAt(2);
@@ -245,13 +249,16 @@ class HistoryButton extends ConstraintLayout
             @Override
             public void onClick(View view)
             {
-//                Log.d(TAG, "Email :" + email_ID);
-                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(currentContext);
-                callHistoryDatabaseHelper.addData(ID, email_ID, name, role, GetDate(), "01:36");
                 AppManager.getInstance().ChangeActivity(email_ID, true);
-
+                SetData();
             }
         });
+    }
+
+    public void SetData ()
+    {
+        CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(currentContext);
+        callHistoryDatabaseHelper.addData(userID, emailID, participantName, userRole, GetDate(), "01:36");
     }
 
     public String GetDate()

@@ -14,15 +14,15 @@
             android:icon="@drawable/history_icon"
             android:title="View History" />
 
-        <!--<item android:title="Toggles">-->
-            <!--<menu>-->
-                <!--<item-->
-                    <!--android:id="@+id/back_cam_switch"-->
-                    <!--android:icon="@drawable/flip_cam_rear"-->
-                    <!--android:title="Switch Camera"-->
-                    <!--app:actionLayout="@layout/switch_item"-->
-                    <!--app:showAsAction="always" />-->
-            <!--</menu>-->
-        <!--</item>-->
+        <item android:title="Toggles">
+            <menu>
+                <item
+                    android:id="@+id/mute_audio"
+                    android:icon="@drawable/mic_off"
+                    android:title="Mute Audio"
+                    app:actionLayout="@layout/switch_item"
+                    app:showAsAction="always" />
+            </menu>
+        </item>
     </group>
 </menu>

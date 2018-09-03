@@ -47,16 +47,24 @@
         android:adjustViewBounds="false"
         android:contentDescription="TODO"
         android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@color/blueBG" />
+        app:srcCompat="@drawable/bg" />
 
     <RelativeLayout
         android:id="@+id/RenderHolder"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <RelativeLayout
             android:id="@+id/currentLayout"
@@ -436,7 +444,7 @@
         android:id="@+id/EndCallButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="10dp"
+        android:layout_marginBottom="18dp"
         android:clickable="true"
         android:scaleX="1.2"
         android:scaleY="1.2"
@@ -444,7 +452,8 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:srcCompat="@drawable/call_end" />
+        app:srcCompat="@drawable/call_end"
+        android:focusable="true" />
 
     <include
         android:id="@+id/FileHistory"
@@ -501,9 +510,9 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_marginStart="15dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="20dp"
         android:clickable="true"
-        app:backgroundTint="@android:color/transparent"
+        app:backgroundTint="@color/FlashColor"
         app:elevation="0dp"
         app:fabSize="mini"
         app:layout_constraintStart_toStartOf="parent"
@@ -609,9 +618,44 @@
         app:layout_constraintTop_toBottomOf="@+id/SettingButton">
 
         <ImageView
+            android:id="@+id/div"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintBottom_toTopOf="@+id/ArrowButton"
+            app:layout_constraintTop_toBottomOf="@+id/UndoButton"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/div2"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:layout_constraintBottom_toTopOf="@+id/DrawButton"
+            app:layout_constraintTop_toBottomOf="@+id/ArrowButton"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/div3"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:layout_constraintBottom_toTopOf="@+id/BlinkButton"
+            app:layout_constraintTop_toBottomOf="@+id/DrawButton"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/div4"
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            app:layout_constraintBottom_toTopOf="@+id/CameraRenderButton"
+            app:layout_constraintTop_toBottomOf="@+id/BlinkButton"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
             android:id="@+id/MenuBG"
             android:layout_width="0dp"
             android:layout_height="0dp"
+            android:background="@drawable/round_shape"
             android:backgroundTint="@color/BlackTinted"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
@@ -672,7 +716,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/DrawButton"
-            app:srcCompat="@drawable/button_record" />
+            app:srcCompat="@drawable/radio_button" />
 
         <ImageButton
             android:id="@+id/CameraRenderButton"

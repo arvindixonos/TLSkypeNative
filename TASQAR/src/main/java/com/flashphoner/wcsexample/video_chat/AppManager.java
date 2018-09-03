@@ -32,6 +32,7 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.flashphoner.fpwcsapi.Flashphoner;
@@ -372,6 +373,73 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         }
     }
 
+    public void SignOut (View v)
+    {
+        ShowSignOutAlertWindow("You Have been Signed Out", "Sign out");
+    }
+
+    public void ShowSignOutAlertWindow(String contentString, String titleString)
+    {
+        AlertDialog.Builder mBuilder = new AlertDialog.Builder(AppManager.this);
+        View view = getLayoutInflater().inflate(R.layout.alert_window, null);
+
+        TextView title = view.findViewById(R.id.TitleText);
+        TextView content = view.findViewById(R.id.Content);
+
+        Button submitButton = view.findViewById(R.id.okbutton);
+        Button cancelButton = view.findViewById(R.id.cancelbutton);
+
+        title.setText(titleString);
+        content.setText(contentString);
+
+        mBuilder.setView(view);
+        AlertDialog dialog = mBuilder.create();
+        dialog.show();
+
+        cancelButton.setOnClickListener(v ->
+        {
+            dialog.cancel();
+        });
+
+        submitButton.setOnClickListener(v ->
+        {
+            loginDB = new LoginDatabaseHelper(getApplicationContext());
+            loginDB.deleteData("0");
+            dialog.cancel();
+            recreate();
+        });
+    }
+
+    public void ShowAlertWindow( String titleString, String contentString)
+    {
+        AlertDialog.Builder mBuilder = new AlertDialog.Builder(AppManager.this);
+        View view = getLayoutInflater().inflate(R.layout.alert_window, null);
+
+        TextView title = view.findViewById(R.id.TitleText);
+        TextView content = view.findViewById(R.id.Content);
+
+        Button submitButton = view.findViewById(R.id.okbutton);
+        Button cancelButton = view.findViewById(R.id.cancelbutton);
+        cancelButton.setVisibility(View.GONE);
+
+        title.setText(titleString);
+        content.setText(contentString);
+
+        mBuilder.setView(view);
+        AlertDialog dialog = mBuilder.create();
+        dialog.show();
+
+        submitButton.setOnClickListener(v ->
+        {
+            dialog.cancel();
+        });
+    }
+
+    public void RefreshConnections ()
+    {
+        roomManager.disconnect();
+        SetupLobby();
+    }
 
     public void ChangePIN(View v)
     {
@@ -392,6 +460,11 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             public void onClick(View view)
             {
                 password = PINText.getText().toString();
+                if(password.length() > 4 || password.length() < 4)
+                {
+                    Toast.makeText(getApplicationContext(), "Password must be exactly 4 digits", Toast.LENGTH_LONG).show();
+                    return;
+                }
                 loginDB = new LoginDatabaseHelper(getApplicationContext());
                 loginDB.AddPINData(password);
                 dialog.dismiss();
@@ -462,26 +535,18 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         mHistorylayout = findViewById(R.id.HistoryButtonInflater);
         mOnlineLayout = findViewById(R.id.OnlineButtonInflater);
 
-        mHistoryButton.setOnClickListener(new View.OnClickListener()
+        mHistoryButton.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
-            {
-                mHistorylayout.setVisibility(VISIBLE);
-                mOnlineLayout.setVisibility(View.GONE);
-                ListCallHistory();
-            }
+            mHistorylayout.setVisibility(VISIBLE);
+            mOnlineLayout.setVisibility(View.GONE);
+            ListCallHistory();
         });
 
-        mOnlineButton.setOnClickListener(new View.OnClickListener()
+        mOnlineButton.setOnClickListener(v ->
         {
-            @Override
-            public void onClick(View v)
-            {
-                mHistorylayout.setVisibility(View.GONE);
-                mOnlineLayout.setVisibility(VISIBLE);
-                ListOnlineUsers();
-            }
+            mHistorylayout.setVisibility(View.GONE);
+            mOnlineLayout.setVisibility(VISIBLE);
+            RefreshConnections();
         });
     }
 
@@ -549,21 +614,70 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     {
         LinearLayout parent;
 
-        if(isHistory)
+        if(isHistory) {
             parent = findViewById(R.id.HistoryInflater);
-        else
+        }
+        else {
             parent = findViewById(R.id.OnlineInflater);
+        }
 
         ViewGroup view = (ViewGroup) LayoutInflater.from(this).inflate(R.layout.history_element_button, null);
         parent.addView(view);
         HistoryButton historyButton = (HistoryButton) view;
         historyButton.Initialise(userID, name, date, duration, role, email);
+        if(isHistory)
+        {
+            historyButton.callButton.setVisibility(View.GONE);
+        }
     }
 
     void ChangeActivity (String participantID, boolean isSender)
     {
         if(isSender)
             participantID = "User_" + participantID;
+
+        String roomName;
+        if(isSender)
+        {
+            roomName = userID + "_CALL_" + participantID;
+        }
+        else
+        {
+            roomName = participantID + "_CALL_" + userID;
+        }
+
+        if(isSender)
+        {
+            boolean sucess = SendMessageToPerson(participantID, roomName);
+            if(!sucess)
+            {
+                Toast.makeText(getApplicationContext(), "User Not Online", Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        roomName = "Room";
+
+        Intent intent = new Intent(this, VideoChatActivity.class);
+        if(profilePicPresent)
+        {
+            intent.putExtra("PIC", "PRESENT");
+        }
+        else
+        {
+            intent.putExtra("PIC", "ABSENT");
+        }
+        intent.putExtra("ROOMNAME", roomName);
+        intent.putExtra("ARCORE", VideoCapturerAndroid.arCorePresent ? "PRESENT" : "ABSENT");
+        this.finish();
+        startActivity(intent);
+    }
+
+    void ChangeActivity (String participantID, boolean isSender, String[] details)
+    {
+        if(isSender)
+            participantID = "User_" + participantID;
+
         String roomName;
         if(isSender)
         {
@@ -592,17 +706,19 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         startActivity(intent);
     }
 
-    private void SendMessageToPerson (String particpantName, String Message)
+    private boolean SendMessageToPerson (String particpantName, String Message)
     {
         for (Participant participant:room.getParticipants())
         {
-            Log.d(TAG, particpantName);
+            Log.d(TAG, "Searching for " + particpantName);
             if(participant.getName().equals(particpantName))
             {
                 Log.d(TAG, "Found participant");
                 participant.sendMessage("CALL:-" + Message);
+                return true;
             }
         }
+        return false;
     }
 
     public void ShowToast(String message)
@@ -742,7 +858,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         });
 
         listUserThread.start();
-
     }
 
     private void AssembleUser (String[] serverData, String email)

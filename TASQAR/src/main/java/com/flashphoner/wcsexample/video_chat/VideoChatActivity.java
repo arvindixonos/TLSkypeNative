@@ -164,7 +164,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private Room room;
     private SurfaceViewRendererCustom localRenderer;
     private SurfaceViewRendererCustom remoteRenderer;
-    private Stream stream;
+    public Stream stream;
     private EditText loginName;
     private boolean permissionGiven = false;
     public boolean participantPublishing = false;

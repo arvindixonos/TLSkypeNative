@@ -94,7 +94,7 @@
                     android:src="@drawable/pin_num_buttons_outline" />
 
                 <TextView
-                    android:id="@+id/textView2"
+                    android:id="@+id/textView6"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:paddingTop="5dp"
@@ -157,7 +157,7 @@
                     android:src="@drawable/pin_num_buttons_outline" />
 
                 <TextView
-                    android:id="@+id/textView4"
+                    android:id="@+id/textView6"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:paddingTop="5dp"

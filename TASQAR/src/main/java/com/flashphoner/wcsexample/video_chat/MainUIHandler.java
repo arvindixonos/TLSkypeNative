@@ -144,6 +144,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     SurfaceViewRendererCustom remote1Render;
     SurfaceViewRendererCustom localRender;
 
+    Switch toggleMuteButton;
+
     CircularImageView   profilePhoto;
 
     ConstraintLayout mHistoryScreen;
@@ -175,6 +177,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
+    RelativeLayout toggleMuteItem;
     RelativeLayout currentRenderLayout;
     RelativeLayout streamRenderLayout;
     RelativeLayout mRenderHolder;
@@ -301,6 +304,17 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             {
                 super.onDrawerOpened(drawerView);
                 drawerOpen = true;
+
+                toggleMuteItem = currentActivity.findViewById(R.id.mute_audio);
+                toggleMuteButton = (Switch) toggleMuteItem.getChildAt(0);
+                toggleMuteButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
+                {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+                    {
+                        ToggleAudio();
+                    }
+                });
             }
         };
 
@@ -343,6 +357,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             selectedElement = SelectedElement.ARROW;
             mColorPickerLayout.setVisibility(VISIBLE);
             mArrowButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
+
+            ChangeSettingButtonSelectedColor();
         });
 
         mDrawButton.setOnClickListener(v ->
@@ -351,6 +367,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             selectedElement = SelectedElement.LINE;
             mColorPickerLayout.setVisibility(VISIBLE);
             mDrawButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
+
+            ChangeSettingButtonSelectedColor();
         });
 
         mBlinkButton.setOnClickListener(v ->
@@ -434,6 +452,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                 mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
                 Log.d(TAG, "Back");
                 backCam = true;
+                localRender.setVisibility(VISIBLE);
                 mSwitchLayoutButton.callOnClick();
                 TurnOffOnDelay(mSwitchCamera, 3000);
                 AdjustSwitchCam();
@@ -444,13 +463,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         mHistoryButton.setOnClickListener(v ->
         {
-
             mHistoryScreen.setVisibility(VISIBLE);
             mSwitchCamera.setVisibility(GONE);
             mStartRecordingButton.setVisibility(GONE);
             mEndCallButton.setVisibility(GONE);
             mRenderHolder.setVisibility(GONE);
             mSettingLayout.setVisibility(GONE);
+            mSettingsButton.setVisibility(GONE);
+            mColorPickerLayout.setVisibility(GONE);
 
             fileButtonHelper.GetData();
         });
@@ -675,6 +695,20 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }
     }
 
+    private void ToggleAudio ()
+    {
+        if(chatActivity.stream.isAudioMuted())
+        {
+            Log.d(TAG, "Audio Muted Un muting");
+            chatActivity.stream.unmuteAudio();
+        }
+        else
+        {
+            Log.d(TAG, "Audio not Muted muting");
+            chatActivity.stream.muteAudio();
+        }
+    }
+
     private void AdjustSwitchCam ()
     {
         if(!backCam)
@@ -759,6 +793,9 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             case R.id.nav_upload:
                 chatActivity.mFileUploadButton.callOnClick();
                 drawer.closeDrawers();
+                break;
+            case R.id.mute_audio:
+                toggleMuteButton.setChecked(!toggleMuteButton.isChecked());
                 break;
         }
         return false;
@@ -880,7 +917,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mStartRecordingButton.setVisibility(VISIBLE);
             mEndCallButton.setVisibility(VISIBLE);
             mRenderHolder.setVisibility(VISIBLE);
-            mSettingLayout.setVisibility(VISIBLE);
+            mSettingsButton.setVisibility(VISIBLE);
         }
     }
 
@@ -1427,7 +1464,7 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
         });
     }
 
-    void SignOut ()
+    private void SignOut ()
     {
         loginDB.deleteData("0");
     }
@@ -1977,7 +2014,18 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
             @Override
             public void onClick(View v)
             {
-                OnSubmitPasswordClicked();
+                if(!SU_PasswordText.getText().toString().equals(SU_ReEnterText.getText().toString()))
+                {
+                    manager.ShowAlertWindow("Password Mismatch", "The passwords you entered are not the same please check and try again");
+                }
+                else if(!isValidPassword(SU_PasswordText.getText().toString()))
+                {
+                    manager.ShowAlertWindow("Wrong Password ", "A password should contain the following: \n 1.At least one small character (a-z) \n 2.At least one capital character (A-Z) \n 3.At least one number (0-9) \n 4.At least one of the following special characters !@#$%^&*");
+                }
+                else
+                {
+                    OnSubmitPasswordClicked();
+                }
             }
         });
 
@@ -2016,11 +2064,10 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
         // Now create matcher object.
         Matcher m = r.matcher(password);
 
-        if (m.find())
+        if (m.matches())
         {
             return true;
         }
-
         return false;
     }
 
