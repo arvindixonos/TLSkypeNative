@@ -18,6 +18,19 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="false"
+        android:contentDescription="TODO"
+        android:scaleType="fitXY"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/bg" />
+
     <android.support.constraint.ConstraintLayout
         android:id="@+id/RenderHolder"
         android:layout_width="match_parent"
@@ -25,19 +38,19 @@
 
         <com.flashphoner.wcsexample.video_chat.SurfaceViewRendererCustom
             android:id="@+id/CurrentRender"
-            android:layout_width="82.5dp"
-            android:layout_height="110dp"
+            android:layout_width="110dp"
+            android:layout_height="82.5dp"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            android:layout_marginEnd="14dp"
-            android:layout_marginTop="14dp"
-            app:layout_constraintEnd_toEndOf="parent"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
         <com.flashphoner.wcsexample.video_chat.SurfaceViewRendererCustom
             android:id="@+id/StreamRender"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
             android:layout_marginBottom="8dp"
             android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
@@ -67,10 +80,11 @@
         android:layout_alignParentStart="true"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        app:layout_constraintBottom_toTopOf="@+id/EndCallButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        android:layout_marginTop="8dp"
+        android:textAlignment="textEnd"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/EndCallButton"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/UploadFileButton"
@@ -92,16 +106,19 @@
         android:id="@+id/EndCallButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="18dp"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="18dp"
+        android:layout_marginTop="8dp"
         android:clickable="true"
+        android:focusable="true"
         android:scaleX="1.2"
         android:scaleY="1.2"
         app:backgroundTint="@android:color/holo_red_dark"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:srcCompat="@drawable/call_end"
-        android:focusable="true" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.498"
+        app:srcCompat="@drawable/call_end" />
 
     <include
         android:id="@+id/FileHistory"
@@ -115,8 +132,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:clickable="true"
@@ -125,10 +140,10 @@
         android:scaleY="0.85"
         app:backgroundTint="@color/FlashColor"
         app:elevation="0dp"
-        app:layout_constraintBottom_toBottomOf="@+id/EndCallButton"
-        app:layout_constraintEnd_toStartOf="@+id/EndCallButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/EndCallButton"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/EndCallButton"
+        app:layout_constraintStart_toStartOf="@+id/EndCallButton"
+        app:layout_constraintTop_toBottomOf="@+id/EndCallButton"
         app:rippleColor="@android:color/holo_purple"
         app:srcCompat="@drawable/flip_cam_front" />
 
@@ -137,8 +152,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_weight="1"
         android:clickable="true"
         android:focusable="true"
@@ -146,10 +160,10 @@
         android:scaleY="0.85"
         app:backgroundTint="@color/FlashColor"
         app:elevation="0dp"
-        app:layout_constraintBottom_toBottomOf="@+id/EndCallButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/EndCallButton"
-        app:layout_constraintTop_toTopOf="@+id/EndCallButton"
+        app:layout_constraintBottom_toTopOf="@+id/EndCallButton"
+        app:layout_constraintEnd_toEndOf="@+id/EndCallButton"
+        app:layout_constraintStart_toStartOf="@+id/EndCallButton"
+        app:layout_constraintTop_toTopOf="parent"
         app:rippleColor="@android:color/holo_purple"
         app:srcCompat="@drawable/button_record" />
 
@@ -157,147 +171,111 @@
         android:id="@+id/SettingButton"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginBottom="12dp"
+        android:layout_marginStart="12dp"
         android:clickable="true"
         app:backgroundTint="@color/FlashColor"
         app:elevation="0dp"
         app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:rippleColor="@color/white"
         app:srcCompat="@drawable/three_dot_buttonnew" />
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/ColorPickerLayout"
-        android:layout_width="36dp"
-        android:layout_height="162dp"
-        android:layout_marginStart="8dp"
+        android:layout_width="164dp"
+        android:layout_height="36dp"
+        android:layout_marginBottom="8dp"
         android:visibility="gone"
-        app:layout_constraintStart_toEndOf="@+id/SettingLayout"
-        app:layout_constraintTop_toBottomOf="@+id/SettingButton">
+        app:layout_constraintBottom_toTopOf="@+id/SettingLayout"
+        app:layout_constraintStart_toStartOf="@+id/SettingLayout">
 
         <ImageButton
             android:id="@+id/ColorRed"
-            android:layout_width="0dp"
+            android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/FullRed"
-            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/button_record" />
 
         <ImageButton
             android:id="@+id/ColorBlue"
-            android:layout_width="0dp"
+            android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/EXCEL"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ColorRed"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ColorRed"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/button_record" />
 
         <ImageButton
             android:id="@+id/ColorGreen"
-            android:layout_width="0dp"
+            android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/green"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ColorBlue"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ColorBlue"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/button_record" />
 
         <ImageButton
             android:id="@+id/ColorYellow"
-            android:layout_width="0dp"
+            android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/YellowBright"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ColorGreen"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ColorGreen"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/button_record" />
 
         <ImageButton
             android:id="@+id/ColorViolet"
-            android:layout_width="0dp"
+            android:layout_width="28dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/Violet"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintHorizontal_bias="0.0"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ColorYellow"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ColorYellow"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/button_record" />
     </android.support.constraint.ConstraintLayout>
 
     <android.support.constraint.ConstraintLayout
         android:id="@+id/SettingLayout"
-        android:layout_width="40dp"
-        android:layout_height="wrap_content"
+        android:layout_width="185dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="8dp"
         android:visibility="gone"
-        app:layout_constraintStart_toStartOf="@+id/SettingButton"
-        app:layout_constraintTop_toBottomOf="@+id/SettingButton">
-
-        <ImageView
-            android:id="@+id/div"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/ArrowButton"
-            app:layout_constraintTop_toBottomOf="@+id/UndoButton"
-            app:srcCompat="@android:color/white" />
-
-        <ImageView
-            android:id="@+id/div2"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:layout_constraintBottom_toTopOf="@+id/DrawButton"
-            app:layout_constraintTop_toBottomOf="@+id/ArrowButton"
-            app:srcCompat="@android:color/white" />
-
-        <ImageView
-            android:id="@+id/div3"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:layout_constraintBottom_toTopOf="@+id/BlinkButton"
-            app:layout_constraintTop_toBottomOf="@+id/DrawButton"
-            app:srcCompat="@android:color/white" />
-
-        <ImageView
-            android:id="@+id/div4"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:layout_constraintBottom_toTopOf="@+id/CameraRenderButton"
-            app:layout_constraintTop_toBottomOf="@+id/BlinkButton"
-            app:srcCompat="@android:color/white" />
+        app:layout_constraintBottom_toBottomOf="@+id/SettingButton"
+        app:layout_constraintStart_toEndOf="@+id/SettingButton"
+        app:layout_constraintTop_toTopOf="@+id/SettingButton">
 
         <ImageView
             android:id="@+id/MenuBG"
@@ -310,74 +288,115 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+
+        <ImageView
+            android:id="@+id/div1"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="8dp"
+            android:layout_marginStart="8dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/ArrowButton"
+            app:layout_constraintStart_toEndOf="@+id/UndoButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/div5"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/DrawButton"
+            app:layout_constraintStart_toEndOf="@+id/ArrowButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/div6"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/BlinkButton"
+            app:layout_constraintStart_toEndOf="@+id/DrawButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:color/white" />
+
+        <ImageView
+            android:id="@+id/div7"
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/CameraRenderButton"
+            app:layout_constraintStart_toEndOf="@+id/BlinkButton"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@android:color/white" />
+
         <ImageButton
             android:id="@+id/UndoButton"
-            android:layout_width="0dp"
+            android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
-            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/undo_button" />
 
+
         <ImageButton
             android:id="@+id/ArrowButton"
-            android:layout_width="0dp"
+            android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/UndoButton"
+            app:layout_constraintBottom_toBottomOf="@+id/MenuBG"
+            app:layout_constraintStart_toEndOf="@+id/UndoButton"
+            app:layout_constraintTop_toTopOf="@+id/MenuBG"
             app:srcCompat="@drawable/arrow_diagonal" />
 
         <ImageButton
             android:id="@+id/DrawButton"
-            android:layout_width="0dp"
+            android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
-            android:tint="@color/EXCEL"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/ArrowButton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/ArrowButton"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/baseline_gesture_white_18dp" />
 
         <ImageButton
             android:id="@+id/BlinkButton"
-            android:layout_width="0dp"
+            android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/DrawButton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/DrawButton"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/radio_button" />
 
         <ImageButton
             android:id="@+id/CameraRenderButton"
-            android:layout_width="0dp"
+            android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginEnd="4dp"
+            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
             android:background="@null"
             android:scaleType="fitXY"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/BlinkButton"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/BlinkButton"
+            app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/user" />
 
     </android.support.constraint.ConstraintLayout>

@@ -173,16 +173,15 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     LinearLayout historyScreen;
 
-    Button mButton;
     Button mHistoryBackButton;
     LinearLayout mSpawnButtonLayout;
 
     RelativeLayout toggleMuteItem;
-    RelativeLayout currentRenderLayout;
-    RelativeLayout streamRenderLayout;
-    RelativeLayout mRenderHolder;
-    RelativeLayout.LayoutParams   fullScreenlayoutParams;
-    RelativeLayout.LayoutParams   smallScreenlayoutParams;
+//    RelativeLayout currentRenderLayout;
+//    RelativeLayout streamRenderLayout;
+    ConstraintLayout mRenderHolder;
+    ConstraintLayout.LayoutParams   fullScreenlayoutParams;
+    ConstraintLayout.LayoutParams   smallScreenlayoutParams;
     Rational aspectRatio;
 
     public enum CameraTorchMode
@@ -219,9 +218,48 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         profilePicPresent = picPresent;
         currentActivity = activity;
 
-        width = GetScreenWidth();
-
         chatActivity = VideoChatActivity.getInstance();
+
+        fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
+
+        AssignUIElements();
+        //Set Photo and Name
+
+        NavigationView headerLayout = currentActivity.findViewById(R.id.nav_view);
+        View header = headerLayout.getHeaderView(0);
+        if(profilePicPresent)
+        {
+            profilePhoto = header.findViewById(R.id.ProfilePics);
+            profilePhoto.setImageBitmap(GetUsetProfilePhoto());
+        }
+        Log.d(TAG, "User Name " + userName);
+        userNameText = header.findViewById(R.id.ProfileName);
+        userNameText.setText(userName);
+        //Set Photo and Name
+
+
+
+        timerHandler = new Handler();
+        timerRunnable = new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                long millis = System.currentTimeMillis() - startTime;
+                int seconds = (int) (millis / 1000);
+                int minutes = seconds / 60;
+                seconds = seconds % 60;
+
+                timerText.setText(String.format("%d:%02d", minutes, seconds));
+
+                timerHandler.postDelayed(this, 500);
+            }
+        };
+    }
+
+    public void AssignUIElements ()
+    {
+        width = GetScreenWidth();
 
         progressBar = currentActivity.findViewById(R.id.ProgressBar);
 
@@ -246,50 +284,19 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mColorPickerLayout = currentActivity.findViewById(R.id.ColorPickerLayout);
 
         mEndCallButton = currentActivity.findViewById(R.id.EndCallButton);
-        mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
-        mSwitchLayoutButton = currentActivity.findViewById(R.id.SwitchLayoutButton);
-        mToggleDrawingMode = currentActivity.findViewById(R.id.DrawingModeButton);
         mSwitchCamera = currentActivity.findViewById(R.id.SwitchCamButton);
         mStartRecordingButton = currentActivity.findViewById(R.id.StartRecordingButton);
-        mPointToPlaneButton = currentActivity.findViewById(R.id.PointToPlaneButton);
-        mHistoryButton = currentActivity.findViewById(R.id.HistoryButton);
         mHistoryBackButton = currentActivity.findViewById(R.id.historyBackButton);
 
         drawer = currentActivity.findViewById(R.id.drawer_layout);
 
-        recordingText = currentActivity.findViewById(R.id.startRecord);
-        pointModeText = currentActivity.findViewById(R.id.Point2Plane);
         timerText = currentActivity.findViewById(R.id.timerText);
-
-        mButton = currentActivity.findViewById(R.id.button);
 
         historyScreen = currentActivity.findViewById(R.id.FileHistoryLayout);
 
-        mSpawnButtonLayout = currentActivity.findViewById(R.id.ButtonLayout);
-
-        currentRenderLayout = currentActivity.findViewById(R.id.currentLayout);
-        streamRenderLayout = currentActivity.findViewById(R.id.streamLayout);
         mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
-        fullScreenlayoutParams = (RelativeLayout.LayoutParams) streamRenderLayout.getLayoutParams();
-        smallScreenlayoutParams = (RelativeLayout.LayoutParams) currentRenderLayout.getLayoutParams();
-
-        fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
-
-        currentActivity.setRequestedOrientation (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-
-        //Set Photo and Name
-
-        NavigationView headerLayout = currentActivity.findViewById(R.id.nav_view);
-        View header = headerLayout.getHeaderView(0);
-        if(profilePicPresent)
-        {
-            profilePhoto = header.findViewById(R.id.ProfilePics);
-            profilePhoto.setImageBitmap(GetUsetProfilePhoto());
-        }
-        Log.d(TAG, "User Name " + userName);
-        userNameText = header.findViewById(R.id.ProfileName);
-        userNameText.setText(userName);
-        //Set Photo and Name
+        fullScreenlayoutParams = (ConstraintLayout.LayoutParams) remote1Render.getLayoutParams();
+        smallScreenlayoutParams = (ConstraintLayout.LayoutParams) localRender.getLayoutParams();
 
         android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
                 (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -326,315 +333,241 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         if(Build.VERSION.SDK_INT > Build.VERSION_CODES.N)
         {
-            mRenderHolder.removeView(streamRenderLayout);
-            mRenderHolder.removeView(currentRenderLayout);
+            mRenderHolder.removeView(remote1Render);
+            mRenderHolder.removeView(localRender);
 
-            mRenderHolder.addView(streamRenderLayout, 0);
-            mRenderHolder.addView(currentRenderLayout, 1);
+            mRenderHolder.addView(remote1Render, 0);
+            mRenderHolder.addView(localRender, 1);
 
             isAboveEight = true;
         }
 
-        mSettingsButton.setOnClickListener(v ->
-        {
-            if(mSettingLayout.getVisibility() == GONE)
-            {
-                mSettingLayout.setVisibility(VISIBLE);
-            }
-            else
-            {
-                mSettingLayout.setVisibility(GONE);
-                mColorPickerLayout.setVisibility(GONE);
-                ChangeSettingButtonSelectedColor();
-            }
-        });
-
-        mUndoButton.setOnClickListener(v -> chatActivity.UndoClicked());
-
-        mArrowButton.setOnClickListener(v ->
-        {
-            chatActivity.arrowMode = true;
-            selectedElement = SelectedElement.ARROW;
-            mColorPickerLayout.setVisibility(VISIBLE);
-            mArrowButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mDrawButton.setOnClickListener(v ->
-        {
-            chatActivity.arrowMode = false;
-            selectedElement = SelectedElement.LINE;
-            mColorPickerLayout.setVisibility(VISIBLE);
-            mDrawButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mBlinkButton.setOnClickListener(v ->
-        {
-            chatActivity.arrowMode = true;
-            selectedElement = SelectedElement.BLINKER;
-            mSettingLayout.setVisibility(GONE);
-            mColorPickerLayout.setVisibility(GONE);
-        });
-
-        mCameraRenderButton.setOnClickListener(v ->
-        {
-            AdjustSwitchCam();
-        });
-
-        mRedColorButton.setOnClickListener(v ->
-        {
-            selectedColor = SelectedColor.RED;
-            chatActivity.SetCurrentColor(new float[] {1.0f, 0.0f, 0.0f, 1.0f});
-            mColorPickerLayout.setVisibility(GONE);
-            mSettingLayout.setVisibility(GONE);
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mBlueButton.setOnClickListener(v ->
-        {
-            selectedColor = SelectedColor.BLUE;
-            chatActivity.SetCurrentColor(new float[] {0.0f, 0.0f, 1.0f, 1.0f});
-            mColorPickerLayout.setVisibility(GONE);
-            mSettingLayout.setVisibility(GONE);
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mGreenButton.setOnClickListener(v ->
-        {
-            selectedColor = SelectedColor.GREEN;
-            chatActivity.SetCurrentColor(new float[] {0.0f, 1.0f, 0.0f, 1.0f});
-            mColorPickerLayout.setVisibility(GONE);
-            mSettingLayout.setVisibility(GONE);
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mYellowButton.setOnClickListener(v ->
-        {
-            selectedColor = SelectedColor.YELLOW;
-            chatActivity.SetCurrentColor(new float[] {1.0f, 1.0f, 0.0f, 1.0f});
-            mColorPickerLayout.setVisibility(GONE);
-            mSettingLayout.setVisibility(GONE);
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mVioletButton.setOnClickListener(v ->
-        {
-            selectedColor = SelectedColor.VIOLET;
-            chatActivity.SetCurrentColor(new float[] {0.325f, 0.278f, 0.639f, 1.0f});
-            mColorPickerLayout.setVisibility(GONE);
-            mSettingLayout.setVisibility(GONE);
-
-            ChangeSettingButtonSelectedColor();
-        });
-
-        mSwitchCamera.setOnClickListener(v ->
-        {
-            VideoChatActivity.getInstance().ToggleCamera();
-
-            if(backCam)
-            {
-                mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
-                Log.d(TAG, "Front");
-                backCam = false;
-                mSwitchLayoutButton.callOnClick();
-                TurnOffOnDelay(mSwitchCamera, 3000);
-                AdjustSwitchCam();
-            }
-            else
-            {
-                mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
-                Log.d(TAG, "Back");
-                backCam = true;
-                localRender.setVisibility(VISIBLE);
-                mSwitchLayoutButton.callOnClick();
-                TurnOffOnDelay(mSwitchCamera, 3000);
-                AdjustSwitchCam();
-            }
-        });
-
+        mSettingsButton.setOnClickListener(v -> SettingButtonClick());
+        mUndoButton.setOnClickListener(v -> UndoButtonClick());
+        mArrowButton.setOnClickListener(v -> ArrowButtonClicked());
+        mDrawButton.setOnClickListener(v -> DrawButtonClicked());
+        mBlinkButton.setOnClickListener(v -> BlinkButtonClicked());
+        mCameraRenderButton.setOnClickListener(v -> AdjustSwitchCam());
+        mRedColorButton.setOnClickListener(v -> RedColorClicked());
+        mBlueButton.setOnClickListener(v -> BlueButtonClicked());
+        mGreenButton.setOnClickListener(v -> GreenColorClicked());
+        mYellowButton.setOnClickListener(v -> YellowColorClicked());
+        mVioletButton.setOnClickListener(v -> VioletClicked());
+        mSwitchCamera.setOnClickListener(v -> SwitchCameraClicked());
         mHistoryBackButton.setOnClickListener(v -> backKey());
+        mStartRecordingButton.setOnClickListener(v -> StartRecordingClicked());
+        mEndCallButton.setOnClickListener(v -> EndCallClicked());
+    }
 
-        mHistoryButton.setOnClickListener(v ->
+    private void SettingButtonClick ()
+    {
+        if(mSettingLayout.getVisibility() == GONE)
         {
-            mHistoryScreen.setVisibility(VISIBLE);
-            mSwitchCamera.setVisibility(GONE);
-            mStartRecordingButton.setVisibility(GONE);
-            mEndCallButton.setVisibility(GONE);
-            mRenderHolder.setVisibility(GONE);
+            mSettingLayout.setVisibility(VISIBLE);
+        }
+        else
+        {
             mSettingLayout.setVisibility(GONE);
-            mSettingsButton.setVisibility(GONE);
             mColorPickerLayout.setVisibility(GONE);
+            ChangeSettingButtonSelectedColor();
+        }
+    }
 
-            fileButtonHelper.GetData();
-        });
+    private void UndoButtonClick ()
+    {
+        chatActivity.UndoClicked();
+    }
 
-        mPlusButton.setOnClickListener(v ->
+    private void ArrowButtonClicked ()
+    {
+        chatActivity.arrowMode = true;
+        selectedElement = SelectedElement.ARROW;
+        mColorPickerLayout.setVisibility(VISIBLE);
+        mArrowButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void DrawButtonClicked ()
+    {
+        chatActivity.arrowMode = false;
+        selectedElement = SelectedElement.LINE;
+        mColorPickerLayout.setVisibility(VISIBLE);
+        mDrawButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void BlinkButtonClicked ()
+    {
+        chatActivity.arrowMode = true;
+        selectedElement = SelectedElement.BLINKER;
+        mSettingLayout.setVisibility(GONE);
+        mColorPickerLayout.setVisibility(GONE);
+    }
+
+    private void RedColorClicked ()
+    {
+        selectedColor = SelectedColor.RED;
+        chatActivity.SetCurrentColor(new float[] {1.0f, 0.0f, 0.0f, 1.0f});
+        mColorPickerLayout.setVisibility(GONE);
+        mSettingLayout.setVisibility(GONE);
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void BlueButtonClicked ()
+    {
+        selectedColor = SelectedColor.BLUE;
+        chatActivity.SetCurrentColor(new float[] {0.0f, 0.0f, 1.0f, 1.0f});
+        mColorPickerLayout.setVisibility(GONE);
+        mSettingLayout.setVisibility(GONE);
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void GreenColorClicked ()
+    {
+        selectedColor = SelectedColor.GREEN;
+        chatActivity.SetCurrentColor(new float[] {0.0f, 1.0f, 0.0f, 1.0f});
+        mColorPickerLayout.setVisibility(GONE);
+        mSettingLayout.setVisibility(GONE);
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void YellowColorClicked ()
+    {
+        selectedColor = SelectedColor.YELLOW;
+        chatActivity.SetCurrentColor(new float[] {1.0f, 1.0f, 0.0f, 1.0f});
+        mColorPickerLayout.setVisibility(GONE);
+        mSettingLayout.setVisibility(GONE);
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void VioletClicked ()
+    {
+        selectedColor = SelectedColor.VIOLET;
+        chatActivity.SetCurrentColor(new float[] {0.325f, 0.278f, 0.639f, 1.0f});
+        mColorPickerLayout.setVisibility(GONE);
+        mSettingLayout.setVisibility(GONE);
+
+        ChangeSettingButtonSelectedColor();
+    }
+
+    private void SwitchCameraClicked ()
+    {
+        VideoChatActivity.getInstance().ToggleCamera();
+
+        if(backCam)
         {
-            if(mSpawnButtonLayout.getVisibility() == VISIBLE)
-            {
-                mSpawnButtonLayout.setVisibility(GONE);
-            }
-            else
-            {
-                mSpawnButtonLayout.setVisibility(VISIBLE);
-            }
-        });
-
-        mPointToPlaneButton.setOnClickListener(v ->
+            mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
+            backCam = false;
+            SwitchLayoutClicked();
+            remote1Render.setVisibility(VISIBLE);
+            TurnOffOnDelay(mSwitchCamera, 3000);
+        }
+        else
         {
-            if(pointMode)
+            mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
+            backCam = true;
+            remote1Render.setVisibility(GONE);
+            if(localRender.getVisibility() == View.GONE)
             {
-                chatActivity.TogglePointPlaneSpawn();
-                mPointToPlaneButton.setImageResource(R.drawable.botton_plane);
-                pointModeText.setText("Switch to Point");
-                pointMode = false;
+                localRender.setVisibility(View.VISIBLE);
             }
-            else
-            {
-                chatActivity.TogglePointPlaneSpawn();
-                mPointToPlaneButton.setImageResource(R.drawable.button_blur);
-                pointModeText.setText("Switch to Plane");
-                pointMode = true;
-            }
-        });
+            SwitchLayoutClicked();
+            TurnOffOnDelay(mSwitchCamera, 3000);
+        }
+    }
 
-        mStartRecordingButton.setOnClickListener(v ->
-        {
-            if (!recording)
-            {
-                chatActivity.screenRecorder.GetPermission();
-                mStartRecordingButton.setImageResource(R.drawable.button_stop);
-                recordingText.setText("Stop Recording");
-//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
-                recording = true;
-            }
-            else
-            {
-                chatActivity.screenRecorder.StopRecording();
-                mStartRecordingButton.setImageResource(R.drawable.button_record);
-                recordingText.setText("Start Recording");
-//                    mStartRecordingButton.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
-                recording = false;
-            }
-        });
+    private void HistoryButtonClicked ()
+    {
+        mHistoryScreen.setVisibility(VISIBLE);
+        mSwitchCamera.setVisibility(GONE);
+        mStartRecordingButton.setVisibility(GONE);
+        mEndCallButton.setVisibility(GONE);
+        mRenderHolder.setVisibility(GONE);
+        mSettingLayout.setVisibility(GONE);
+        mSettingsButton.setVisibility(GONE);
+        mColorPickerLayout.setVisibility(GONE);
 
-        mEndCallButton.setOnClickListener(v ->
-        {
-            ToggleVideoView();
-            chatActivity.CleanUp();
-            chatActivity.SendMessage("CTRL:-DC");
-            chatActivity.Disconnect();
-            ChangeActivity();
-        });
+        fileButtonHelper.GetData();
+    }
 
-        mButton.setOnClickListener(v ->
+    private void StartRecordingClicked ()
+    {
+        if (!recording)
         {
-            char[] charray = new char[] {'a', 'd', 'i', 's', 'h'};
-            Log.d(TAG, charray.toString());
-            chatActivity.SendMessage("Something");
-//                count += 10;
-//                SetProgress(count);
-//                showNotification(currentActivity, "Download", "filepath", new Intent());
-//                DisplayNotification();
-//                if(count == 0)
-//                    showNotification(currentActivity, "Title", "This is download", new Intent());
-//                else
-//                    UpdateNotification(count);
-//
-//                count += 10;
-        });
+            chatActivity.screenRecorder.GetPermission();
+            mStartRecordingButton.setImageResource(R.drawable.button_stop);
+            recordingText.setText("Stop Recording");
+            recording = true;
+        }
+        else
+        {
+            chatActivity.screenRecorder.StopRecording();
+            mStartRecordingButton.setImageResource(R.drawable.button_record);
+            recordingText.setText("Start Recording");
+            recording = false;
+        }
+    }
 
-        mToggleDrawingMode.setOnClickListener(v ->
-        {
-            if(!drawMode)
+    private void EndCallClicked ()
+    {
+        ToggleVideoView();
+        chatActivity.CleanUp();
+        chatActivity.SendMessage("CTRL:-DC");
+        chatActivity.Disconnect();
+        ChangeActivity();
+    }
+
+    private void SwitchLayoutClicked ()
+    {
+        VideoChatActivity.ShowToast("Switching", chatActivity.getApplicationContext());
+        currentActivity.runOnUiThread (new Thread(new Runnable() {
+            public void run()
             {
-                Log.d(TAG, "clicking");
-                drawMode = true;
-//                    remote1Render.touchEnabled = true;
-                remote1Render.drawEnabled = true;
-                mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_black_18dp);
-                mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.redLight)));
-            }
-            else
-            {
-                Log.d(TAG, "clickingAlso");
-                drawMode = false;
-//                    remote1Render.touchEnabled = false;
-                remote1Render.drawEnabled = false;
-                mToggleDrawingMode.setImageResource(R.drawable.baseline_gesture_white_18dp);
-                mToggleDrawingMode.setBackgroundTintList(ColorStateList.valueOf(currentActivity.getResources().getColor(R.color.blueDark)));
-            }
-        });
-
-        mSwitchLayoutButton.setOnClickListener(v ->
-        {
-            VideoChatActivity.ShowToast("Switching", chatActivity.getApplicationContext());
-            currentActivity.runOnUiThread (new Thread(new Runnable() {
-                public void run()
+                mRenderHolder.removeView(remote1Render);
+                mRenderHolder.removeView(localRender);
+                if(!switched)
                 {
-                    mRenderHolder.removeView(streamRenderLayout);
-                    mRenderHolder.removeView(currentRenderLayout);
-                    if(!switched)
-                    {
-                        streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
-                        currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
+                    remote1Render.setLayoutParams(smallScreenlayoutParams);
+                    localRender.setLayoutParams(fullScreenlayoutParams);
 
-                        if(!isAboveEight)
-                        {
-                            mRenderHolder.addView(streamRenderLayout, 0);
-                            mRenderHolder.addView(currentRenderLayout, 1);
-                        }
-                        else
-                        {
-                            mRenderHolder.addView(currentRenderLayout, 0);
-                            mRenderHolder.addView(streamRenderLayout, 1);
-                        }
-                        switched = true;
+                    if(!isAboveEight)
+                    {
+                        mRenderHolder.addView(remote1Render, 0);
+                        mRenderHolder.addView(localRender, 1);
                     }
                     else
                     {
-                        streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
-                        currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
-
-                        if(!isAboveEight)
-                        {
-                            mRenderHolder.addView(currentRenderLayout, 0);
-                            mRenderHolder.addView(streamRenderLayout, 1);
-                        }
-                        else
-                        {
-                            mRenderHolder.addView(streamRenderLayout, 0);
-                            mRenderHolder.addView(currentRenderLayout, 1);
-                        }
-                        switched = false;
+                        mRenderHolder.addView(localRender, 0);
+                        mRenderHolder.addView(remote1Render, 1);
                     }
-                    mRenderHolder.invalidate();
+                    switched = true;
                 }
-            }));
-        });
-        timerHandler = new Handler();
-        timerRunnable = new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                long millis = System.currentTimeMillis() - startTime;
-                int seconds = (int) (millis / 1000);
-                int minutes = seconds / 60;
-                seconds = seconds % 60;
+                else
+                {
+                    remote1Render.setLayoutParams(fullScreenlayoutParams);
+                    localRender.setLayoutParams(smallScreenlayoutParams);
 
-                timerText.setText(String.format("%d:%02d", minutes, seconds));
-
-                timerHandler.postDelayed(this, 500);
+                    if(!isAboveEight)
+                    {
+                        mRenderHolder.addView(localRender, 0);
+                        mRenderHolder.addView(remote1Render, 1);
+                    }
+                    else
+                    {
+                        mRenderHolder.addView(remote1Render, 0);
+                        mRenderHolder.addView(localRender, 1);
+                    }
+                    switched = false;
+                }
+                mRenderHolder.invalidate();
             }
-        };
+        }));
     }
 
     public void ReOrient ()
@@ -787,7 +720,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         switch(num)
         {
             case R.id.nav_history:
-                mHistoryButton.callOnClick();
+                HistoryButtonClicked();
                 drawer.closeDrawers();
                 break;
             case R.id.nav_upload:
@@ -988,43 +921,43 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         currentActivity.runOnUiThread(new Thread(new Runnable() {
             @Override
             public void run() {
-                mRenderHolder.removeView(streamRenderLayout);
-                mRenderHolder.removeView(currentRenderLayout);
+                mRenderHolder.removeView(remote1Render);
+                mRenderHolder.removeView(localRender);
                 if(!switched)
                 {
-                    streamRenderLayout.setLayoutParams(smallScreenlayoutParams);
-                    currentRenderLayout.setLayoutParams(fullScreenlayoutParams);
-                    ViewGroup.LayoutParams layoutParams = currentRenderLayout.getLayoutParams();
+                    remote1Render.setLayoutParams(smallScreenlayoutParams);
+                    localRender.setLayoutParams(fullScreenlayoutParams);
+                    ViewGroup.LayoutParams layoutParams = localRender.getLayoutParams();
                     layoutParams.width = ViewGroup.LayoutParams.WRAP_CONTENT;
 
 
                     if(!isAboveEight)
                     {
-                        mRenderHolder.addView(streamRenderLayout, 0);
-                        mRenderHolder.addView(currentRenderLayout, 1);
+                        mRenderHolder.addView(remote1Render, 0);
+                        mRenderHolder.addView(localRender, 1);
                     }
                     else
                     {
-                        mRenderHolder.addView(currentRenderLayout, 0);
-                        mRenderHolder.addView(streamRenderLayout, 1);
+                        mRenderHolder.addView(localRender, 0);
+                        mRenderHolder.addView(remote1Render, 1);
                     }
-                    currentRenderLayout.setLayoutParams(layoutParams);
+                    localRender.setLayoutParams(layoutParams);
                     switched = true;
                 }
                 else
                 {
-                    streamRenderLayout.setLayoutParams(fullScreenlayoutParams);
-                    currentRenderLayout.setLayoutParams(smallScreenlayoutParams);
+                    remote1Render.setLayoutParams(fullScreenlayoutParams);
+                    localRender.setLayoutParams(smallScreenlayoutParams);
 
                     if(!isAboveEight)
                     {
-                        mRenderHolder.addView(currentRenderLayout, 0);
-                        mRenderHolder.addView(streamRenderLayout, 1);
+                        mRenderHolder.addView(localRender, 0);
+                        mRenderHolder.addView(remote1Render, 1);
                     }
                     else
                     {
-                        mRenderHolder.addView(streamRenderLayout, 0);
-                        mRenderHolder.addView(currentRenderLayout, 1);
+                        mRenderHolder.addView(remote1Render, 0);
+                        mRenderHolder.addView(localRender, 1);
                     }
                     switched = false;
                 }
@@ -1047,13 +980,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         SurfaceViewRendererCustom currentRender = currentActivity.findViewById(R.id.CurrentRender);
         FloatingActionButton mEndCall = currentActivity.findViewById(R.id.EndCallButton);
-        FloatingActionButton mPlusButton = currentActivity.findViewById(R.id.floatingActionButton4);
         if(isSmall)
         {
             Log.d(TAG, "Screen is small");
             currentRender.setVisibility(GONE);
             mEndCall.setVisibility(GONE);
-            mPlusButton.setVisibility(GONE);
             mSpawnButtonLayout.setVisibility(GONE);
             mSwitchCamera.setVisibility(GONE);
             mStartRecordingButton.setVisibility(GONE);
@@ -1257,46 +1188,24 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
         {
             return;
         }
-        SA_BackButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                backKey();
-            }
+        SA_BackButton.setOnClickListener(v -> backKey());
+
+        SI_SignUpButton.setOnClickListener(v -> {
+            mLoginScreen.setVisibility(View.GONE);
+            mSignUpScreen.setVisibility(View.VISIBLE);
+            mDetailsScreen.setVisibility(View.VISIBLE);
+            mPasswordScreen.setVisibility(View.GONE);
+            SA_BackButton.setVisibility(View.VISIBLE);
+            currentScreen = 1;
         });
 
-        SI_SignUpButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v)
-            {
-                mLoginScreen.setVisibility(View.GONE);
-                mSignUpScreen.setVisibility(View.VISIBLE);
-                mDetailsScreen.setVisibility(View.VISIBLE);
-                mPasswordScreen.setVisibility(View.GONE);
-                SA_BackButton.setVisibility(View.VISIBLE);
-                currentScreen = 1;
-            }
-        });
+        SI_SubmitButton.setOnClickListener(v -> {
 
-        SI_SubmitButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v) {
-
-                TryLogin();
+            TryLogin();
 //            Login("arvindsemail@gmail.com", "asaadfghjk");
-            }
         });
 
-        SU_NextButton.setOnClickListener(new View.OnClickListener()
-        {
-            @Override
-            public void onClick(View v) {
-                OnSubmitClicked();
-            }
-        });
+        SU_NextButton.setOnClickListener(v -> OnSubmitClicked());
 
         SU_NameField.addTextChangedListener(new TextWatcher()
         {
@@ -1309,21 +1218,17 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count)
             {
-
-                currentActivity.runOnUiThread(new Runnable()
+                currentActivity.runOnUiThread(() ->
                 {
-                    @Override
-                    public void run()
-                    {
-//                        SU_NameFieldImage.setVisibility(View.INVISIBLE);
-                    }
+
                 });
 
                 isNamePresent = !(SU_NameField.getText().toString().length() == 0);
             }
 
             @Override
-            public void afterTextChanged(Editable s) {
+            public void afterTextChanged(Editable s)
+            {
 
             }
         });
@@ -1366,12 +1271,9 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count)
             {
-                currentActivity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run()
-                    {
+                currentActivity.runOnUiThread(() ->
+                {
 //                        SU_PhoneFieldImage.setVisibility(View.INVISIBLE);
-                    }
                 });
 
                 isPhonePresent = !(SU_PhoneField.getText().toString().length() == 0);
@@ -1512,6 +1414,9 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
     {
 
         final FTPManager ftpManager = new FTPManager();
+        ftpManager.server = "13.127.231.176";
+        ftpManager.user = "anonymous";
+        ftpManager.pass = "";
         ftpManager.fileInputStream = inputStream;
         ftpManager.uploadORdownload = 1;
         ftpManager.applicationContext = currentActivity.getApplicationContext();
@@ -1559,6 +1464,9 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
     private void DownloadFile (final String fileName)
     {
         final FTPManager ftpManager = new FTPManager();
+        ftpManager.server = "13.127.231.176";
+        ftpManager.user = "anonymous";
+        ftpManager.pass = "";
         ftpManager.uploadORdownload = 0;
         ftpManager.applicationContext = currentActivity.getApplicationContext();
         ftpManager.filePath = Environment.getExternalStorageDirectory().getPath() + "/TASQAR/ReceivedFiles/UserData/";

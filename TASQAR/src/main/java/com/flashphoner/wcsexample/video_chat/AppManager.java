@@ -46,6 +46,7 @@ import com.flashphoner.fpwcsapi.room.RoomManager;
 import com.flashphoner.fpwcsapi.room.RoomManagerEvent;
 import com.flashphoner.fpwcsapi.room.RoomManagerOptions;
 import com.flashphoner.fpwcsapi.room.RoomOptions;
+import com.flashphoner.fpwcsapi.session.Call;
 import com.flashphoner.fpwcsapi.session.RestAppCommunicator;
 import com.google.ar.core.ArCoreApk;
 import com.google.ar.core.Session;
@@ -89,6 +90,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     private     boolean  profilePicPresent = false;
     private     boolean  drawerOpen = false;
     private     boolean  pinMode = false;
+    private     boolean  signedIn = false;
     private String password = "0000";
     private String passwordFilling = "0000";
 
@@ -114,6 +116,11 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
     private String wcsURL = "ws://123.176.34.172:8080";
     //lobby Functional Elements
+
+    Button mHistoryButton;
+    Button mOnlineButton;
+    ScrollView mHistorylayout;
+    ScrollView mOnlineLayout;
 
     public static AppManager getInstance()
     {
@@ -277,15 +284,30 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             public void onConnected(Connection connection)
             {
                 Log.d(TAG, "Connected " + userID);
+                Log.d(TAG, "LOGGING :- " + connection.toString());
                 RoomOptions roomOptions = new RoomOptions();
-                roomOptions.setName("TLLobby");
+                roomOptions.setName("TLLobby_v2");
                 room = roomManager.join(roomOptions);
+                Log.d(TAG, room.toString());
+
+                final Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Do something after 5s = 5000ms
+                        if(!signedIn)
+                        {
+                            SignOut();
+                        }
+                    }
+                }, 5000);
 
                 room.on(new RoomEvent()
                 {
                     @Override
                     public void onState(Room room)
                     {
+                        signedIn = true;
                         Log.d(TAG, "RoomName : " + room.getName() + " onState");
                         if(room.getParticipants().size() == 0)
                         {
@@ -293,6 +315,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                         }
                         else
                         {
+                            Log.d(TAG, "A FollowScout");
                             ListOnlineUsers();
                         }
                     }
@@ -373,9 +396,50 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         }
     }
 
+    public void SignOut ()
+    {
+        ShowSignedOutAlertWindow("Signing out", "User ID Already signed in you will be signed out");
+    }
+
     public void SignOut (View v)
     {
-        ShowSignOutAlertWindow("You Have been Signed Out", "Sign out");
+        ShowSignOutAlertWindow("You Will be Signed Out", "Sign out");
+    }
+
+    public void ShowSignedOutAlertWindow (String titleString, String contentString)
+    {
+        AlertDialog.Builder mBuilder = new AlertDialog.Builder(AppManager.this);
+        View view = getLayoutInflater().inflate(R.layout.alert_window, null);
+
+        TextView title = view.findViewById(R.id.TitleText);
+        TextView content = view.findViewById(R.id.Content);
+
+        Button submitButton = view.findViewById(R.id.okbutton);
+        Button cancelButton = view.findViewById(R.id.cancelbutton);
+
+        title.setText(titleString);
+        content.setText(contentString);
+
+        mBuilder.setView(view);
+        AlertDialog dialog = mBuilder.create();
+        dialog.show();
+
+        cancelButton.setVisibility(View.GONE);
+
+        submitButton.setOnClickListener(v ->
+        {
+            loginDB = new LoginDatabaseHelper(getApplicationContext());
+            loginDB.deleteData("0");
+            dialog.cancel();
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    recreate();
+                }
+            });
+        });
     }
 
     public void ShowSignOutAlertWindow(String contentString, String titleString)
@@ -438,7 +502,14 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     public void RefreshConnections ()
     {
         roomManager.disconnect();
-        SetupLobby();
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                SetupLobby();
+            }
+        }, 2000); // Millisecond 1000 = 1 sec
     }
 
     public void ChangePIN(View v)
@@ -471,7 +542,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             }
         });
     }
-
 
     public void SetupPasswordScreen (boolean picPresent)
     {
@@ -520,14 +590,10 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             }
         });
 
-//        ChangeActivity("part", false);
+        ChangeActivity("asd", false);
         SetupLobby();
     }
 
-    Button mHistoryButton;
-    Button mOnlineButton;
-    ScrollView mHistorylayout;
-    ScrollView mOnlineLayout;
     private void SetupButtons()
     {
         mHistoryButton = findViewById(R.id.CallHistoryButton);
@@ -633,18 +699,19 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
     void ChangeActivity (String participantID, boolean isSender)
     {
-        if(isSender)
-            participantID = "User_" + participantID;
-
         String roomName;
         if(isSender)
         {
+            participantID = "User_" + participantID;
             roomName = userID + "_CALL_" + participantID;
         }
         else
         {
             roomName = participantID + "_CALL_" + userID;
+            GetUserDetails(participantID.replace("User_", ""), true);
         }
+
+        roomName = "TestRoom";
 
         if(isSender)
         {
@@ -655,8 +722,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 return;
             }
         }
-
-        roomName = "Room";
 
         Intent intent = new Intent(this, VideoChatActivity.class);
         if(profilePicPresent)
@@ -773,7 +838,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
     }
 
-    private void GetUserDetails(final String emailID)
+    private void GetUserDetails(final String emailID, final boolean toStoreData)
     {
         if (getUserThread != null && getUserThread.isAlive())
         {
@@ -807,7 +872,10 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                         @Override
                         public void run()
                         {
-                            AssembleUser(userData, emailID);
+                            if(!toStoreData)
+                                AssembleUser(userData, emailID);
+                            else
+                                StoreData(userData, emailID);
                         }
                     });
                 }
@@ -816,6 +884,11 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             }
         });
         getUserThread.start();
+    }
+
+    public void StoreData (String[] userData, String email)
+    {
+//        callHistoryDatabaseHelper.addData(userData[0], email, userData[1], userData[5], GetDate(), "1:46");//TODO Uncomment Before Submit
     }
 
     public void onDestroy()
@@ -840,7 +913,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 Collection<Participant> participants = room.getParticipants();
                 for (Participant participant : participants)
                 {
-                    GetUserDetails(participant.getName().replace("User_", ""));
+                    GetUserDetails(participant.getName().replace("User_", ""), false);
 
                     while(getUserThread.isAlive())
                     {

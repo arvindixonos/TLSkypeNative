@@ -99,12 +99,7 @@ public class FTPManager extends AsyncTask {
 
                 if(success)
                 {
-                    ToastFunction("Successfully Uploaded File " + GetFileName(filePath));
                     transferSuccess = true;
-                }
-                else
-                {
-                    ToastFunction(" Failed to Upload File " + GetFileName(filePath));
                 }
 
                 fileInputStream.close();
@@ -150,27 +145,6 @@ public class FTPManager extends AsyncTask {
 
         running = false;
         return null;
-    }
-
-    public void ToastFunction(final String toastMessage)
-    {
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    // TODO Auto-generated method stub
-//                    try {
-//                        // Thread.sleep(10000);
-//                        mHandler.post(new Runnable() {
-//
-//                            @Override
-//                            public void run() {
-//                            }
-//                        });
-//                    } catch (Exception e) {
-//                        // TODO: handle exception
-//                    }
-//                }
-//            }).start();
     }
 
     public String GetFileName(String filePath)

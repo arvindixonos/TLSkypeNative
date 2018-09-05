@@ -4,9 +4,6 @@ package com.flashphoner.wcsexample.video_chat;
  * Created by TakeLeap05 on 05-07-2018.
  */
 
-// TODO: Your own package name here
-//package com.kittehface;
-
 // Some work based on http://stackoverflow.com/a/12702836 by rics (http://stackoverflow.com/users/21047/rics)
 
 import android.graphics.Bitmap;
