@@ -105,6 +105,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -134,6 +135,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public static Context applicationContext;
     private static VideoChatActivity Instance;
     public boolean connected = false;
+    public boolean isLandscape = false;
     public ImageButton mFileUploadButton;
     String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
@@ -263,6 +265,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
 //        width = 1280;
 //        height = 720;
+        Log.d("ARTEST", "onSurfaceChanged" + "Width : " + width + " Height : " + height);
 
         screenWidth = width;
         screenHeight = height;
@@ -270,9 +273,16 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         displayRotationHelper.onSurfaceChanged(width, height);
         GLES20.glViewport(0, 0, width, height);
 
-        mWidth = 720; //width;
-        mHeight = 1280; //height;
-
+        if(isLandscape)
+        {
+            mWidth = 1280; //width;
+            mHeight = 720; //height;
+        }
+        else
+        {
+            mWidth = 720; //width;
+            mHeight = 1280; //height;
+        }
         totalSurfaceLength = screenWidth * screenHeight * 4;
         totalViewLength = mWidth * mHeight * 4;
         pixelData = new byte[totalSurfaceLength];
@@ -337,6 +347,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         applicationContext = getApplicationContext();
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
 
         Flashphoner.init(this);
         UploadAttempt();
@@ -506,7 +517,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         localRenderer = findViewById(R.id.CurrentRender);
         remoteRenderer = findViewById(R.id.StreamRender);
         participantView = new ParticipantView(remoteRenderer, mParticipantName);
-        mFileUploadButton = findViewById(R.id.UploadFileButton);
 
         screenRecorder = new ScreenRecorder(this);
 
@@ -541,6 +551,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         {
             uiHandler = new MainUIHandler(Instance, false);
         }
+
+
+        mFileUploadButton = findViewById(R.id.UploadFileButton);
         loginName = findViewById(R.id.ProfileName);
 
         String loginNameText = Build.MODEL;
@@ -636,6 +649,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     Frame frame = null;
     Camera camera = null;
+    boolean resetLocalCam = false;
     @Override
     public void onDrawFrame(GL10 gl)
     {
@@ -663,14 +677,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
             // If not tracking, don't draw 3d objects.
             if (camera.getTrackingState() == TrackingState.PAUSED) {
-                byte[] ardata = GetScreenPixels();
-                onPreviewFrame(ardata, null);
+//                byte[] ardata = GetScreenPixels();                //TODO:UnComment
+//                onPreviewFrame(ardata, null);
                 return;
             }
 
 //            // Get projection matrix.
             float[] projmtx = new float[16];
             camera.getProjectionMatrix(projmtx, 0, 0.1f, 100.0f);
+
 
 //            // Get camera matrix and draw.
             float[] viewmtx = new float[16];
@@ -701,7 +716,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
             pointRenderer.draw(viewmtx, projmtx);
 
-            byte[] ardata = GetScreenPixels();
+            byte[] ardata = GetScreenPixels();                //TODO:UnComment
             onPreviewFrame(ardata, null);
         } catch (Throwable t) {
             // Avoid crashing the application due to unhandled exceptions.
@@ -772,22 +787,29 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
         buf.position(0);
 
-        GLES20.glReadPixels(0, 0, screenWidth, screenHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);
-
+//        if(!isLandscape)
+        {
+            GLES20.glReadPixels(0, 0, screenWidth, screenHeight, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);//Original
+            Libyuv.ARCORETONV21(pixelData, screenWidth * 4, tempData, argbBuffer, mWidth * 4, mWidth, -mHeight, ybuffer, uvbuffer, frameData);
+        }
 //        Libyuv.ARGBScale(pixelData, screenWidth * 4, screenWidth, screenHeight, pixelData2, mWidth * 4, mWidth, mHeight);
 
 //        Libyuv.ABGRToARGB(pixelData, mWidth * 4, argbBuffer, mWidth * 4, mWidth, -mHeight);
 //        Libyuv.ARGBMirror(argbBuffer, mWidth * 4, argbBufferMirror, mWidth * 4, mWidth, mHeight);
 
-        Libyuv.ARCORETONV21(pixelData, screenWidth * 4, tempData, argbBuffer, mWidth * 4, mWidth, -mHeight, ybuffer, uvbuffer, frameData);
 //        Libyuv.ARGBToNV21(argbBuffer, mWidth * 4, mWidth, mHeight, ybuffer, uvbuffer);
 
 //        System.arraycopy(ybuffer,0, frameData,0, mWidth * mHeight);
 //        System.arraycopy(uvbuffer,0, frameData, mWidth * mHeight, mWidth * mHeight / 2);
+//        else
+//        {
+////            Log.d("ARTEST", "ScreenWidth : " + screenWidth + " ScreenHeight : " + screenHeight);
+//            GLES20.glReadPixels(0, 0, 1280, 720, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buf);//works with camera parameters swapped
+//            Libyuv.ARCORETONV21(pixelData, 1280 * 4, tempData, argbBuffer, 720 * 4, 720, -1280, ybuffer, uvbuffer, frameData);
+//        }
 
         return frameData;
     }
-
 
     void  SaveBitmap(byte[] rgbbuffer, int width, int height) throws IOException
     {
@@ -812,31 +834,40 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
-
         if (videoCapturerAndroid == null)
             return;
 
         if(VideoCapturerAndroid.arCorePresent && WebRTCMediaProvider.cameraID == 0)
         {
             long captureTimeNs = TimeUnit.MILLISECONDS.toNanos(SystemClock.elapsedRealtime());
-            if (videoCapturerAndroid.eventsHandler != null && !videoCapturerAndroid.firstFrameReported) {
+            if (videoCapturerAndroid.eventsHandler != null && !videoCapturerAndroid.firstFrameReported)
+            {
                 videoCapturerAndroid.eventsHandler.onFirstFrameAvailable();
                 videoCapturerAndroid.firstFrameReported = true;
             }
 
             int frameOrientation = 180; //videoCapturerAndroid.getFrameOrientation();
 
-//            Log.d(TAG, "WITH AR CORE :" + videoCapturerAndroid.getFrameOrientation());
+//            Log.d("ARTEST", "Frame : height" + videoCapturerAndroid.captureFormat.height + " Width : " + videoCapturerAndroid.captureFormat.width);
+            //height : 1280 width : 720
 
-            if (videoCapturerAndroid.frameObserver != null)
+            if (videoCapturerAndroid.frameObserver != null) {
+                if(!isLandscape)
                 videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.width,
                         videoCapturerAndroid.captureFormat.height, frameOrientation, captureTimeNs);
+                else
+                    videoCapturerAndroid.frameObserver.onByteBufferFrameCaptured(data, videoCapturerAndroid.captureFormat.height,
+                            videoCapturerAndroid.captureFormat.width, frameOrientation, captureTimeNs);
+            }
         }
         else
         {
-//            try {
+//            try
+//            {
 //                SaveBitmap(data, videoCapturerAndroid.captureFormat.width, videoCapturerAndroid.captureFormat.height);
-//            } catch (IOException e) {
+//            }
+//            catch (IOException e)
+//            {
 //                e.printStackTrace();
 //            }
 
@@ -1370,9 +1401,10 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                         Log.d(TAG, "ON STATE");
 
-                        if (permissionGiven && stream == null) {
+                        if (permissionGiven && stream == null)
+                        {
                             stream = room.publish(localRenderer, VideoChatActivity.this);
-                            stream.unmuteAudio();
+                            uiHandler.ToggleAudio(false);
                         }
                         /**
                          * Callback function for stream status change is added to make appropriate changes in controls of the interface when stream is being published.
@@ -1456,8 +1488,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             participantPublishing = true;
                             remoteStream = publishedParticipant.play(participantView.surfaceViewRenderer);
                             //TODO : UnMute Audio
-                            remoteStream.muteAudio();
-                            stream.muteAudio();
+                            uiHandler.ToggleAudio(false);
                         }
                     }
 
@@ -1601,11 +1632,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 connected = false;
                 Log.d(TAG, "ON DISCCONEASd");
 
-//                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
-//                Cursor data = callHistoryDatabaseHelper.showData();
-//                data.moveToLast();
-//
-//                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), data.getString(0));
+                CallHistoryDatabaseHelper callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
+                Cursor data = callHistoryDatabaseHelper.showData();
+                data.moveToLast();
+
+                callHistoryDatabaseHelper.UpdateSpecificData(CallHistoryDatabaseHelper.DataType.DURATION, uiHandler.timerText.getText().toString(), data.getString(0));
                 uiHandler.StopTimer();
                 stream = null;
             }
@@ -2164,6 +2195,32 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         upThread.start();
     }
 
+    public void SetLandscapeParams ()
+    {
+        ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
+        layoutParams.width = 1280;
+        layoutParams.height = 720;
+        glsurfaceView.setLayoutParams(layoutParams);
+        glsurfaceView.invalidate();
+
+        resetLocalCam = true;
+        uiHandler.AssignUIElements(false);
+        screenSize = GetScreeenSize();
+    }
+
+    public void SetPortraitParams ()
+    {
+        ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
+        layoutParams.width = 720;
+        layoutParams.height = 1280;
+        glsurfaceView.setLayoutParams(layoutParams);
+        glsurfaceView.invalidate();
+
+        resetLocalCam = true;
+        uiHandler.AssignUIElements(false);
+        screenSize = GetScreeenSize();
+    }
+
     @Override
     public void onConfigurationChanged(Configuration newConfig)
     {
@@ -2173,53 +2230,14 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
         {
             Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
-            room.unpublish();
-            setContentView(R.layout.activity_drawer);
-            uiHandler.AssignUIElements();
-            stream = room.publish(uiHandler.localRender, VideoChatActivity.this);
-            participantView.surfaceViewRenderer = uiHandler.remote1Render;
-
-            glsurfaceView = (GLSurfaceView) findViewById(R.id.glsurfaceview);
-            ViewGroup.LayoutParams layoutParams = glsurfaceView.getLayoutParams();
-            layoutParams.width = 720;
-            layoutParams.height = 1280;
-            glsurfaceView.setLayoutParams(layoutParams);
-            glsurfaceView.invalidate();
-            glsurfaceView.setPreserveEGLContextOnPause(true);
-            glsurfaceView.setEGLContextClientVersion(2);
-            glsurfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
-            glsurfaceView.setRenderer(this);
-            glsurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-            glsurfaceView.getHolder().setFormat(PixelFormat.TRANSLUCENT);
-            glsurfaceView.setZOrderOnTop(true);
-            glsurfaceView.setX(25000);
-
-            final Handler handler = new Handler();
-            handler.postDelayed(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    if(publishedParticipant != null)
-                        publishedParticipant.play(participantView.surfaceViewRenderer);
-                }
-            }, 5000);
-
-            stream.muteAudio();
-            screenSize = GetScreeenSize();
+            isLandscape = true;
+            SetLandscapeParams();
         }
         else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
         {
             Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
-            room.unpublish();
-            setContentView(R.layout.activity_drawer);
-            uiHandler.AssignUIElements();
-            participantView.surfaceViewRenderer = uiHandler.remote1Render;
-            stream = room.publish(uiHandler.localRender, VideoChatActivity.this);
-            publishedParticipant.play(participantView.surfaceViewRenderer);
-
-            stream.muteAudio();
-            screenSize = GetScreeenSize();
+            isLandscape = false;
+            SetPortraitParams();
         }
     }
 

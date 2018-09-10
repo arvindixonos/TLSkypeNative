@@ -57,7 +57,7 @@
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges=
-                "screenSize|smallestScreenSize|screenLayout|orientation">
+            "screenSize|smallestScreenSize|screenLayout|orientation">
             <intent-filter>
                 <!-- MAIN represents that it is the Main Activity-->
                 <action android:name="android.intent.action.MAIN" />

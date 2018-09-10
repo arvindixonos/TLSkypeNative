@@ -11,6 +11,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -24,6 +26,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
+import android.support.constraint.ConstraintSet;
 import android.support.design.internal.NavigationMenuItemView;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
@@ -32,11 +35,15 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.Rational;
+import android.util.TypedValue;
 import android.view.Display;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewAnimationUtils;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
@@ -94,8 +101,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private     boolean                 timerRunning = false;
     private     boolean                 flashOn;
     private     boolean                 drawerOpen = false;
-    public      boolean                 isLandscape;
     public      boolean                 isReversed;
+    public      boolean                 isMuted;
     private     Activity                currentActivity;
     private     static  String          TAG = "UI_TEST";
     private     VideoChatActivity       chatActivity;
@@ -126,6 +133,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private     String                      userName = "";
     //Notification Variables
 
+    View uiElementsVariables;
+
     ImageView progressBar;
 
     ImageButton mSettingsButton;
@@ -148,6 +157,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     CircularImageView   profilePhoto;
 
+    ConstraintLayout mainLayout;
     ConstraintLayout mHistoryScreen;
     ConstraintLayout mSettingLayout;
     ConstraintLayout mColorPickerLayout;
@@ -218,11 +228,18 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         profilePicPresent = picPresent;
         currentActivity = activity;
 
+        remote1Render = currentActivity.findViewById(R.id.StreamRender);
+        localRender = currentActivity.findViewById(R.id.CurrentRender);
+
+        mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
+        fullScreenlayoutParams = (ConstraintLayout.LayoutParams) remote1Render.getLayoutParams();
+        smallScreenlayoutParams = (ConstraintLayout.LayoutParams) localRender.getLayoutParams();
+
         chatActivity = VideoChatActivity.getInstance();
 
         fileButtonHelper = new FileButtonHelper(currentActivity, historyScreen);
 
-        AssignUIElements();
+        AssignUIElements(true);
         //Set Photo and Name
 
         NavigationView headerLayout = currentActivity.findViewById(R.id.nav_view);
@@ -257,9 +274,98 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         };
     }
 
-    public void AssignUIElements ()
+    public void AssignUIElements (boolean initialising)
     {
         width = GetScreenWidth();
+
+        mainLayout = chatActivity.findViewById(R.id.PostLogin);
+
+        if(initialising)
+        {
+            if (chatActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+            {
+                if (uiElementsVariables != null)
+                {
+                    mainLayout.removeView(uiElementsVariables);
+                    uiElementsVariables = null;
+                }
+
+                LayoutInflater inflater = chatActivity.getLayoutInflater();
+                uiElementsVariables = inflater.inflate(R.layout.activity_ui_elements_landscape, mainLayout, false);
+                mainLayout.addView(uiElementsVariables, mainLayout.getChildCount() - 1);
+
+                //Adjust Camera
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(mainLayout);
+                constraintSet.connect(R.id.CurrentRender,ConstraintSet.RIGHT,R.id.PostLogin,ConstraintSet.RIGHT,0);
+                constraintSet.connect(R.id.CurrentRender,ConstraintSet.TOP,R.id.PostLogin,ConstraintSet.TOP,0);
+
+                //Adjust Camera
+            }
+            else if (chatActivity.getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT)
+            {
+                if (uiElementsVariables != null)
+                {
+                    mainLayout.removeView(uiElementsVariables);
+                    uiElementsVariables = null;
+                }
+
+                LayoutInflater inflater = chatActivity.getLayoutInflater();
+                uiElementsVariables = inflater.inflate(R.layout.activity_ui_elements_portrait, mainLayout, false);
+                mainLayout.addView(uiElementsVariables, mainLayout.getChildCount() - 1);
+            }
+        }
+        else
+        {
+            if (chatActivity.isLandscape)
+            {
+                if (uiElementsVariables != null)
+                {
+                    mainLayout.removeView(uiElementsVariables);
+                    mainLayout.requestLayout();
+                    mainLayout.invalidate();
+                    uiElementsVariables = null;
+                }
+
+
+                //Adjust Camera
+                Log.d("ARTEST", "Set Constraints");
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(mRenderHolder);
+                constraintSet.connect(localRender.getId(), ConstraintSet.START, mRenderHolder.getId(), ConstraintSet.START, convertPixelsToDp(14));
+                constraintSet.clear(localRender.getId(), ConstraintSet.END);
+                constraintSet.applyTo(mRenderHolder);
+                //Adjust Camera
+
+                LayoutInflater inflater = chatActivity.getLayoutInflater();
+                uiElementsVariables = inflater.inflate(R.layout.activity_ui_elements_landscape, mainLayout, false);
+                mainLayout.addView(uiElementsVariables, mainLayout.getChildCount() - 1);
+
+            }
+            else
+            {
+                if (uiElementsVariables != null)
+                {
+                    mainLayout.removeView(uiElementsVariables);
+                    mainLayout.requestLayout();
+                    mainLayout.invalidate();
+                    uiElementsVariables = null;
+                }
+
+                LayoutInflater inflater = chatActivity.getLayoutInflater();
+                uiElementsVariables = inflater.inflate(R.layout.activity_ui_elements_portrait, mainLayout, false);
+                mainLayout.addView(uiElementsVariables, mainLayout.getChildCount() - 1);
+
+                //Adjust Camera
+                Log.d("ARTEST", "Set Constraints");
+                ConstraintSet constraintSet = new ConstraintSet();
+                constraintSet.clone(mRenderHolder);
+                constraintSet.connect(localRender.getId(), ConstraintSet.END, mRenderHolder.getId(), ConstraintSet.END, convertPixelsToDp(14));
+                constraintSet.clear(localRender.getId(), ConstraintSet.START);
+                constraintSet.applyTo(mRenderHolder);
+                //Adjust Camera
+            }
+        }
 
         progressBar = currentActivity.findViewById(R.id.ProgressBar);
 
@@ -276,9 +382,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         mYellowButton = currentActivity.findViewById(R.id.ColorYellow);
         mVioletButton = currentActivity.findViewById(R.id.ColorViolet);
 
-        remote1Render = currentActivity.findViewById(R.id.StreamRender);
-        localRender = currentActivity.findViewById(R.id.CurrentRender);
-
         mHistoryScreen = currentActivity.findViewById(R.id.FileHistory);
         mSettingLayout = currentActivity.findViewById(R.id.SettingLayout);
         mColorPickerLayout = currentActivity.findViewById(R.id.ColorPickerLayout);
@@ -293,10 +396,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         timerText = currentActivity.findViewById(R.id.timerText);
 
         historyScreen = currentActivity.findViewById(R.id.FileHistoryLayout);
-
-        mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
-        fullScreenlayoutParams = (ConstraintLayout.LayoutParams) remote1Render.getLayoutParams();
-        smallScreenlayoutParams = (ConstraintLayout.LayoutParams) localRender.getLayoutParams();
 
         android.support.v7.app.ActionBarDrawerToggle toggle = new android.support.v7.app.ActionBarDrawerToggle
                 (currentActivity, drawer, R.string.navigation_drawer_open, R.string.navigation_drawer_close)
@@ -319,7 +418,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
                     {
-                        ToggleAudio();
+                        ToggleAudio(isChecked);
                     }
                 });
             }
@@ -465,20 +564,29 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mSwitchCamera.setImageResource(R.drawable.flip_cam_front);
             backCam = false;
             SwitchLayoutClicked();
-            remote1Render.setVisibility(VISIBLE);
+//            remote1Render.setVisibility(VISIBLE);
             TurnOffOnDelay(mSwitchCamera, 3000);
         }
         else
         {
             mSwitchCamera.setImageResource(R.drawable.flip_cam_rear);
             backCam = true;
-            remote1Render.setVisibility(GONE);
+//            remote1Render.setVisibility(GONE);
             if(localRender.getVisibility() == View.GONE)
             {
-                localRender.setVisibility(View.VISIBLE);
+//                localRender.setVisibility(View.VISIBLE);
             }
             SwitchLayoutClicked();
             TurnOffOnDelay(mSwitchCamera, 3000);
+        }
+
+        if(chatActivity.isLandscape)
+        {
+            chatActivity.SetLandscapeParams();
+        }
+        else
+        {
+            chatActivity.SetPortraitParams();
         }
     }
 
@@ -521,6 +629,25 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         chatActivity.SendMessage("CTRL:-DC");
         chatActivity.Disconnect();
         ChangeActivity();
+    }
+
+    void RotateFrontCamera ()
+    {
+        WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
+        VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
+
+        if(WebRTCMediaProvider.cameraID == 1)
+        {
+            if (chatActivity.isLandscape)
+                videoCapturerAndroid.camera.setDisplayOrientation(90);
+            else
+                videoCapturerAndroid.camera.setDisplayOrientation(0);
+            ViewGroup.LayoutParams params = localRender.getLayoutParams();
+            int dude = params.width;
+            params.width = params.height;
+            params.height = dude;
+            localRender.setLayoutParams(params);
+        }
     }
 
     private void SwitchLayoutClicked ()
@@ -572,7 +699,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     public void ReOrient ()
     {
-        if(isLandscape)
+        if(chatActivity.isLandscape)
         {
             if(!isReversed)
             {
@@ -628,17 +755,33 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }
     }
 
-    private void ToggleAudio ()
+    public void ToggleAudio (boolean setAudio)
     {
-        if(chatActivity.stream.isAudioMuted())
+        if(setAudio)
         {
             Log.d(TAG, "Audio Muted Un muting");
-            chatActivity.stream.unmuteAudio();
+            isMuted = false;
+            if(chatActivity.stream != null)
+            {
+                chatActivity.stream.unmuteAudio();
+            }
+            if(chatActivity.remoteStream != null)
+            {
+                chatActivity.remoteStream.unmuteAudio();
+            }
         }
         else
         {
             Log.d(TAG, "Audio not Muted muting");
-            chatActivity.stream.muteAudio();
+            isMuted = true;
+            if(chatActivity.stream != null)
+            {
+                chatActivity.stream.muteAudio();
+            }
+            if(chatActivity.remoteStream != null)
+            {
+                chatActivity.remoteStream.muteAudio();
+            }
         }
     }
 
@@ -648,11 +791,11 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
             if (localRender.getVisibility() == GONE)
             {
-                localRender.setVisibility(VISIBLE);
+//                localRender.setVisibility(VISIBLE);
             }
             else
             {
-                localRender.setVisibility(GONE);
+//                localRender.setVisibility(GONE);
             }
         }
     }
@@ -1048,7 +1191,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     public void ToggleVideoView ()
     {
-        RelativeLayout mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
+        ConstraintLayout mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
         if(!videoView)
         {
             mRenderHolder.setVisibility(VISIBLE);
@@ -1059,6 +1202,16 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
             mRenderHolder.setVisibility(GONE);
             videoView = false;
         }
+    }
+
+    public int convertPixelsToDp(float dp)
+    {
+        Resources r = chatActivity.getResources();
+        return (int) TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp,
+                r.getDisplayMetrics()
+        );
     }
 }
 
@@ -1361,7 +1514,7 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
             {
-
+                loginDB.AddSpecificData("PIN_MODE", isChecked ? "ENABLED" : "DISABLED");
             }
         });
     }
@@ -2124,13 +2277,6 @@ class LoginUIHandler implements NavigationView.OnNavigationItemSelectedListener,
 
     public void backKey ()
     {
-        if(mST_SettingsScreen.getVisibility() == VISIBLE)
-        {
-            mST_SettingsScreen.setVisibility(GONE);
-            loginDB.AddSpecificData("PIN_MODE", ST_PasswordToggle.isChecked() ? "ENABLED" : "DISABLED");
-            return;
-        }
-
         switch(currentScreen)
         {
             case 0:

@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Canvas;
@@ -65,6 +66,7 @@ import org.xml.sax.SAXException;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.file.attribute.UserDefinedFileAttributeView;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -91,6 +93,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     private     boolean  drawerOpen = false;
     private     boolean  pinMode = false;
     private     boolean  signedIn = false;
+    private     boolean  stored = false;
     private String password = "0000";
     private String passwordFilling = "0000";
 
@@ -208,11 +211,10 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
         final Thread arCoreCheckThread = new Thread(() ->
         {
-            Log.d(VideoChatActivity.TAG, " VideoChatActivity HERE ");
-
             CheckArCoreAvailablity();
         });
         arCoreCheckThread.start();
+
 
         callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
         loginDB = new LoginDatabaseHelper(getApplicationContext());
@@ -228,6 +230,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             allPermissionsGiven = true;
         }
 
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         String message = getIntent().getStringExtra("PIC");
         if(message == null)
         {
@@ -286,7 +289,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 Log.d(TAG, "Connected " + userID);
                 Log.d(TAG, "LOGGING :- " + connection.toString());
                 RoomOptions roomOptions = new RoomOptions();
-                roomOptions.setName("TLLobby_v2");
+                roomOptions.setName("TLLobby_v3");
                 room = roomManager.join(roomOptions);
                 Log.d(TAG, room.toString());
 
@@ -297,10 +300,12 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                         // Do something after 5s = 5000ms
                         if(!signedIn)
                         {
+                            //TODO: SignOut
+                            Log.d(TAG, userID + " Already signed in");
                             SignOut();
                         }
                     }
-                }, 5000);
+                }, 3000);
 
                 room.on(new RoomEvent()
                 {
@@ -399,6 +404,10 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     public void SignOut ()
     {
         ShowSignedOutAlertWindow("Signing out", "User ID Already signed in you will be signed out");
+        if(room != null)
+            room.leave(null);
+        if(roomManager != null)
+            roomManager.disconnect();
     }
 
     public void SignOut (View v)
@@ -568,7 +577,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
         setContentView(R.layout.drawer_callscreen);
         SetupButtons();
-//        ListCallHistory();
 
         if(loginUIHandler == null)
         {
@@ -590,8 +598,16 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             }
         });
 
-        ChangeActivity("asd", false);
         SetupLobby();
+
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                ChangeActivity("asd", false);
+            }
+        }, 2000);
     }
 
     private void SetupButtons()
@@ -671,7 +687,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
             {
-
+                loginDB.AddSpecificData("PIN_MODE", isChecked ? "ENABLED" : "DISABLED");
             }
         });
     }
@@ -710,8 +726,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             roomName = participantID + "_CALL_" + userID;
             GetUserDetails(participantID.replace("User_", ""), true);
         }
-
-        roomName = "TestRoom";
 
         if(isSender)
         {
@@ -793,20 +807,24 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
     }
 
     @Override
+    public void onWindowFocusChanged(boolean hasFocus)
+    {
+        if(!hasFocus)
+        {
+            if(signedIn)
+                room.leave(null);
+        }
+        else
+        {
+            if(signedIn)
+                SetupLobby();
+        }
+        super.onWindowFocusChanged(hasFocus);
+    }
+
+    @Override
     public void onBackPressed()
     {
-        if(mST_SettingsScreen != null)
-        {
-            if (mST_SettingsScreen.getVisibility() == VISIBLE)
-            {
-                loginDB.AddSpecificData("PIN_MODE", ST_PasswordToggle.isChecked() ? "ENABLED" : "DISABLED");
-                Log.d(TAG, "BACKPRESSED" + ST_PasswordToggle.isChecked());
-                mST_SettingsScreen.setVisibility(View.GONE);
-
-                return;
-            }
-        }
-
         if(session != null) {
             session.pause();
         }
@@ -888,7 +906,12 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
 
     public void StoreData (String[] userData, String email)
     {
-//        callHistoryDatabaseHelper.addData(userData[0], email, userData[1], userData[5], GetDate(), "1:46");//TODO Uncomment Before Submit
+        for (String data: userData)
+        {
+            Log.d("ARTEST", data + " : " + email);
+        }
+        callHistoryDatabaseHelper.addData(userData[0], email, userData[1], userData[5], GetDate(), "1:46");//TODO Uncomment Before Submit
+        stored = true;
     }
 
     public void onDestroy()

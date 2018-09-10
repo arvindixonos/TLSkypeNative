@@ -16,8 +16,10 @@ package com.flashphoner.wcsexample.video_chat;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Point;
 import android.hardware.display.DisplayManager;
 import android.hardware.display.DisplayManager.DisplayListener;
+import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
 
@@ -65,6 +67,7 @@ public final class DisplayRotationHelper implements DisplayListener {
    * @param height the updated height of the surface.
    */
   public void onSurfaceChanged(int width, int height) {
+    Log.d("ARTEST", "SurfaceChanged");
     viewportWidth = width;
     viewportHeight = height;
     viewportChanged = true;
@@ -102,5 +105,17 @@ public final class DisplayRotationHelper implements DisplayListener {
   @Override
   public void onDisplayChanged(int displayId) {
     viewportChanged = true;
+    Log.d("ARTEST", "onDisplayChanged");
+    Point pnt = new Point();
+    display.getSize(pnt);
+    Log.d("ARTEST", "X : " + pnt.x + "Y : " + pnt.y);
+    if(pnt.x > pnt.y)
+    {
+        onSurfaceChanged(1280, 720);
+    }
+    else
+    {
+        onSurfaceChanged(720, 1280);
+    }
   }
 }
