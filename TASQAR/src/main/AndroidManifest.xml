@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.flashphoner.wcsexample.video_chat">
+    package="com.takeleap.tasqar">
 
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
@@ -28,7 +28,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
-        <receiver android:name=".ActionReceiver" />
+        <receiver android:name="com.takeleap.tasqar.ActionReceiver" />
 
         <meta-data android:name="com.google.ar.core" android:value="required" />
 
@@ -42,7 +42,7 @@
                 android:resource="@xml/provider_paths"/>
         </provider>
         <activity
-            android:name=".AppManager"
+            android:name="com.takeleap.tasqar.AppManager"
             android:label="@string/app_name"
             android:configChanges="orientation|screenSize"
             android:theme="@style/AppTheme">
@@ -53,7 +53,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".VideoChatActivity"
+            android:name="com.takeleap.tasqar.VideoChatActivity"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges=

@@ -9,7 +9,7 @@
     android:gravity="bottom"
     android:theme="@style/ThemeOverlay.AppCompat.Dark">
 
-    <com.flashphoner.wcsexample.video_chat.CircularImageView
+    <com.takeleap.tasqar.CircularImageView
         android:id="@+id/ProfilePics"
         android:layout_width="100dp"
         android:layout_height="100dp"

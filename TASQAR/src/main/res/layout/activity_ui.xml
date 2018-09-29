@@ -23,7 +23,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.flashphoner.wcsexample.video_chat.SurfaceViewRendererCustom
+        <com.takeleap.tasqar.SurfaceViewRendererCustom
             android:id="@+id/CurrentRender"
             android:layout_width="82.5dp"
             android:layout_height="110dp"
@@ -34,7 +34,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
-        <com.flashphoner.wcsexample.video_chat.SurfaceViewRendererCustom
+        <com.takeleap.tasqar.SurfaceViewRendererCustom
             android:id="@+id/StreamRender"
             android:layout_width="match_parent"
             android:layout_height="match_parent"

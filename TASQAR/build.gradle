@@ -11,7 +11,7 @@ android
 
     defaultConfig
     {
-        applicationId "com.flashphoner.wcsexample.video_chat"
+        applicationId "com.takeleap.tasqar"
         minSdkVersion 26
         targetSdkVersion 27
         versionCode 3
@@ -86,39 +86,14 @@ dependencies
             compile 'org.apache.commons:commons-lang3:3.7'
             compile 'org.apache.commons:commons-math3:3.6.1'
             compile 'de.hdodenhof:circleimageview:1.2.1'
-            //      implementation project(':arcore_client')
-            //      implementation project(':google_ar_required')
-            //      noinspection GradleCompatible
+//          implementation project(':arcore_client')
+//          implementation project(':google_ar_required')
+//          noinspection GradleCompatible
             compile 'com.google.android.support:wearable:1.1.+'
             implementation project(':Shapes3D')
             implementation project(':processing-core')
+            implementation project(':flashphoner')
         }
-
-    dependencies {
-        compile fileTree(include: ['*.jar'], dir: 'libs')
-        implementation 'com.google.ar:core:1.4.0'
-        testCompile 'junit:junit:4.12'
-        compile 'com.android.support:appcompat-v7:27.1.1'
-        compile 'com.android.support:design:27.1.1'
-        implementation 'com.google.code.gson:gson:2.2.4'
-        implementation project(':commons-net-3.6')
-        implementation project(':autobahn.0.5.2')
-        implementation 'com.android.support.constraint:constraint-layout:1.1.2'
-        implementation 'com.android.support:gridlayout-v7:27.1.1'
-        implementation 'de.javagl:obj:0.2.1'
-        implementation project(':libraryyuv')
-        implementation 'com.github.hedzr:android-file-chooser:83d0e18f63'
-        implementation project(':libjingle_peerconnection')
-        compile 'org.apache.commons:commons-lang3:3.7'
-        compile 'org.apache.commons:commons-math3:3.6.1'
-        //    implementation project(':arcore_client')
-        //    implementation project(':google_ar_required')
-        //noinspection GradleCompatible
-        compile 'com.google.android.support:wearable:1.1.+'
-        implementation project(':flashphoner')
-        implementation project(':processing-core')
-        implementation project(':Shapes3D')
-}
 
 play
 {

@@ -58,7 +58,7 @@
                 android:layout_weight="1"
                 android:paddingEnd="15dp">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn1"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -84,7 +84,7 @@
                 android:layout_height="58dp"
                 android:layout_weight="1">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn2"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -111,7 +111,7 @@
                 android:layout_weight="1"
                 android:paddingStart="15dp">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn3"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -147,7 +147,7 @@
                 android:layout_weight="1"
                 android:paddingEnd="15dp">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn4"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -173,7 +173,7 @@
                 android:layout_height="58dp"
                 android:layout_weight="1">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn5"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -200,7 +200,7 @@
                 android:layout_weight="1"
                 android:paddingStart="15dp">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn6"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -236,7 +236,7 @@
                 android:layout_weight="1"
                 android:paddingEnd="15dp">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn7"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -262,7 +262,7 @@
                 android:layout_height="58dp"
                 android:layout_weight="1">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn8"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -289,7 +289,7 @@
                 android:layout_weight="1"
                 android:paddingStart="15dp">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn9"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
@@ -325,7 +325,7 @@
                 android:layout_height="58dp"
                 android:layout_gravity="center_horizontal">
 
-                <com.flashphoner.wcsexample.video_chat.CustomImageButton
+                <com.takeleap.tasqar.CustomImageButton
                     android:id="@+id/imgBtn0"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

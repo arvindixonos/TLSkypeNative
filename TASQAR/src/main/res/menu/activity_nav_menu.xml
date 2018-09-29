@@ -17,11 +17,17 @@
         <item android:title="Toggles">
             <menu>
                 <item
-                    android:id="@+id/mute_audio"
+                    android:id="@+id/mute_mic"
                     android:icon="@drawable/mic_off"
-                    android:title="Mute Audio"
+                    android:title="Mute Mic"
                     app:actionLayout="@layout/switch_item"
                     app:showAsAction="always" />
+                <!--<item-->
+                    <!--android:id="@+id/mute_speaker"-->
+                    <!--android:icon="@drawable/volume_off"-->
+                    <!--android:title="Mute Speaker"-->
+                    <!--app:actionLayout="@layout/switch_item"-->
+                    <!--app:showAsAction="always" />-->
             </menu>
         </item>
     </group>

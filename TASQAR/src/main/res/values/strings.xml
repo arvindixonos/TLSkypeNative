@@ -31,4 +31,5 @@
     <string name="nav_header_subtitle">support@takeleap.com</string>
     <string name="nav_header_desc">Options Menu</string>
     <string name="action_settings">Settings</string>
+    <string name="background">BackGround</string>
 </resources>

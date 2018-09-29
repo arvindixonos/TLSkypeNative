@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.flashphoner.wcsexample.video_chat.HistoryButton xmlns:android="http://schemas.android.com/apk/res/android"
+<com.takeleap.tasqar.HistoryButton xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -82,7 +82,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/baseline_call_white_24dp" />
 
-    <com.flashphoner.wcsexample.video_chat.CircularImageView
+    <com.takeleap.tasqar.CircularImageView
         android:id="@+id/circularImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -95,4 +95,4 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/call_expert_1" />
 
-</com.flashphoner.wcsexample.video_chat.HistoryButton>
+</com.takeleap.tasqar.HistoryButton>
