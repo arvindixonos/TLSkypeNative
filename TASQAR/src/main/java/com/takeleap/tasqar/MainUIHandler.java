@@ -107,7 +107,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private     Runnable                timerRunnable;
     private     long                    startTime;
     private     CameraTorchMode         cameraTorchMode;
-    public      SelectedElement         selectedElement = SelectedElement.LINE;
+    public      SelectedElement         selectedElement;
     private     SelectedColor           selectedColor = SelectedColor.BLUE;
     public      boolean                 startTransfer = false;
     private     ActionBarDrawerToggle   mDrawerToggle;
@@ -152,7 +152,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     Switch toggleMuteButton;
     Switch toggleAudioButton;
 
-    CircularImageView profilePhoto;
+//    CircularImageView profilePhoto;
 
     ConstraintLayout mainLayout;
     ConstraintLayout mHistoryScreen;
@@ -200,7 +200,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     {
         ARROW,
         LINE,
-        BLINKER
+        BLINKER,
+        SURFACE_LINE
     }
 
     public enum SelectedColor
@@ -244,22 +245,19 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         }
 
         AssignUIElements(true);
-        //Set Photo and Name
 
+        //Set Photo and Name
         NavigationView headerLayout = currentActivity.findViewById(R.id.nav_view);
         View header = headerLayout.getHeaderView(0);
         if(profilePicPresent)
         {
-            profilePhoto = header.findViewById(R.id.ProfilePics);
-            profilePhoto.setImageBitmap(GetUsetProfilePhoto());
+//            profilePhoto = header.findViewById(R.id.ProfilePics);
+//            profilePhoto.setImageBitmap(GetUsetProfilePhoto());
         }
         Log.d(TAG, "User Name " + userName);
         userNameText = header.findViewById(R.id.ProfileName);
         userNameText.setText(userName);
         //Set Photo and Name
-
-
-
         timerHandler = new Handler();
         timerRunnable = new Runnable()
         {
@@ -458,7 +456,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                         ToggleMic(isChecked);
                     }
                 });
-
 //                toggleMuteSpeakerItem = currentActivity.findViewById(R.id.mute_speaker);
 //                toggleAudioButton = (Switch) toggleMuteSpeakerItem.getChildAt(0);
 //                toggleAudioButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
@@ -477,7 +474,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         NavigationView navigationView = currentActivity.findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
 
         mSettingsButton.setOnClickListener(v -> SettingButtonClick());
         mUndoButton.setOnClickListener(v -> UndoButtonClick());
@@ -596,7 +592,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private void SwitchCameraClicked ()
     {
         VideoChatActivity.getInstance().ToggleCamera();
-
+        selectedElement = SelectedElement.LINE;
         if(backCam)
         {
             mSwitchCamera.setImageResource(R.drawable.flip_cam_front);

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -20,6 +21,8 @@ import com.takeleap.tasqar.R;
 
 import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoRenderer;
+
+import java.util.ArrayList;
 
 
 /**
@@ -41,13 +44,15 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
     Bitmap screenShotBitmap;
 
     //DrawPicture Vars
-    public boolean drawEnabled;
+    public boolean drawEnabled = true; //TODO
     private boolean drawReset;
     private float xStart;
     private float yStart;
     Picture drawPicture;
     Rect dst = new Rect(0, 0, 173, 485);
     Rect nullRect = new Rect(0,0,0,0);
+    private ArrayList<FingerPath> paths = new ArrayList<>();
+    private int currentColor = Color.RED;
     //End DrawPicture Vars
 
     public SurfaceViewRendererCustom(Context context)
@@ -115,6 +120,51 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
 
     }
 
+
+    public void PaintStart (float x, float y)
+    {
+        Log.d("PAINT", "Paint Start");
+
+        mPath = new Path();
+        FingerPath fp = new FingerPath(currentColor, 20,  mPath);
+        paths.add(fp);
+
+        mPath.reset();
+        mPath.moveTo(x, y);
+        mX = x;
+        mY = y;
+    }
+    private boolean paintStarted = false;
+    public void PaintMove (float x, float y)
+    {
+        if(!paintStarted)
+        {
+            PaintStart(x, y);
+            paintStarted = true;
+            return;
+        }
+        Log.d("PAINT", "Paint Move");
+
+        float dx = Math.abs(x - mX);
+        float dy = Math.abs(y - mY);
+
+        if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE)
+        {
+            mPath.quadTo(mX, mY, (x + mX) / 2, (y + mY) / 2);
+            mX = x;
+            mY = y;
+        }
+    }
+
+    public void PaintUp ()
+    {
+        Log.d("PAINT", "Paint Up");
+
+        mPath.lineTo(mX, mY);
+        paintStarted = false;
+    }
+
+
     public Picture getPicture(boolean clear)
     {
         Bitmap bitmap;
@@ -153,19 +203,13 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
     {
         super.onDraw(canvas);
 
-        if(!drawEnabled)
+        if(drawEnabled && mPath != null)
         {
-            canvas.drawColor(0Xcbf442);
+            canvas.save();
+            mCanvas.drawPath(mPath, mPaint);
+
             canvas.drawBitmap(mBitmap, 0, 0, mBitmapPaint);
-            canvas.drawPath(mPath, mPaint);
-        }
-        else
-        {
-            canvas.drawPicture(drawPicture, dst);
-        }
-        if(drawReset)
-        {
-            canvas.drawPicture(drawPicture, nullRect);
+            canvas.restore();
         }
     }
 
@@ -187,12 +231,13 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
                 int width = getWidth();
                 int height = getHeight();
 
+                if(VideoChatActivity.getInstance().isODG)
+                {
+                    PaintMove(xPos, yPos);
+                }
+
                 if(VideoChatActivity.getInstance().arrowMode)
                     VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
-
-//                VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
-                if(drawEnabled)
-                    drawTouch_start(event.getX(), event.getY());
                 invalidate();
                 break;
             case MotionEvent.ACTION_MOVE:
@@ -206,31 +251,27 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
 
 //                Log.d(VideoChatActivity.TAG, "SURF " + xPos + " " + yPos);
 
+                if(VideoChatActivity.getInstance().isODG)
+                {
+                    PaintMove(xPos, yPos);
+                }
+
                 if(!VideoChatActivity.getInstance().arrowMode)
                     VideoChatActivity.getInstance().TapSend(xPos, yPos, width, height);
 
-                if(drawEnabled)
-                    drawTouch_move(event.getX(), event.getY());
                 invalidate();
                 break;
             case MotionEvent.ACTION_UP:
 
+                if(VideoChatActivity.getInstance().isODG)
+                {
+                    PaintUp();
+                    VideoChatActivity.getInstance().BreakSend();
+                }
                 if(!VideoChatActivity.getInstance().arrowMode)
                     VideoChatActivity.getInstance().BreakSend();
-
-                drawTouch_up(event.getX(), event.getY());
-                invalidate();
-                if(!VideoChatActivity.getInstance().participantPublishing)
-                {
-                    ClearDrawingCache();
-                }
-                else if(drawEnabled)
-                {
-                    savePic = true;
-                }
                 break;
         }
-
         return true;
     }
 
@@ -275,5 +316,20 @@ public class SurfaceViewRendererCustom extends SurfaceViewRenderer
         Bitmap dst = Bitmap.createBitmap(src, 0, 0, src.getWidth(), src.getHeight(), m, false);
         dst.setDensity(DisplayMetrics.DENSITY_DEFAULT);
         return dst;
+    }
+}
+
+class FingerPath
+{
+
+    public int color;
+    public int strokeWidth;
+    public Path path;
+
+    public FingerPath(int color, int StrokeWidth, Path path)
+    {
+        this.color = color;
+        this.strokeWidth = StrokeWidth;
+        this.path = path;
     }
 }

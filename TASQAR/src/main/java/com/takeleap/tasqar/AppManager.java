@@ -3,6 +3,7 @@ package com.takeleap.tasqar;
 import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
@@ -207,6 +208,11 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         callHistoryDatabaseHelper = new CallHistoryDatabaseHelper(getApplicationContext());
         loginDB = new LoginDatabaseHelper(getApplicationContext());
 
+
+//        loginDB.addData("25", "Adish", "Fantasy@gmail.com", "9790025168", "Qwerty5$", "Developer", "Developer", "0000");
+
+//        loginDB.addData("27", "Nakkeran", "Nakkeran@wow.com", "9790025168", "Hello9!?", "Manager", "Manager", "0000");
+
         if( ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(AppManager.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED)
@@ -231,7 +237,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         }
         else if(message.equals("PRESENT"))
         {
-            SetupUserScreen(true);
+            SetupUserScreen(false);//TODO: Set to tru if present for demo reason off
         }
     }
 
@@ -280,23 +286,22 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 Log.d(TAG, "Connected " + userID);
                 Log.d(TAG, "LOGGING :- " + connection.toString());
                 RoomOptions roomOptions = new RoomOptions();
-                roomOptions.setName("TLLobby_v3");
+                roomOptions.setName("TLLobby_v5");
                 room = roomManager.join(roomOptions);
                 Log.d(TAG, room.toString());
 
-                final Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Do something after 5s = 5000ms
-                        if(!signedIn)
-                        {
-                            //TODO: SignOut
-                            Log.d(TAG, userID + " Already signed in");
-                            SignOut();
-                        }
-                    }
-                }, 3000);
+//                final Handler handler = new Handler();
+//                handler.postDelayed(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        // Do something after 5s = 5000ms
+//                        if(!signedIn)
+//                        {
+//                            Log.d(TAG, userID + " Already signed in");
+//                            SignOut();
+//                        }
+//                    }
+//                }, 3000);
 
                 room.on(new RoomEvent()
                 {
@@ -339,7 +344,8 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                     @Override
                     public void onFailed(Room room, String s)
                     {
-
+                        Log.d(TAG, "onFailed to join room : " + room + "Reason : " + s);
+                        SignOut();
                     }
 
                     @Override
@@ -424,8 +430,6 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         AlertDialog dialog = mBuilder.create();
         dialog.show();
 
-        cancelButton.setVisibility(View.GONE);
-
         submitButton.setOnClickListener(v ->
         {
             loginDB = new LoginDatabaseHelper(getApplicationContext());
@@ -440,6 +444,16 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
                 }
             });
         });
+
+        dialog.setOnCancelListener(new DialogInterface.OnCancelListener()
+        {
+            @Override
+            public void onCancel(DialogInterface dialogInterface)
+            {
+                submitButton.callOnClick();
+            }
+        });
+        cancelButton.setVisibility(View.GONE);
     }
 
     public void ShowSignOutAlertWindow(String contentString, String titleString)
@@ -592,14 +606,14 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         });
 
         SetupLobby();
-//        new Handler().postDelayed(new Runnable()
-//        {
-//            @Override
-//            public void run()
-//            {
-//                ChangeActivity("asd", false);
-//            }
-//        }, 2000);
+        new Handler().postDelayed(new Runnable()
+        {
+            @Override
+            public void run()
+            {
+                ChangeActivity("asd", false);
+            }
+        }, 2000);
     }
 
     private void SetupButtons()
@@ -724,12 +738,12 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             boolean sucess = SendMessageToPerson(participantID, roomName);
             if(!sucess)
             {
-                Toast.makeText(getApplicationContext(), "User Not Online", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Call does not connect", Toast.LENGTH_SHORT).show();
                 return;
             }
         }
 
-//        roomName = "chatRoom";
+        roomName = "chatRoom";
 
         Intent intent = new Intent(this, VideoChatActivity.class);
         if(profilePicPresent)
