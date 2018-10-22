@@ -56,7 +56,11 @@
         layout="@layout/screen_history"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/SwitchCamButton"
@@ -224,8 +228,8 @@
             android:id="@+id/div1"
             android:layout_width="1dp"
             android:layout_height="match_parent"
-            android:layout_marginEnd="8dp"
             android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@+id/ArrowButton"
             app:layout_constraintStart_toEndOf="@+id/UndoButton"
@@ -279,9 +283,9 @@
             android:id="@+id/ArrowButton"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="@+id/MenuBG"
@@ -293,9 +297,9 @@
             android:id="@+id/DrawButton"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@null"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/ArrowButton"
@@ -306,9 +310,9 @@
             android:id="@+id/BlinkButton"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -320,9 +324,9 @@
             android:id="@+id/CameraRenderButton"
             android:layout_width="32dp"
             android:layout_height="32dp"
-            android:layout_marginBottom="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginBottom="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -335,7 +339,11 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="0dp">
+        android:elevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/ProgressBar"

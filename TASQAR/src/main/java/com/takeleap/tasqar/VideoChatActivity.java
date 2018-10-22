@@ -128,7 +128,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean isAdmin = false;
     public boolean isODG;
     public ImageButton mFileUploadButton;
-    String wcsURL = "ws://123.176.34.172:8080";
+    String wcsURL = "ws://192.168.0.156:8080";
+//    String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
     String roomName = "NEWFTP";
 //    UI references.
@@ -203,7 +204,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     private final PlaneRenderer planeRenderer = new PlaneRenderer();
     private final PointCloudRenderer pointCloudRenderer = new PointCloudRenderer();
 
-    public      boolean arrowMode = false;
+    public      boolean arrowMode;
 
     public      boolean fileDownloading = false;
     public      boolean fileDownloadingFinishing = false;
@@ -327,7 +328,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
         android_id = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
 
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_FULL_USER);
 
         if (ActivityCompat.checkSelfPermission(VideoChatActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 != PackageManager.PERMISSION_GRANTED)
@@ -357,11 +358,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             String localMessage = localMessages.get(0);
                             localMessages.remove(0);
 
-                            if (localMessage.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
+                            if (localMessage.contains("TAP: "))
                             {
                                 DecodeTapMessage(localMessage);
                             }
-                            else if (localMessage.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
+                            else if (localMessage.contains("BREAK: "))
                             {
                                 String userName = localMessage.replace("BREAK: " , "");
 
@@ -415,6 +416,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                             if (remoteMessage.contains("TAP: ") && WebRTCMediaProvider.cameraID == 0)
                             {
+                                Log.d(TAG, "Remote Message : " + remoteMessage);
                                 DecodeTapMessage(remoteMessage);
                             }
                             else if (remoteMessage.contains("BREAK: ") && WebRTCMediaProvider.cameraID == 0)
@@ -458,6 +460,19 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     private void DecodeUndoMessage(String userName)
     {
+        if(isODG)
+        {
+            remoteRenderer.ClearCanvas();
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    remoteRenderer.invalidate();
+                }
+            });
+            return;
+        }
         pointRenderer.Undo(userName);
     }
 
@@ -480,7 +495,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     protected void onResume()
     {
         super.onResume();
-
+        Log.d(TAG, "App unpaused");
+        isPaused = false;
         if (session != null) {
             try
             {
@@ -553,7 +569,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         loginName.setText(loginNameText);
 
         localRenderer.setMirror(true);
-        remoteRenderer.setMirror(false);
+        remoteRenderer.setMirror(true);
 
         List<MediaDevice> videoDeviceList = Flashphoner.getMediaDevices().getVideoList();
 
@@ -645,11 +661,9 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     public void onDrawFrame(GL10 gl)
     {
-//        Log.d(TAG, "ON DRAW");
-
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
 
-        if (session == null) {
+        if (session == null || isPaused) {
             return;
         }
 
@@ -721,7 +735,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 }
                 catch (CameraNotAvailableException e)
                 {
-                    Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Log.d(TAG, "Camera not available exception : " + e.getMessage());
                 }
             }
         }
@@ -814,8 +828,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     @Override
     public void onPreviewFrame(byte[] data, android.hardware.Camera camera)
     {
+        if(isPaused)
+            return;
         WebRTCMediaProvider webRTCMediaProvider = WebRTCMediaProvider.getInstance();
         VideoCapturerAndroid videoCapturerAndroid = webRTCMediaProvider.videoCapturer;
+        if(isODG)
+        {
+            handleLocalTap();
+            handleRemoteTap();
+        }
         if (videoCapturerAndroid == null)
             return;
 
@@ -871,8 +892,15 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
         synchronized (localSyncObject)
         {
+            if(isODG)
+            {
+                motionEventsLocal.clear();
+                remoteRenderer.PaintUp();
+                return;
+            }
             motionEventsLocal.clear();
             pointRenderer.AddBreak(userName);
+
         }
     }
 
@@ -904,7 +932,19 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public void UndoClicked()
     {
         SendMessage("UNDO: " + roomManager.getUsername());
-
+        if(isODG)
+        {
+            remoteRenderer.ClearCanvas();
+            runOnUiThread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    remoteRenderer.invalidate();
+                }
+            });
+            return;
+        }
         pointRenderer.Undo(roomManager.getUsername());
     }
 
@@ -1008,6 +1048,12 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             case SURFACE_LINE:
                 drawType = "LN";
                 break;
+            case SURFACE_ARROW:
+                drawType = "SAR";
+                break;
+            case SURFACE_BLINKER:
+                drawType = "SBL";
+                break;
         }
 
         SendMessage("TAP: " + x + " " + y + " " + width + " " + height + " " + drawType + " " + roomManager.getUsername() + " " + Arrays.toString(currentColor));
@@ -1024,19 +1070,45 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         float xMul = event.motionEvent.getX() / width;
         float yMul = event.motionEvent.getY() / height;
 
-        float xVal = screenWidth * xMul;
-        float yVal = screenHeight * yMul;
 
-        event.motionEvent.setLocation(xVal, yVal);
+        float xVal;
+        float yVal;
+
+        if(isODG)
+        {
+            xVal = screenSize.x * xMul;
+            yVal = screenSize.y * yMul;
+        }
+        else
+        {
+            xVal = screenWidth * xMul;
+            yVal = screenHeight * yMul;
+
+        }
+
 
         boolean local = event.userName.equals(roomManager.getUsername());
 
         if (local)
         {
+            if(isODG)
+            {
+                xVal = screenSize.x * xMul;
+                yVal = screenSize.y * yMul;
+            }
+            else
+            {
+                xVal = screenWidth * xMul;
+                yVal = screenHeight * yMul;
+            }
+            event.motionEvent.setLocation(xVal, yVal);
             motionEventsLocal.add(event);
         }
         else
         {
+            xVal = screenWidth * xMul;
+            yVal = screenHeight * yMul;
+            event.motionEvent.setLocation(xVal, yVal);
             motionEventsRemote.add(event);
         }
     }
@@ -1055,7 +1127,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                 MotionEvent tap = tasqar_motionEvent.motionEvent;
                 motionEventsLocal.remove(0);
-
                 if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
                 {
                     for (HitResult hit : frame.hitTest(tap))
@@ -1090,8 +1161,11 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                 String mode = tasqar_motionEvent.mode;
 
                 MotionEvent tap = tasqar_motionEvent.motionEvent;
-                motionEventsRemote.remove(0);
 
+                localRenderer.drawEnabled = true;
+                localRenderer.drawTouch_move(tap.getX(), tap.getY());
+
+                motionEventsRemote.remove(0);
                 if (tap != null && camera.getTrackingState() == TrackingState.TRACKING)
                 {
                     for (HitResult hit : frame.hitTest(tap))
@@ -1114,6 +1188,96 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
             }
         }
     }
+
+
+    private void handleLocalTap()
+    {
+        synchronized (localSyncObject)
+        {
+            while (motionEventsLocal.size() > 0)
+            {
+                TASQAR_MotionEvent tasqar_motionEvent = motionEventsLocal.get(0);
+
+                String mode = tasqar_motionEvent.mode;
+
+                MotionEvent tap = tasqar_motionEvent.motionEvent;
+                motionEventsLocal.remove(0);
+
+                if (tap != null)
+                {
+                    switch (mode)
+                    {
+                        case "LN":
+                            DrawOnCanvas(tap.getX(), tap.getY());
+                            break;
+                        case "BR":
+
+                            break;
+                        case "SAR":
+                            DrawArrowTwoD(tap.getX(), tap.getY());
+                            break;
+                        case "SBL":
+                            DrawBlinkerTwoD(tap.getX(), tap.getY());
+                            break;
+                        default:
+                            Log.d(TAG, "Tap handler doesn't exist");
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleRemoteTap()
+    {
+        synchronized (remoteSyncObject)
+        {
+            while (motionEventsRemote.size() > 0)
+            {
+                TASQAR_MotionEvent tasqar_motionEvent = motionEventsRemote.get(0);
+
+                String mode = tasqar_motionEvent.mode;
+
+                MotionEvent tap = tasqar_motionEvent.motionEvent;
+                motionEventsRemote.remove(0);
+
+                if (tap != null)
+                {
+                    switch (mode)
+                    {
+                        case "LN":
+                            DrawOnCanvas(tap.getX(), tap.getY());
+                            break;
+                        case "SAR":
+                            DrawArrowTwoD(tap.getX(), tap.getY());
+                            break;
+                        case "SBL":
+                            DrawBlinkerTwoD(tap.getX(), tap.getY());
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+
+    private void DrawOnCanvas (float x, float y)
+    {
+        remoteRenderer.PaintMove(x, y);
+        remoteRenderer.invalidate();
+        Log.d(TAG, "Drawing on canvas");
+    }
+
+    private void DrawArrowTwoD (float x, float y)
+    {
+        remoteRenderer.DrawArrow(x, y);
+    }
+
+    private void DrawBlinkerTwoD (float x, float y)
+    {
+        remoteRenderer.DrawBlinker(x, y);
+    }
+
 
     public  void TogglePointPlaneSpawn()
     {
@@ -2054,11 +2218,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         }
     }
 
+    public boolean isPaused;
     @Override
     protected void onPause()
     {
         super.onPause();
-
+        Log.d(TAG, "App Paused");
+        isPaused = true;
         if (session != null)
         {
             room.unpublish();
@@ -2151,20 +2317,24 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     {
         super.onConfigurationChanged(newConfig);
         adjustFullScreen(newConfig);
-//        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
-//        {
-//            Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
-//            isLandscape = true;
-//            SetLandscapeParams();
-//            SendMessage("CTRL:-LS");
-//        }
-//        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
-//        {
-//            Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
-//            isLandscape = false;
-//            SetPortraitParams();
-//            SendMessage("CTRL:-PT");
-//        }
+        if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE)
+        {
+            Log.d(TAG, "ScreenSize : " + screenSize);
+            Toast.makeText(this, "landscape", Toast.LENGTH_SHORT).show();
+            isLandscape = true;
+            SetLandscapeParams();
+            if(uiHandler.backCam && VideoCapturerAndroid.arCorePresent)
+                SendMessage("CTRL:-LS");
+        }
+        else if (newConfig.orientation == Configuration.ORIENTATION_PORTRAIT)
+        {
+            Log.d(TAG, "ScreenSize : " + screenSize);
+            Toast.makeText(this, "portrait", Toast.LENGTH_SHORT).show();
+            isLandscape = false;
+            SetPortraitParams();
+            if(uiHandler.backCam && VideoCapturerAndroid.arCorePresent)
+                SendMessage("CTRL:-PT");
+        }
     }
 
     @Override

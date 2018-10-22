@@ -90,7 +90,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private     boolean                 switched;
     private     boolean                 minimisedSwitched;
     private     boolean                 videoView = false;
-    private     boolean                 backCam = false;
+    public      boolean                 backCam = false;
     private     boolean                 recording;
     private     boolean                 pointMode = false;
     private     boolean                 isAboveEight;
@@ -107,7 +107,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private     Runnable                timerRunnable;
     private     long                    startTime;
     private     CameraTorchMode         cameraTorchMode;
-    public      SelectedElement         selectedElement;
+    public      SelectedElement         selectedElement = SelectedElement.LINE;
     private     SelectedColor           selectedColor = SelectedColor.BLUE;
     public      boolean                 startTransfer = false;
     private     ActionBarDrawerToggle   mDrawerToggle;
@@ -201,7 +201,9 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         ARROW,
         LINE,
         BLINKER,
-        SURFACE_LINE
+        SURFACE_LINE,
+        SURFACE_ARROW,
+        SURFACE_BLINKER
     }
 
     public enum SelectedColor
@@ -226,6 +228,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
         remote1Render = currentActivity.findViewById(R.id.StreamRender);
         localRender = currentActivity.findViewById(R.id.CurrentRender);
+        localRender.currentActivity = currentActivity;
 
         mRenderHolder = currentActivity.findViewById(R.id.RenderHolder);
         fullScreenlayoutParams = (ConstraintLayout.LayoutParams) remote1Render.getLayoutParams();
@@ -456,16 +459,6 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
                         ToggleMic(isChecked);
                     }
                 });
-//                toggleMuteSpeakerItem = currentActivity.findViewById(R.id.mute_speaker);
-//                toggleAudioButton = (Switch) toggleMuteSpeakerItem.getChildAt(0);
-//                toggleAudioButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener()
-//                {
-//                    @Override
-//                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
-//                    {
-//                        ToggleAudio(isChecked);
-//                    }
-//                });
             }
         };
 
@@ -514,7 +507,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private void ArrowButtonClicked ()
     {
         chatActivity.arrowMode = true;
-        selectedElement = SelectedElement.ARROW;
+        if(chatActivity.isODG)
+        {
+            selectedElement = SelectedElement.SURFACE_ARROW;
+        }
+        else
+        {
+            selectedElement = SelectedElement.ARROW;
+        }
         mColorPickerLayout.setVisibility(VISIBLE);
         mArrowButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
 
@@ -524,7 +524,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private void DrawButtonClicked ()
     {
         chatActivity.arrowMode = false;
-        selectedElement = SelectedElement.LINE;
+        if(chatActivity.isODG)
+        {
+            selectedElement = SelectedElement.SURFACE_LINE;
+        }
+        else
+        {
+            selectedElement = SelectedElement.LINE;
+        }
         mColorPickerLayout.setVisibility(VISIBLE);
         mDrawButton.setColorFilter(currentActivity.getResources().getColor(R.color.light_grey));
 
@@ -534,7 +541,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
     private void BlinkButtonClicked ()
     {
         chatActivity.arrowMode = true;
-        selectedElement = SelectedElement.BLINKER;
+        if(chatActivity.isODG)
+        {
+            selectedElement = SelectedElement.SURFACE_BLINKER;
+        }
+        else
+        {
+            selectedElement = SelectedElement.BLINKER;
+        }
         mSettingLayout.setVisibility(GONE);
         mColorPickerLayout.setVisibility(GONE);
     }
