@@ -127,8 +127,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
     public boolean isLandscape = false;
     public boolean isAdmin = false;
     public boolean isODG;
-    public ImageButton mFileUploadButton;
-    String wcsURL = "ws://192.168.0.156:8080";
+    public FloatingActionButton mFileUploadButton;
+    String wcsURL = "ws://192.168.1.72:8080";
 //    String wcsURL = "ws://123.176.34.172:8080";
 //    String roomName = "room-cd696c";
     String roomName = "NEWFTP";
@@ -295,8 +295,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         getInstance().runOnUiThread(new Runnable()
         {
             @Override
-            public void run() {
-
+            public void run()
+            {
                 Toast toast = Toast.makeText(applicationContext, message, Toast.LENGTH_LONG);
                 toast.show();
             }
@@ -1585,6 +1585,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                                     isODG = true;
                                     uiHandler.selectedElement = MainUIHandler.SelectedElement.SURFACE_LINE;
                                     setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                                    remoteRenderer.setMirror(false);
                                     Log.d(TAG, "Partner is an ODG device");
                                 }
                             }
@@ -1603,6 +1604,7 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                             isODG = true;
                             uiHandler.selectedElement = MainUIHandler.SelectedElement.SURFACE_LINE;
                             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                            remoteRenderer.setMirror(false);
                             Log.d(TAG, "An ODG device has joined");
                         }
 
@@ -1736,11 +1738,13 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
                             String messageAndroidID = messageReceived.substring(messageReceived.indexOf(":FU") + 3, messageReceived.indexOf("-/"));
 
-                            if(messageAndroidID == android_id)
+                            if(messageAndroidID.equals(android_id))
                             {
+                                Log.d(TAG, "Android ID is The SAME");
                                 return;
                             }
 
+                            Log.d(TAG, "Message android ID" + messageAndroidID);
                             messageReceived = messageReceived.replace(":FU", "");
                             messageReceived = messageReceived.replace(messageAndroidID, "");
                             messageReceived = messageReceived.replace("-/", "");
@@ -1838,7 +1842,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
                         e.printStackTrace();
                     }
                 }
-
                 break;
 
             case ScreenRecorder.PERMISSION_CODE:
@@ -2046,7 +2049,6 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
 
     public void DownloadFile(String fileName)
     {
-
         if(fileDownloading)
             return;
 
@@ -2227,7 +2229,8 @@ public class VideoChatActivity extends AppCompatActivity implements GLSurfaceVie
         isPaused = true;
         if (session != null)
         {
-            room.unpublish();
+            if(room != null)
+                room.unpublish();
             displayRotationHelper.onPause();
             glsurfaceView.onPause();
             session.pause();

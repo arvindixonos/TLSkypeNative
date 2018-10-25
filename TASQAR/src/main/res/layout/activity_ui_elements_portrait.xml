@@ -52,7 +52,11 @@
         layout="@layout/screen_history"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="gone" />
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/SwitchCamButton"
@@ -125,9 +129,9 @@
             android:id="@+id/ColorRed"
             android:layout_width="0dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/FullRed"
@@ -140,9 +144,9 @@
             android:id="@+id/ColorBlue"
             android:layout_width="0dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/EXCEL"
@@ -156,9 +160,9 @@
             android:id="@+id/ColorGreen"
             android:layout_width="0dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/green"
@@ -172,9 +176,9 @@
             android:id="@+id/ColorYellow"
             android:layout_width="0dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/YellowBright"
@@ -188,9 +192,9 @@
             android:id="@+id/ColorViolet"
             android:layout_width="0dp"
             android:layout_height="28dp"
-            android:layout_marginEnd="4dp"
             android:layout_marginStart="4dp"
             android:layout_marginTop="4dp"
+            android:layout_marginEnd="4dp"
             android:background="@null"
             android:scaleType="fitXY"
             android:tint="@color/Violet"
@@ -329,7 +333,11 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="0dp">
+        android:elevation="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/ProgressBar"

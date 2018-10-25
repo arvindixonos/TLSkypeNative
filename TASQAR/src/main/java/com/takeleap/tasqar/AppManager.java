@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
@@ -583,6 +584,24 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         }
 
         setContentView(R.layout.drawer_callscreen);
+        ImageView splashImage = findViewById(R.id.splashScreen);
+        String splashScreen = getIntent().getStringExtra("CALLEND");
+        if(splashScreen == null)
+        {
+            new Handler().postDelayed(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    splashImage.setVisibility(View.GONE);
+                }
+            }, 2000);
+        }
+        else
+        {
+            splashImage.setVisibility(View.GONE);
+        }
+
         SetupButtons();
 
         if(loginUIHandler == null)
@@ -606,14 +625,15 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
         });
 
         SetupLobby();
-        new Handler().postDelayed(new Runnable()
-        {
-            @Override
-            public void run()
-            {
-                ChangeActivity("asd", false);
-            }
-        }, 2000);
+        // Auto start a room for testing
+//        new Handler().postDelayed(new Runnable()
+//        {
+//            @Override
+//            public void run()
+//            {
+//                ChangeActivity("asd", false);
+//            }
+//        }, 2000);
     }
 
     private void SetupButtons()
@@ -743,7 +763,7 @@ public class AppManager extends AppCompatActivity implements NavigationView.OnNa
             }
         }
 
-        roomName = "chatRoom";
+//        roomName = "chatRoom";
 
         Intent intent = new Intent(this, VideoChatActivity.class);
         if(profilePicPresent)

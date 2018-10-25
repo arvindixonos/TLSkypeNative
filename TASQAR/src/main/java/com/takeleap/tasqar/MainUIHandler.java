@@ -171,7 +171,7 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
 
     DrawerLayout drawer;
 
-    TextView recordingText;
+//    TextView recordingText;
     TextView pointModeText;
     TextView timerText;
     TextView userNameText;
@@ -652,14 +652,14 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
             chatActivity.screenRecorder.GetPermission();
             mStartRecordingButton.setImageResource(R.drawable.button_stop);
-            recordingText.setText("Stop Recording");
+//            recordingText.setText("Stop Recording");
             recording = true;
         }
         else
         {
             chatActivity.screenRecorder.StopRecording();
             mStartRecordingButton.setImageResource(R.drawable.button_record);
-            recordingText.setText("Start Recording");
+//            recordingText.setText("Start Recording");
             recording = false;
         }
     }
@@ -1067,6 +1067,8 @@ public class MainUIHandler implements NavigationView.OnNavigationItemSelectedLis
         {
             intent.putExtra("PIC", "ABSENT");
         }
+
+        intent.putExtra("CALLEND", "TRUE");
         currentActivity.finish();
         currentActivity.startActivity(intent);
     }

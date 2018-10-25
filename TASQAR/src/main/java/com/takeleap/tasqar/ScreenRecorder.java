@@ -174,7 +174,6 @@ public class ScreenRecorder
         }
     }
 
-
     public void GetPermission()
     {
         SetupScreen();
